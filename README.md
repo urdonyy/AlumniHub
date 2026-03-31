@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="public/images/alumnihub-logo.svg" width="140" alt="AlumniHub Logo">
+	<img src="public/images/alumnihub-logo.png" width="140" alt="AlumniHub Logo">
 </p>
 
 <h1 align="center">AlumniHub</h1>
