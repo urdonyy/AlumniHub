@@ -7,6 +7,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -26,7 +27,19 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $validated = $request->validated();
+
+        $firstName = Str::of($validated['first_name'])->trim()->value();
+        $lastName = Str::of($validated['last_name'])->trim()->value();
+
+        $request->user()->fill([
+            'name' => trim($firstName . ' ' . $lastName),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => Str::of($validated['email'])->trim()->value(),
+            'batch_year' => (int) $validated['batch_year'],
+            'program_course' => Str::of($validated['program_course'])->trim()->value(),
+        ]);
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
