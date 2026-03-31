@@ -1,0 +1,14 @@
+<svg width="320" height="320" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AlumniHub Logo</title>
+  <desc id="desc">Maroon and gold abstract crest used as the AlumniHub project logo.</desc>
+
+  <rect width="320" height="320" fill="#ffffff"/>
+
+  <path d="M20 20H300V145H280V165L264 175V145H236L212 140L196 160H124L108 140L84 145H20V20Z" fill="#7F1D2D"/>
+
+  <path d="M20 145H84L108 140L124 160H196L212 140L236 145H264V175L252 190H220L202 174H118L100 190H20V145Z" fill="#F2C318"/>
+
+  <path d="M20 190H300V300H20V190Z" fill="#F2C318"/>
+
+  <circle cx="160" cy="190" r="42" fill="#F2C318"/>
+</svg>
