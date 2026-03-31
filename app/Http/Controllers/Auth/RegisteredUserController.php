@@ -9,6 +9,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -30,16 +32,40 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $currentYear = (int) now()->format('Y');
+
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
+            'role' => ['required', Rule::in(['alumni', 'student'])],
+            'batch_year' => ['required', 'integer', 'between:2024,' . $currentYear],
+            'program_course' => ['required', Rule::in([
+                'Diploma in Civil Engineering Technology (DCvET)',
+                'Diploma in Computer Engineering Technology (DCET)',
+                'Diploma in Electrical Engineering Technology (DEET)',
+                'Diploma in Electronics Engineering Technology (DECET)',
+                'Diploma in Information Communication Technology (DICT)',
+                'Diploma in Mechanical Engineering Technology (DMET)',
+                'Diploma in Office Management Technology (DOMT)',
+                'Diploma in Railway Engineering Technology (DRET)',
+            ])],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        $firstName = Str::of($request->string('first_name'))->trim()->value();
+        $lastName = Str::of($request->string('last_name'))->trim()->value();
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => trim($firstName . ' ' . $lastName),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'role' => $request->string('role')->value(),
+            'account_status' => 'pending',
+            'batch_year' => (int) $request->input('batch_year'),
+            'program_course' => $request->string('program_course')->trim()->value(),
+            'email' => $request->string('email')->value(),
+            'password' => Hash::make($request->string('password')->value()),
         ]);
 
         event(new Registered($user));
