@@ -19,9 +19,14 @@
     @endif
 </head>
 
-<body
-    class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] flex p-6 lg:p-8 items-center lg:justify-center min-h-screen flex-col">
-    <header class="w-full lg:max-w-4xl max-w-[335px] text-sm mb-6 not-has-[nav]:hidden">
+<body class="bg-[#FDFDFC] text-[#1b1b18] flex items-center lg:justify-center min-h-screen flex-col">
+    <header class="bg-red900 w-full text-sm flex items-center justify-between not-has-[nav]:hidden px-5 py-2">
+        <div class="flex items-center gap-4">
+            <img src="{{ asset('images/alumnihub-logo.png') }}" alt="AlumniHub Logo" class="w-8" />
+            <h1 class="font-bold text-xl">
+                <span class="text-red-900">Alumni</span><span class="text-[#FFC107]">Hub</span>
+            </h1>
+        </div>
         @if (Route::has('login'))
             <nav class="flex items-center justify-end gap-4">
                 @auth
@@ -31,13 +36,13 @@
                     </a>
                 @else
                     <a href="{{ route('login') }}"
-                        class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] text-[#1b1b18] border border-transparent hover:border-[#19140035] dark:hover:border-[#3E3E3A] rounded-sm text-sm leading-normal">
+                        class="font-semibold inline-block px-5 py-1.5 text-red-900 border-2 border-red-900 hover:border-[#FFC107] hover:text-[#FFC107] rounded-sm text-sm leading-normal">
                         Log in
                     </a>
 
                     @if (Route::has('register'))
                         <a href="{{ route('register') }}"
-                            class="inline-block px-5 py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
+                            class="font-semibold inline-block px-5 py-1.5 text-red-900 border-2 border-red-900 hover:border-[#FFC107] hover:text-[#FFC107] rounded-sm text-sm leading-normal">
                             Register
                         </a>
                     @endif
@@ -45,6 +50,15 @@
             </nav>
         @endif
     </header>
+    <div class="bg-red-900 text-white w-full h-14 flex items-center justify-end">
+        <div class="relative w-[420px] mr-[320px]">
+            <img src="{{ asset('images/alumnihub-logo.png') }}" alt="AlumniHub Logo"
+                class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input type="text" placeholder="Find what you're looking for"
+                class="w-full pl-12 pr-4 rounded-full border-[#A8413B] text-neutral-400 bg-white focus:outline focus:ring-1 focus:ring-[#FFC107] focus:border-none hover:border-[#FFC107]" />
+        </div>
+    </div>
+
     <div
         class="flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0">
         <main class="flex max-w-[335px] w-full flex-col-reverse lg:max-w-4xl lg:flex-row">
