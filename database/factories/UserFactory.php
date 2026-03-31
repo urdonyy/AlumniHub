@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
+use function Symfony\Component\String\s;
+
 /**
  * @extends Factory<User>
  */
@@ -24,8 +26,16 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $firstName = fake()->firstName();
+        $lastName = fake()->lastName();
         return [
-            'name' => fake()->name(),
+            'name' => trim($firstName . ' ' . $lastName),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'role' => 'alumni',
+            'account_status' => 'pending',
+            'batch_year' => fake()->numberBetween(2024, (int) now()->format('Y')),
+            'program_course' => fake()->randomElement(['BSIT', 'BSCS', 'BSIS']),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
@@ -38,7 +48,7 @@ class UserFactory extends Factory
      */
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'email_verified_at' => null,
         ]);
     }
