@@ -20,39 +20,9 @@
 </head>
 
 <body class="bg-[#FDFDFC] text-[#1b1b18] flex items-center lg:justify-center min-h-screen flex-col">
-    <header
-        class="bg-red-900/10 w-full text-sm flex items-center justify-between not-has-[nav]:hidden px-2 py-2 sm:px-5">
-        <a href="{{ url('/') }}" class="flex items-center gap-2 sm:gap-4 cursor-pointer decoration-none">
-            <img src="{{ asset('images/alumnihub-logo.png') }}" alt="AlumniHub Logo" class="w-6 sm:w-8" />
-            <h1 class="font-bold text-base sm:text-xl ">
-                <span class="text-red-900">Alumni</span><span class="text-[#FFC107]">Hub</span>
-            </h1>
-        </a>
-        @if (Route::has('login'))
-            <nav class="flex items-center justify-end gap-2 sm:gap-4">
-                @auth
-                    <a href="{{ url('/dashboard') }}"
-                        class="inline-block px-3 py-1 sm:px-5 sm:py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
-                        Dashboard
-                    </a>
-                @else
-                    <a href="{{ route('login') }}"
-                        class="font-semibold inline-block px-3 py-1 sm:px-5 sm:py-1.5 text-red-900 border border-red-900 hover:border-[#FFC107] hover:text-[#FFC107] rounded-sm text-xs sm:text-sm leading-normal whitespace-nowrap">
-                        Log in
-                    </a>
+    <x-header />
 
-                    @if (Route::has('register'))
-                        <a href="{{ route('register') }}"
-                            class="font-semibold inline-block px-3 py-1 sm:px-5 sm:py-1.5 text-red-900 border border-red-900 hover:border-[#FFC107] hover:text-[#FFC107] rounded-sm text-xs sm:text-sm leading-normal whitespace-nowrap">
-                            Register
-                        </a>
-                    @endif
-                @endauth
-            </nav>
-        @endif
-    </header>
-
-    <div class="bg-cover bg-centerx flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0 pt-8 px-8 pb-24"
+    <div class="bg-cover bg-center flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0 pt-8 lg:pt-20 px-8 pb-24"
         style="background-image: url('{{ asset('images/element.png') }}');">
         <main class="flex max-w-[335px] w-full flex-col-reverse lg:max-w-4xl lg:flex-row rounded-2xl shadow-md">
             <div
