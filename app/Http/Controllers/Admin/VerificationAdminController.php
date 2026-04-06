@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\VerificationDocument;
+use App\Notifications\VerificationStatusChanged;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -52,6 +53,8 @@ class VerificationAdminController extends Controller
             'account_status' => 'approved',
         ]);
 
+        $verificationDocument->user->notify(new VerificationStatusChanged($verificationDocument));
+
         return back()->with('status', 'verification-approved');
     }
 
@@ -89,6 +92,8 @@ class VerificationAdminController extends Controller
         $verificationDocument->user()->update([
             'account_status' => 'rejected',
         ]);
+
+        $verificationDocument->user->notify(new VerificationStatusChanged($verificationDocument));
 
         return back()->with('status', 'verification-rejected');
     }
