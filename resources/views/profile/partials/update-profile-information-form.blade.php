@@ -9,6 +9,17 @@
         </p>
     </header>
 
+    <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+        <span class="font-medium text-gray-900">{{ __('Status') }}:</span>
+        <span
+            class="ml-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $user->accountStatusBadgeClass() }}">
+            {{ $user->accountStatusLabel() }}
+        </span>
+        <p class="mt-2 text-gray-600">
+            {{ $user->isVerifiedAlumni() ? __('Your alumni verification is approved.') : __('You can keep using the system while your verification is pending review.') }}
+        </p>
+    </div>
+
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
