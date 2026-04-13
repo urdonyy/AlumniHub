@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CommunityAutoJoinService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,7 @@ class RegisteredUserController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, CommunityAutoJoinService $communityAutoJoinService): RedirectResponse
     {
         $currentYear = (int) now()->format('Y');
 
@@ -67,6 +68,8 @@ class RegisteredUserController extends Controller
             'email' => $request->string('email')->value(),
             'password' => Hash::make($request->string('password')->value()),
         ]);
+
+        $communityAutoJoinService->attachMatchingCommunities($user);
 
         event(new Registered($user));
 

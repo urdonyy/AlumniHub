@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -20,6 +21,69 @@ class User extends Authenticatable
     public function isVerifiedAlumni(): bool
     {
         return $this->role === 'alumni' && $this->account_status === 'approved';
+    }
+
+    public function canInteractInCommunities(): bool
+    {
+        return $this->role === 'admin' || $this->isVerifiedAlumni();
+    }
+
+    public function canManageCommunities(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function canCreatePosts(): bool
+    {
+        return $this->canInteractInCommunities();
+    }
+
+    public function canCommentOnPosts(): bool
+    {
+        return $this->canInteractInCommunities();
+    }
+
+    public function canSendMessages(): bool
+    {
+        return $this->canInteractInCommunities();
+    }
+
+    public function canSendConnectionRequests(): bool
+    {
+        return $this->canInteractInCommunities();
+    }
+
+    public function hasLimitedProfileVisibility(): bool
+    {
+        return $this->role !== 'admin' && ! $this->isVerifiedAlumni();
+    }
+
+    public function profileVisibilityLabel(): string
+    {
+        return $this->hasLimitedProfileVisibility()
+            ? 'Limited profile visibility'
+            : 'Full profile visibility';
+    }
+
+    public function profileVisibilityBadgeClass(): string
+    {
+        return $this->hasLimitedProfileVisibility()
+            ? 'bg-slate-100 text-slate-700 ring-slate-200'
+            : 'bg-emerald-100 text-emerald-800 ring-emerald-200';
+    }
+
+    public function communityAccessLabel(): string
+    {
+        return $this->canInteractInCommunities()
+            ? 'Full community access'
+            : 'Read-only community access';
+    }
+
+    public function communityAccessBadgeClass(): string
+    {
+        return $this->canInteractInCommunities()
+            ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+            : 'bg-slate-100 text-slate-700 ring-slate-200';
     }
 
     public function accountStatusLabel(): string
@@ -48,6 +112,11 @@ class User extends Authenticatable
     public function reviewedVerificationDocuments()
     {
         return $this->hasMany(VerificationDocument::class, 'reviewed_by');
+    }
+
+    public function communities(): BelongsToMany
+    {
+        return $this->belongsToMany(Community::class)->withTimestamps();
     }
 
     /**
