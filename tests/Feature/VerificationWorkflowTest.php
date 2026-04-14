@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Community;
+use App\Models\CommunityRule;
 use App\Models\User;
 use App\Models\VerificationDocument;
 use App\Notifications\VerificationStatusChanged;
@@ -113,6 +115,50 @@ test('admin can approve a verification document and notify the user', function (
     Notification::assertSentTo($user, VerificationStatusChanged::class, function (VerificationStatusChanged $notification) use ($document) {
         return $notification->verificationDocument->is($document);
     });
+});
+
+test('admin approval auto attaches matching communities', function () {
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'account_status' => 'approved',
+    ]);
+
+    $user = User::factory()->create([
+        'role' => 'alumni',
+        'account_status' => 'pending',
+        'batch_year' => 2026,
+        'program_course' => 'Diploma in Information Communication Technology (DICT)',
+    ]);
+
+    $community = Community::create([
+        'name' => 'DICT Community',
+        'slug' => 'dict-community-test',
+    ]);
+
+    CommunityRule::create([
+        'community_id' => $community->id,
+        'batch_year' => null,
+        'program_course' => 'Diploma in Information Communication Technology (DICT)',
+    ]);
+
+    Storage::disk('local')->put('verifications/user_' . $user->id . '/sample.pdf', 'fake pdf content');
+
+    $document = VerificationDocument::create([
+        'user_id' => $user->id,
+        'document_path' => 'verifications/user_' . $user->id . '/sample.pdf',
+        'status' => 'pending',
+    ]);
+
+    actingAs($admin)
+        ->patch(route('admin.verifications.approve', $document), [
+            'admin_notes' => 'Approved after matching check.',
+        ])
+        ->assertSessionHas('status', 'verification-approved');
+
+    assertDatabaseHas('community_user', [
+        'community_id' => $community->id,
+        'user_id' => $user->id,
+    ]);
 });
 
 test('admin can reject a verification document and notify the user', function () {
