@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\VerificationAdminController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
+use App\Models\Community;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,7 +15,25 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $user = request()->user();
+
+    $featuredCommunities = Community::query()
+        ->withCount('members')
+        ->orderByDesc('members_count')
+        ->limit(5)
+        ->get();
+
+    $suggestedPeople = User::query()
+        ->where('id', '!=', $user->id)
+        ->where('role', 'alumni')
+        ->orderBy('name')
+        ->limit(5)
+        ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
+
+    return view('dashboard', [
+        'featuredCommunities' => $featuredCommunities,
+        'suggestedPeople' => $suggestedPeople,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -28,6 +48,26 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/verification', [VerificationController::class, 'store'])->name('verification.store');
+
+    Route::view('/messages', 'placeholders.module', [
+        'title' => 'Messages',
+        'description' => 'Direct messaging will be available after the messaging backend is implemented.',
+    ])->name('messages.index');
+
+    Route::view('/notifications', 'placeholders.module', [
+        'title' => 'Notifications',
+        'description' => 'Notification center will be enabled once activity feed and social actions are integrated.',
+    ])->name('notifications.index');
+
+    Route::view('/connections', 'placeholders.module', [
+        'title' => 'Connections',
+        'description' => 'Connections and follow requests are planned for a future phase.',
+    ])->name('connections.index');
+
+    Route::view('/saved', 'placeholders.module', [
+        'title' => 'Saved',
+        'description' => 'Saved posts and resources will be available after post features are ready.',
+    ])->name('saved.index');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
