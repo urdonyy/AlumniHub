@@ -68,3 +68,25 @@ test('non admin cannot access community management routes', function () {
         ->get(route('admin.communities.index'))
         ->assertForbidden();
 });
+
+test('admin cannot delete system communities', function () {
+    $admin = User::factory()->create([
+        'role' => 'admin',
+        'account_status' => 'approved',
+    ]);
+
+    $systemCommunity = Community::create([
+        'name' => 'General Alumni Hub',
+        'slug' => 'general-alumni-hub-test',
+        'is_system' => true,
+        'system_key' => 'general-alumni-hub-test',
+    ]);
+
+    actingAs($admin)
+        ->delete(route('admin.communities.destroy', $systemCommunity))
+        ->assertSessionHas('status', 'community-delete-blocked-system');
+
+    assertDatabaseHas('communities', [
+        'id' => $systemCommunity->id,
+    ]);
+});

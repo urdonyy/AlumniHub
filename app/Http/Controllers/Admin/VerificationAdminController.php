@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\VerificationDocument;
 use App\Notifications\VerificationStatusChanged;
+use App\Services\CommunityAutoJoinService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -32,8 +33,11 @@ class VerificationAdminController extends Controller
         ]);
     }
 
-    public function approve(Request $request, VerificationDocument $verificationDocument): RedirectResponse
-    {
+    public function approve(
+        Request $request,
+        VerificationDocument $verificationDocument,
+        CommunityAutoJoinService $communityAutoJoinService
+    ): RedirectResponse {
         if ($verificationDocument->status !== 'pending') {
             return back()->with('status', 'verification-already-reviewed');
         }
@@ -52,6 +56,12 @@ class VerificationAdminController extends Controller
         $verificationDocument->user()->update([
             'account_status' => 'approved',
         ]);
+
+        $approvedUser = $verificationDocument->user()->first();
+
+        if ($approvedUser !== null) {
+            $communityAutoJoinService->attachMatchingCommunities($approvedUser);
+        }
 
         $verificationDocument->user->notify(new VerificationStatusChanged($verificationDocument));
 

@@ -16,6 +16,7 @@ class CommunityAdminController extends Controller
         $communities = Community::query()
             ->withCount('members')
             ->with('rules')
+            ->orderByDesc('is_system')
             ->latest()
             ->get();
 
@@ -53,19 +54,48 @@ class CommunityAdminController extends Controller
 
     public function update(Request $request, Community $community): RedirectResponse
     {
+        $slugRules = [
+            'required',
+            'string',
+            'max:255',
+            'alpha_dash',
+            Rule::unique('communities', 'slug')->ignore($community->id),
+        ];
+
+        if ($community->is_system) {
+            $slugRules[0] = 'nullable';
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'slug' => ['required', 'string', 'max:255', 'alpha_dash', Rule::unique('communities', 'slug')->ignore($community->id)],
+            'slug' => $slugRules,
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $community->update($validated);
+        $updateData = [
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ];
+
+        if (! $community->is_system) {
+            $updateData['slug'] = $validated['slug'];
+        }
+
+        $community->update($updateData);
+
+        if ($community->is_system) {
+            return back()->with('status', 'community-updated-system');
+        }
 
         return back()->with('status', 'community-updated');
     }
 
     public function destroy(Community $community): RedirectResponse
     {
+        if ($community->is_system) {
+            return back()->with('status', 'community-delete-blocked-system');
+        }
+
         $community->delete();
 
         return back()->with('status', 'community-deleted');
