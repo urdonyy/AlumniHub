@@ -15,37 +15,45 @@
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
                     @if (Auth::user()?->role === 'admin')
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            <i class="fa-regular fa-house"></i>
                             {{ __('Admin Home') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.communities.index')"
                             :active="request()->routeIs('admin.communities.*')">
+                            <i class="fa-solid fa-group-arrows-rotate"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.verifications.index')"
                             :active="request()->routeIs('admin.verifications.*')">
+                            <i class="fa-solid fa-user-check"></i>
                             {{ __('Verification Queue') }}
                         </x-nav-link>
                     @else
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            <i class="fa-regular fa-house"></i>
                             {{ __('Home') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('profiles.show', Auth::id())"
                             :active="request()->routeIs('profiles.show')">
+                            <i class="fa-regular fa-user"></i>
                             {{ __('Profile') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('communities.index')" :active="request()->routeIs('communities.*')">
+                            <i class="fa-solid fa-group-arrows-rotate"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('messages.index')" :active="request()->routeIs('messages.*')">
+                            <i class="fa-regular fa-message"></i>
                             {{ __('Messages') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
+                            <i class="fa-regular fa-bell"></i>
                             {{ __('Notifications') }}
                         </x-nav-link>
                     @endif
@@ -73,6 +81,7 @@
 
                     <x-slot name="content">
                         <x-dropdown-link :href="route('profile.edit')">
+                            <i class="fa-solid fa-circle-user"></i>
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
@@ -82,6 +91,7 @@
 
                             <x-dropdown-link :href="route('logout')" onclick="event.preventDefault();
                                                 this.closest('form').submit();">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
                                 {{ __('Log Out') }}
                             </x-dropdown-link>
                         </form>
@@ -110,37 +120,45 @@
         <div class="pt-2 pb-3 space-y-1">
             @if (Auth::user()?->role === 'admin')
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <i class="fa-solid fa-house"></i>
                     {{ __('Admin Home') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.communities.index')"
                     :active="request()->routeIs('admin.communities.*')">
+                    <i class="fa-solid fa-group-arrows-rotate"></i>
                     {{ __('Communities') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.verifications.index')"
                     :active="request()->routeIs('admin.verifications.*')">
+                    <i class="fa-solid fa-user-check"></i>
                     {{ __('Verification Queue') }}
                 </x-responsive-nav-link>
             @else
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    <i class="fa-regular fa-house"></i>
                     {{ __('Home') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('profiles.show', Auth::id())"
                     :active="request()->routeIs('profiles.show')">
+                    <i class="fa-regular fa-user"></i>
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('communities.index')" :active="request()->routeIs('communities.*')">
+                    <i class="fa-solid fa-group-arrows-rotate"></i>
                     {{ __('Communities') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('messages.index')" :active="request()->routeIs('messages.*')">
+                    <i class="fa-regular fa-message"></i>
                     {{ __('Messages') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
+                    <i class="fa-regular fa-bell"></i>
                     {{ __('Notifications') }}
                 </x-responsive-nav-link>
             @endif
@@ -149,12 +167,13 @@
         <!-- Responsive Settings Options -->
         <div class="pt-4 pb-1 border-t border-[#afafaf]">
             <div class="px-4">
-                <div class="font-medium text-base text-red-900">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-[#FFC107]">{{ Auth::user()->email }}</div>
+                <div class="font-medium text-lg text-red-900">{{ Auth::user()->name }}</div>
+                <div class="font-medium text-xs text-[#FFC107]">{{ Auth::user()->email }}</div>
             </div>
 
             <div class="mt-3 space-y-1">
                 <x-responsive-nav-link :href="route('profile.edit')">
+                    <i class="fa-solid fa-circle-user"></i>
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
@@ -164,6 +183,7 @@
 
                     <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault();
                                         this.closest('form').submit();">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
                         {{ __('Log Out') }}
                     </x-responsive-nav-link>
                 </form>
