@@ -9,7 +9,7 @@
         <nav class="flex items-center justify-end gap-2 sm:gap-4">
             @auth
                 <a href="{{ url('/dashboard') }}"
-                    class="inline-block px-3 py-1 sm:px-5 sm:py-1.5 dark:text-[#EDEDEC] border-[#19140035] hover:border-[#1915014a] border text-[#1b1b18] dark:border-[#3E3E3A] dark:hover:border-[#62605b] rounded-sm text-sm leading-normal">
+                    class="font-semibold inline-block px-3 py-1 sm:px-5 sm:py-1.5 text-red-900 border border-red-900 hover:border-[#FFC107] hover:text-[#FFC107] rounded-sm text-xs sm:text-sm leading-normal whitespace-nowrap">
                     Dashboard
                 </a>
             @else
