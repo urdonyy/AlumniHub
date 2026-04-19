@@ -1,14 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            <h2 class="font-semibold text-xl text-red-900 leading-tight">
                 {{ auth()->user()->canManageCommunities() ? __('Admin Home') : __('Home') }}
             </h2>
-            <p class="text-sm text-gray-500">{{ __('AlumniHub social experience (beta)') }}</p>
+            <p class="text-sm text-red-900">{{ __('AlumniHub social experience (beta)') }}</p>
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if (auth()->user()->canManageCommunities())
                 <div class="grid gap-6 lg:grid-cols-2">
