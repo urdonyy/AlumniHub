@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -17,11 +18,12 @@ class ProfileController extends Controller
     public function show(Request $request, User $user): View
     {
         $viewer = $request->user();
+        $user->load('profileExperiences');
 
         return view('profile.show', [
             'profileUser' => $user,
             'viewer' => $viewer,
-            'showFullDetails' => ! $viewer->hasLimitedProfileVisibility(),
+            'showFullDetails' => ! $user->hasLimitedProfileVisibility(),
         ]);
     }
 
@@ -30,6 +32,8 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $request->user()->load('profileExperiences');
+
         return view('profile.edit', [
             'user' => $request->user(),
         ]);
@@ -45,6 +49,11 @@ class ProfileController extends Controller
 
         $firstName = Str::of($validated['first_name'])->trim()->value();
         $lastName = Str::of($validated['last_name'])->trim()->value();
+        $skills = collect(explode(',', (string) ($validated['skills'] ?? '')))
+            ->map(fn(string $skill) => trim($skill))
+            ->filter(fn(string $skill) => $skill !== '')
+            ->unique()
+            ->values();
 
         $user->fill([
             'name' => trim($firstName . ' ' . $lastName),
@@ -53,6 +62,7 @@ class ProfileController extends Controller
             'email' => Str::of($validated['email'])->trim()->value(),
             'batch_year' => (int) $validated['batch_year'],
             'program_course' => Str::of($validated['program_course'])->trim()->value(),
+            'skills' => $skills->isEmpty() ? null : $skills->implode(', '),
         ]);
 
         if ($request->hasFile('avatar')) {
@@ -83,9 +93,79 @@ class ProfileController extends Controller
             $user->email_verified_at = null;
         }
 
-        $user->save();
+        DB::transaction(function () use ($user, $validated): void {
+            $user->save();
+
+            $submittedExperiences = collect($validated['experiences'] ?? [])
+                ->map(function (array $experience): array {
+                    return [
+                        'id' => isset($experience['id']) ? (int) $experience['id'] : null,
+                        'title' => Str::of((string) ($experience['title'] ?? ''))->trim()->value(),
+                        'organization' => Str::of((string) ($experience['organization'] ?? ''))->trim()->value(),
+                        'start_date' => $this->normalizeExperienceMonth($experience['start_month'] ?? null),
+                        'end_date' => $this->normalizeExperienceMonth($experience['end_month'] ?? null),
+                        'description' => Str::of((string) ($experience['description'] ?? ''))->trim()->value(),
+                    ];
+                })
+                ->filter(function (array $experience): bool {
+                    return $experience['title'] !== ''
+                        || $experience['organization'] !== ''
+                        || $experience['start_date'] !== null
+                        || $experience['end_date'] !== null
+                        || $experience['description'] !== '';
+                })
+                ->values();
+
+            $userExperienceIds = $user->profileExperiences()->pluck('id')->all();
+            $keptExperienceIds = [];
+
+            foreach ($submittedExperiences as $experience) {
+                if ($experience['title'] === '' || $experience['organization'] === '') {
+                    continue;
+                }
+
+                $payload = [
+                    'title' => $experience['title'],
+                    'organization' => $experience['organization'],
+                    'start_date' => $experience['start_date'],
+                    'end_date' => $experience['end_date'],
+                    'description' => $experience['description'] === '' ? null : $experience['description'],
+                ];
+
+                if ($experience['id'] !== null && in_array($experience['id'], $userExperienceIds, true)) {
+                    $user->profileExperiences()->whereKey($experience['id'])->update($payload);
+                    $keptExperienceIds[] = $experience['id'];
+                    continue;
+                }
+
+                $createdExperience = $user->profileExperiences()->create($payload);
+                $keptExperienceIds[] = $createdExperience->id;
+            }
+
+            if (empty($keptExperienceIds)) {
+                $user->profileExperiences()->delete();
+                return;
+            }
+
+            $user->profileExperiences()->whereNotIn('id', $keptExperienceIds)->delete();
+        });
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    private function normalizeExperienceMonth(?string $month): ?string
+    {
+        if (! $month) {
+            return null;
+        }
+
+        $monthValue = trim($month);
+
+        if ($monthValue === '') {
+            return null;
+        }
+
+        return $monthValue . '-01';
     }
 
     /**
