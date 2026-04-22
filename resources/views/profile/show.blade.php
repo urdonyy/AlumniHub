@@ -14,43 +14,64 @@
                 $isOwnProfile = $viewer->is($profileUser);
             @endphp
 
-            <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                    <div>
-                        <h3 class="text-2xl font-semibold text-gray-900">{{ $profileUser->name }}</h3>
-                        <p class="mt-1 text-sm text-gray-600">{{ $profileUser->program_course ?? __('Program not yet provided') }}</p>
-                        <div class="mt-3 flex flex-wrap items-center gap-2">
-                            <span
-                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ $profileUser->accountStatusBadgeClass() }}">
-                                {{ $profileUser->accountStatusLabel() }}
-                            </span>
-                            <span
-                                class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ $viewer->profileVisibilityBadgeClass() }}">
-                                {{ $viewer->profileVisibilityLabel() }}
-                            </span>
-                        </div>
-                    </div>
-
-                    @if ($isOwnProfile)
-                        <a href="{{ route('profile.edit') }}"
-                            class="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700">
-                            {{ __('Edit Profile Settings') }}
-                        </a>
-                    @endif
+            <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="relative h-40 sm:h-52 lg:h-60">
+                    <img src="{{ $profileUser->profileBannerUrl() }}"
+                        alt="{{ __('Profile banner for :name', ['name' => $profileUser->name]) }}"
+                        onerror="this.onerror=null;this.src='{{ asset('images/default-banner.svg') }}';"
+                        class="h-full w-full object-cover" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent"></div>
                 </div>
 
-                <div class="mt-6 grid gap-3 sm:grid-cols-3">
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Batch Year') }}</p>
-                        <p class="mt-1 text-sm font-medium text-gray-900">{{ $profileUser->batch_year ?? __('Not provided') }}</p>
+                <div class="relative px-6 pb-6 pt-20 sm:px-8 sm:pb-8 sm:pt-24">
+                    <div
+                        class="absolute -top-14 left-1/2 h-28 w-28 -translate-x-1/2 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg sm:-top-16 sm:left-8 sm:h-32 sm:w-32 sm:translate-x-0">
+                        <img src="{{ $profileUser->profileAvatarUrl() }}"
+                            alt="{{ __('Profile photo for :name', ['name' => $profileUser->name]) }}"
+                            onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';"
+                            class="h-full w-full object-cover" />
                     </div>
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Connections') }}</p>
-                        <p class="mt-1 text-sm font-medium text-gray-900">{{ __('Coming soon') }}</p>
-                    </div>
-                    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Recent Posts') }}</p>
-                        <p class="mt-1 text-sm font-medium text-gray-900">{{ __('Coming soon') }}</p>
+
+                    <div class="flex flex-col gap-5 sm:pl-36">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="text-center sm:text-left">
+                                <h3 class="text-2xl font-semibold text-gray-900 sm:text-3xl">{{ $profileUser->name }}</h3>
+                                <p class="mt-1 text-sm text-gray-600 sm:text-base">
+                                    {{ $profileUser->program_course ?? __('Program not yet provided') }}</p>
+                                <div class="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                                    <span
+                                        class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ $profileUser->accountStatusBadgeClass() }}">
+                                        {{ $profileUser->accountStatusLabel() }}
+                                    </span>
+                                    <span
+                                        class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ $profileUser->profileVisibilityBadgeClass() }}">
+                                        {{ $profileUser->profileVisibilityLabel() }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if ($isOwnProfile)
+                                <a href="{{ route('profile.edit') }}"
+                                    class="inline-flex items-center justify-center rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700">
+                                    {{ __('Edit Profile Settings') }}
+                                </a>
+                            @endif
+                        </div>
+
+                        <div class="grid gap-3 sm:grid-cols-3">
+                            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Batch Year') }}</p>
+                                <p class="mt-1 text-sm font-medium text-gray-900">{{ $profileUser->batch_year ?? __('Not provided') }}</p>
+                            </div>
+                            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Connections') }}</p>
+                                <p class="mt-1 text-sm font-medium text-gray-900">{{ __('Coming soon') }}</p>
+                            </div>
+                            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Recent Posts') }}</p>
+                                <p class="mt-1 text-sm font-medium text-gray-900">{{ __('Coming soon') }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

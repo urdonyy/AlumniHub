@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -40,11 +41,12 @@ class ProfileController extends Controller
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $user = $request->user();
 
         $firstName = Str::of($validated['first_name'])->trim()->value();
         $lastName = Str::of($validated['last_name'])->trim()->value();
 
-        $request->user()->fill([
+        $user->fill([
             'name' => trim($firstName . ' ' . $lastName),
             'first_name' => $firstName,
             'last_name' => $lastName,
@@ -53,11 +55,35 @@ class ProfileController extends Controller
             'program_course' => Str::of($validated['program_course'])->trim()->value(),
         ]);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($request->hasFile('avatar')) {
+            $oldAvatarPath = $user->avatar_path;
+            $newAvatarPath = $request->file('avatar')->store('avatars/user_' . $user->id, 'public');
+
+            $user->avatar_path = $newAvatarPath;
+            $user->avatar_uploaded_at = now();
+
+            if ($oldAvatarPath && Storage::disk('public')->exists($oldAvatarPath)) {
+                Storage::disk('public')->delete($oldAvatarPath);
+            }
         }
 
-        $request->user()->save();
+        if ($request->hasFile('banner')) {
+            $oldBannerPath = $user->banner_path;
+            $newBannerPath = $request->file('banner')->store('banners/user_' . $user->id, 'public');
+
+            $user->banner_path = $newBannerPath;
+            $user->banner_uploaded_at = now();
+
+            if ($oldBannerPath && Storage::disk('public')->exists($oldBannerPath)) {
+                Storage::disk('public')->delete($oldBannerPath);
+            }
+        }
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
@@ -72,6 +98,14 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+
+        if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
+
+        if ($user->banner_path && Storage::disk('public')->exists($user->banner_path)) {
+            Storage::disk('public')->delete($user->banner_path);
+        }
 
         Auth::logout();
 

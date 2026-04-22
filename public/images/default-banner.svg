@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-labelledby="bannerTitle bannerDesc">
+  <title id="bannerTitle">Default profile banner</title>
+  <desc id="bannerDesc">A warm, abstract placeholder banner for AlumniHub profiles.</desc>
+  <defs>
+    <linearGradient id="bannerBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff7ed" />
+      <stop offset="50%" stop-color="#ffedd5" />
+      <stop offset="100%" stop-color="#fee2e2" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#bannerBg)" />
+  <circle cx="140" cy="70" r="90" fill="#dc2626" opacity="0.12" />
+  <circle cx="1060" cy="290" r="150" fill="#b91c1c" opacity="0.12" />
+  <path d="M0 258c122-35 241-53 357-53 190 0 294 83 480 83 108 0 229-32 363-95v167H0z" fill="#7f1d1d" opacity="0.15" />
+  <text x="62" y="78" font-size="28" font-family="Segoe UI, Tahoma, sans-serif" fill="#7f1d1d" opacity="0.85">AlumniHub</text>
+</svg>

@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'email', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -119,6 +120,24 @@ class User extends Authenticatable
         return $this->belongsToMany(Community::class)->withTimestamps();
     }
 
+    public function profileAvatarUrl(): string
+    {
+        if ($this->avatar_path) {
+            return Storage::url($this->avatar_path);
+        }
+
+        return asset('images/default-avatar.svg');
+    }
+
+    public function profileBannerUrl(): string
+    {
+        if ($this->banner_path) {
+            return Storage::url($this->banner_path);
+        }
+
+        return asset('images/default-banner.svg');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -128,6 +147,8 @@ class User extends Authenticatable
     {
         return [
             "batch_year" => "integer",
+            'avatar_uploaded_at' => 'datetime',
+            'banner_uploaded_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
