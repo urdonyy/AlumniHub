@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -12,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -105,6 +106,32 @@ class User extends Authenticatable
         };
     }
 
+    public function verificationBadgeClass(): string
+    {
+        return match ($this->account_status) {
+            'approved' => 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+            'rejected' => 'bg-rose-100 text-rose-700 ring-rose-200',
+            default => 'bg-amber-100 text-amber-700 ring-amber-200',
+        };
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function parsedSkills(): array
+    {
+        if (! $this->skills) {
+            return [];
+        }
+
+        return collect(explode(',', $this->skills))
+            ->map(fn(string $skill) => trim($skill))
+            ->filter(fn(string $skill) => $skill !== '')
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     public function verificationDocuments()
     {
         return $this->hasMany(VerificationDocument::class);
@@ -118,6 +145,13 @@ class User extends Authenticatable
     public function communities(): BelongsToMany
     {
         return $this->belongsToMany(Community::class)->withTimestamps();
+    }
+
+    public function profileExperiences(): HasMany
+    {
+        return $this->hasMany(ProfileExperience::class)
+            ->orderByDesc('start_date')
+            ->orderByDesc('id');
     }
 
     public function profileAvatarUrl(): string

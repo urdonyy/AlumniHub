@@ -14,6 +14,7 @@
             <div class="max-w-5xl mx-auto space-y-6 sm:px-6 lg:px-8">
                 @php
                     $isOwnProfile = $viewer->is($profileUser);
+                    $canSeeCareerDetails = $isOwnProfile || $showFullDetails;
                 @endphp
 
                 <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -27,19 +28,18 @@
 
                     <div class="relative px-6 pb-6 pt-20 sm:px-8 sm:pb-8 sm:pt-24">
                         <div
-                            class="absolute -top-14 left-1/2 h-28 w-28 -translate-x-1/2 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg sm:-top-16 sm:left-8 sm:h-32 sm:w-32 sm:translate-x-0">
+                            class="absolute -top-14 left-1/2 h-28 w-28 -translate-x-1/2 overflow-hidden rounded-full border-4 border-white bg-white shadow-lg sm:-top-16 sm:h-32 sm:w-32">
                             <img src="{{ $profileUser->profileAvatarUrl() }}"
                                 alt="{{ __('Profile photo for :name', ['name' => $profileUser->name]) }}"
                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';"
                                 class="h-full w-full object-cover" />
                         </div>
 
-                        <div class="flex flex-col gap-5">
+                        <div class="flex flex-col gap-5 sm:pl-36">
                             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                 <div class="text-center sm:text-left">
                                     <h3 class="text-2xl font-semibold text-gray-900 sm:text-3xl">
-                                        {{ $profileUser->name }}
-                                    </h3>
+                                        {{ $profileUser->name }}</h3>
                                     <p class="mt-1 text-sm text-gray-600 sm:text-base">
                                         {{ $profileUser->program_course ?? __('Program not yet provided') }}
                                     </p>
@@ -118,12 +118,10 @@
                     </div>
                 </section>
 
-                <section class="!mt-3 grid gap-3 lg:grid-cols-3">
+                <section class="grid gap-6 lg:grid-cols-3">
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
-                        <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-700">
-                            {{ __('About') }}
-                        </h3>
-                        <p class="mt-3 text-sm leading-6 text-gray-600">
+                        <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">{{ __('About') }}</h3>
+                        <p class="mt-3 text-sm leading-6 text-gray-700">
                             {{ __('This profile section will include alumni bio, career highlights, and social activity once the posting and connection modules are integrated.') }}
                         </p>
 
@@ -137,7 +135,7 @@
                                 </p>
                             </div>
                         @else
-                            <div class="mt-5 rounded-lg border border-slate-200 bg-[#FFC107] p-4 text-sm text-red-900">
+                            <div class="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
                                 {{ __('Additional profile details are hidden until your account is verified.') }}
                             </div>
                         @endif
