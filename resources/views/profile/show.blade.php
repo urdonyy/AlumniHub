@@ -8,7 +8,7 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="pb-20">
         <div class="max-w-5xl mx-auto space-y-6 sm:px-6 lg:px-8">
             @php
                 $isOwnProfile = $viewer->is($profileUser);
@@ -32,7 +32,7 @@
                             class="h-full w-full object-cover" />
                     </div>
 
-                    <div class="flex flex-col gap-5 sm:pl-36">
+                    <div class="flex flex-col gap-5">
                         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                             <div class="text-center sm:text-left">
                                 <h3 class="text-2xl font-semibold text-gray-900 sm:text-3xl">{{ $profileUser->name }}</h3>
@@ -76,7 +76,7 @@
                 </div>
             </section>
 
-            <section class="grid gap-6 lg:grid-cols-3">
+            <section class="!mt-3 grid gap-3 lg:grid-cols-3">
                 <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
                     <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">{{ __('About') }}</h3>
                     <p class="mt-3 text-sm leading-6 text-gray-700">
@@ -111,4 +111,6 @@
             </section>
         </div>
     </div>
+
+    <x-footer />
 </x-app-layout>
