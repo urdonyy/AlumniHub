@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="avatarTitle avatarDesc">
+  <title id="avatarTitle">Default profile avatar</title>
+  <desc id="avatarDesc">A neutral placeholder avatar with initials AH.</desc>
+  <defs>
+    <linearGradient id="avatarBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fee2e2" />
+      <stop offset="100%" stop-color="#fecaca" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#avatarBg)" />
+  <circle cx="128" cy="102" r="46" fill="#7f1d1d" opacity="0.18" />
+  <path d="M49 214c8-43 39-68 79-68s71 25 79 68" fill="#7f1d1d" opacity="0.18" />
+  <circle cx="128" cy="102" r="38" fill="#7f1d1d" />
+  <path d="M59 214c7-37 34-58 69-58s62 21 69 58" fill="#7f1d1d" />
+  <text x="128" y="236" text-anchor="middle" font-size="22" font-family="Segoe UI, Tahoma, sans-serif" fill="#7f1d1d" opacity="0.82">AH</text>
+</svg>
