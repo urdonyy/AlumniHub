@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\ProfileExperience;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use function Pest\Laravel\actingAs;
@@ -124,6 +125,85 @@ test('profile information can be updated', function () {
     $this->assertSame($programCourse, $user->program_course);
     $this->assertSame('test@example.com', $user->email);
     $this->assertNull($user->email_verified_at);
+});
+
+test('skills and experiences can be updated through profile settings', function () {
+    $currentYear = (int) now()->format('Y');
+
+    $user = User::factory()->create();
+
+    $response = actingAs($user)
+        ->patch('/profile', [
+            'first_name' => 'Career',
+            'last_name' => 'Builder',
+            'batch_year' => $currentYear,
+            'program_course' => 'Diploma in Information Communication Technology (DICT)',
+            'email' => 'career.builder@example.com',
+            'skills' => 'Laravel, PHP, Leadership, Laravel',
+            'experiences' => [
+                [
+                    'title' => 'Junior Developer',
+                    'organization' => 'Acme Tech',
+                    'start_month' => '2024-06',
+                    'end_month' => '2025-08',
+                    'description' => 'Worked on alumni portal features.',
+                ],
+                [
+                    'title' => 'Volunteer Mentor',
+                    'organization' => 'PUP-ITECH Alumni',
+                    'start_month' => '2025-09',
+                    'end_month' => '',
+                    'description' => 'Mentored graduating students.',
+                ],
+            ],
+        ]);
+
+    $response
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/profile');
+
+    $user->refresh();
+
+    $this->assertSame('Laravel, PHP, Leadership', $user->skills);
+    $this->assertCount(2, $user->profileExperiences);
+
+    expect(ProfileExperience::query()->where([
+        'user_id' => $user->id,
+        'title' => 'Junior Developer',
+        'organization' => 'Acme Tech',
+    ])->exists())->toBeTrue();
+});
+
+test('owner sees own experiences and skills while public viewers see limited profile placeholders', function () {
+    $profileUser = User::factory()->create([
+        'role' => 'alumni',
+        'account_status' => 'pending',
+        'skills' => 'Laravel, Public Speaking',
+    ]);
+
+    ProfileExperience::factory()->create([
+        'user_id' => $profileUser->id,
+        'title' => 'Community Organizer',
+        'organization' => 'Alumni Volunteers',
+    ]);
+
+    $ownerResponse = actingAs($profileUser)->get('/profiles/' . $profileUser->id);
+
+    $ownerResponse
+        ->assertOk()
+        ->assertSee('Community Organizer')
+        ->assertSee('Public Speaking');
+
+    $viewer = User::factory()->create();
+
+    $viewerResponse = actingAs($viewer)->get('/profiles/' . $profileUser->id);
+
+    $viewerResponse
+        ->assertOk()
+        ->assertSee('Experience is visible after verification.')
+        ->assertSee('Skills are visible after verification.')
+        ->assertDontSee('Community Organizer')
+        ->assertDontSee('Public Speaking');
 });
 
 test('email verification status is unchanged when the email address is unchanged', function () {

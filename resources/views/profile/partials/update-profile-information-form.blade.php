@@ -6,6 +6,30 @@
         $avatarPreviewUrl = $user->avatar_path
             ? \Illuminate\Support\Facades\Storage::url($user->avatar_path)
             : asset('images/default-avatar.svg');
+        $experienceValues = old(
+            'experiences',
+            $user->profileExperiences->map(
+                fn($experience) => [
+                    'id' => $experience->id,
+                    'title' => $experience->title,
+                    'organization' => $experience->organization,
+                    'start_month' => $experience->start_date?->format('Y-m'),
+                    'end_month' => $experience->end_date?->format('Y-m'),
+                    'description' => $experience->description,
+                ],
+            )->values()->all(),
+        );
+
+        if (empty($experienceValues)) {
+            $experienceValues = [[
+                'id' => null,
+                'title' => '',
+                'organization' => '',
+                'start_month' => '',
+                'end_month' => '',
+                'description' => '',
+            ]];
+        }
     @endphp
 
     <header>
@@ -117,6 +141,89 @@
         </div>
 
         <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-900">{{ __('Career Profile') }}</h3>
+            <p class="mt-1 text-sm text-gray-600">{{ __('Add your skills and work experience to make your profile more discoverable.') }}</p>
+
+            <div class="mt-4">
+                <x-input-label for="skills" :value="__('Skills (comma-separated)')" />
+                <x-text-input id="skills" name="skills" type="text" class="mt-1 block w-full"
+                    :value="old('skills', data_get($user, 'skills'))" placeholder="{{ __('Laravel, UI Design, Embedded Systems') }}" />
+                <p class="mt-1 text-xs text-gray-500">{{ __('Example: Project Management, AutoCAD, Data Analysis') }}</p>
+                <x-input-error class="mt-2" :messages="$errors->get('skills')" />
+            </div>
+
+            <div class="mt-6">
+                <div class="flex items-center justify-between gap-3">
+                    <x-input-label :value="__('Experience')" />
+                    <button type="button" id="add-experience"
+                        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition hover:bg-gray-100">
+                        {{ __('Add Experience') }}
+                    </button>
+                </div>
+
+                <div id="experience-list" class="mt-3 space-y-4" data-next-index="{{ count($experienceValues) }}">
+                    @foreach ($experienceValues as $index => $experience)
+                        <div class="experience-item rounded-lg border border-gray-200 bg-white p-4">
+                            <input type="hidden" name="experiences[{{ $index }}][id]"
+                                value="{{ $experience['id'] ?? '' }}" />
+
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <x-input-label :for="'experience_title_' . $index" :value="__('Role / Title')" />
+                                    <x-text-input :id="'experience_title_' . $index"
+                                        :name="'experiences[' . $index . '][title]'" type="text" class="mt-1 block w-full"
+                                        :value="$experience['title'] ?? ''" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('experiences.' . $index . '.title')" />
+                                </div>
+
+                                <div>
+                                    <x-input-label :for="'experience_organization_' . $index" :value="__('Organization')" />
+                                    <x-text-input :id="'experience_organization_' . $index"
+                                        :name="'experiences[' . $index . '][organization]'" type="text"
+                                        class="mt-1 block w-full" :value="$experience['organization'] ?? ''" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('experiences.' . $index . '.organization')" />
+                                </div>
+                            </div>
+
+                            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <x-input-label :for="'experience_start_month_' . $index" :value="__('Start Month')" />
+                                    <x-text-input :id="'experience_start_month_' . $index"
+                                        :name="'experiences[' . $index . '][start_month]'" type="month"
+                                        class="mt-1 block w-full" :value="$experience['start_month'] ?? ''" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('experiences.' . $index . '.start_month')" />
+                                </div>
+
+                                <div>
+                                    <x-input-label :for="'experience_end_month_' . $index" :value="__('End Month')" />
+                                    <x-text-input :id="'experience_end_month_' . $index"
+                                        :name="'experiences[' . $index . '][end_month]'" type="month"
+                                        class="mt-1 block w-full" :value="$experience['end_month'] ?? ''" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('experiences.' . $index . '.end_month')" />
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <x-input-label :for="'experience_description_' . $index" :value="__('Description')" />
+                                <textarea id="experience_description_{{ $index }}" name="experiences[{{ $index }}][description]"
+                                    rows="3"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ $experience['description'] ?? '' }}</textarea>
+                                <x-input-error class="mt-2" :messages="$errors->get('experiences.' . $index . '.description')" />
+                            </div>
+
+                            <div class="mt-4 flex justify-end">
+                                <button type="button"
+                                    class="remove-experience inline-flex items-center rounded-md border border-rose-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rose-700 transition hover:bg-rose-50">
+                                    {{ __('Remove') }}
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
             <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-900">{{ __('Profile Media') }}</h3>
             <p class="mt-1 text-sm text-gray-600">
                 {{ __('Banner is uploaded as-is. Avatar opens a popup editor so you can adjust before saving.') }}
@@ -195,6 +302,53 @@
             @endif
         </div>
     </form>
+
+    <template id="experience-template">
+        <div class="experience-item rounded-lg border border-gray-200 bg-white p-4">
+            <input type="hidden" name="experiences[__INDEX__][id]" value="" />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="experience_title___INDEX__">{{ __('Role / Title') }}</label>
+                    <input id="experience_title___INDEX__" name="experiences[__INDEX__][title]" type="text"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="experience_organization___INDEX__">{{ __('Organization') }}</label>
+                    <input id="experience_organization___INDEX__" name="experiences[__INDEX__][organization]" type="text"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+            </div>
+
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="experience_start_month___INDEX__">{{ __('Start Month') }}</label>
+                    <input id="experience_start_month___INDEX__" name="experiences[__INDEX__][start_month]" type="month"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="experience_end_month___INDEX__">{{ __('End Month') }}</label>
+                    <input id="experience_end_month___INDEX__" name="experiences[__INDEX__][end_month]" type="month"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="text-sm font-medium text-gray-700" for="experience_description___INDEX__">{{ __('Description') }}</label>
+                <textarea id="experience_description___INDEX__" name="experiences[__INDEX__][description]" rows="3"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button type="button"
+                    class="remove-experience inline-flex items-center rounded-md border border-rose-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rose-700 transition hover:bg-rose-50">
+                    {{ __('Remove') }}
+                </button>
+            </div>
+        </div>
+    </template>
 </section>
 
 <script>
@@ -329,5 +483,54 @@
                 closeCropModal();
             }, 'image/png', 0.92);
         });
+    });
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const experienceList = document.getElementById('experience-list');
+        const addExperienceButton = document.getElementById('add-experience');
+        const experienceTemplate = document.getElementById('experience-template');
+
+        if (!experienceList || !addExperienceButton || !experienceTemplate) {
+            return;
+        }
+
+        const refreshRemoveButtons = () => {
+            const items = experienceList.querySelectorAll('.experience-item');
+            items.forEach((item) => {
+                const removeButton = item.querySelector('.remove-experience');
+                if (!removeButton) {
+                    return;
+                }
+
+                removeButton.classList.toggle('hidden', items.length === 1);
+            });
+        };
+
+        const appendExperience = () => {
+            const nextIndex = Number(experienceList.dataset.nextIndex || '0');
+            const templateHtml = experienceTemplate.innerHTML.replaceAll('__INDEX__', String(nextIndex));
+            experienceList.insertAdjacentHTML('beforeend', templateHtml);
+            experienceList.dataset.nextIndex = String(nextIndex + 1);
+            refreshRemoveButtons();
+        };
+
+        addExperienceButton.addEventListener('click', appendExperience);
+
+        experienceList.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement) || !target.classList.contains('remove-experience')) {
+                return;
+            }
+
+            const item = target.closest('.experience-item');
+            if (item) {
+                item.remove();
+                refreshRemoveButtons();
+            }
+        });
+
+        refreshRemoveButtons();
     });
 </script>
