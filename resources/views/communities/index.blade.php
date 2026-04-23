@@ -1,8 +1,9 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
             {{ __('Communities') }}
         </h2>
+        <p class="text-sm text-red-900">{{ __('Discover and join alumni communities') }}</p>
     </x-slot>
 
     <div class="py-12">
