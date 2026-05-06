@@ -65,9 +65,9 @@
                             </div>
 
                             <div
-                                class="grid gap-1 sm:gap-3 grid-cols-3 sm:border sm:border-gray-200 sm:bg-gray-50 sm:rounded-lg">
+                                class="grid gap-1 sm:gap-3 grid-cols-2 sm:grid-cols-3 sm:border sm:border-gray-200 sm:bg-gray-50 sm:rounded-lg">
                                 <div
-                                    class="p-0 sm:p-4 flex flex-row sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0">
+                                    class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-graduation-cap text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -76,7 +76,7 @@
                                         </p>
                                     </div>
                                     <p
-                                        class="flex-1 min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
+                                        class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
                                         {{ __('Batch Year') }}
                                     </p>
                                     <div
@@ -84,7 +84,7 @@
                                     </div>
                                 </div>
                                 <div
-                                    class="p-0 sm:p-4 flex flex-row sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0">
+                                    class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0 border-l border-red-900/30 sm:border-l-0">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-circle-nodes text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -93,7 +93,7 @@
                                         </p>
                                     </div>
                                     <p
-                                        class="flex-1 min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
+                                        class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
                                         {{ __('Connections') }}
                                     </p>
                                     <div
@@ -101,7 +101,7 @@
                                     </div>
                                 </div>
                                 <div
-                                    class="p-0 sm:p-4 flex flex-row sm:flex-col gap-[6px] sm:gap-0 items-center justify-center min-w-0">
+                                    class="col-span-2 sm:col-span-1 p-0 pt-2 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center min-w-0 border-t border-red-900/30 sm:border-t-0">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-pen-to-square text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -110,7 +110,7 @@
                                         </p>
                                     </div>
                                     <p
-                                        class="flex-1 min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
+                                        class="min-w-0 text-center sm:text-left truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
                                         {{ __('Recent Posts') }}
                                     </p>
                                 </div>
