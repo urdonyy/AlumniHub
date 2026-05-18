@@ -24,5 +24,8 @@ class DatabaseSeeder extends Seeder
                 'email' => 'test@example.com',
             ])->toArray()
         );
+
+        // Seed posts and flairs after baseline communities and a test user exist
+        $this->call(\Database\Seeders\PostSeeder::class);
     }
 }
