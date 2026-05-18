@@ -60,6 +60,11 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3 border-t border-gray-200 pt-5">
+                        <a href="{{ route('communities.posts.index', $community) }}"
+                            class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                            📝 {{ __('View Posts') }}
+                        </a>
+
                         @if ($canInteract)
                             @if ($isMember)
                                 <form method="post" action="{{ route('communities.leave', $community) }}">

@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\Admin\CommunityAdminController;
+use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
+use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
 use App\Models\Community;
@@ -30,9 +33,14 @@ Route::get('/dashboard', function () {
         ->limit(5)
         ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
 
+    $joinedCommunities = $user->communities()
+        ->orderBy('name')
+        ->get(['communities.id', 'communities.name']);
+
     return view('dashboard', [
         'featuredCommunities' => $featuredCommunities,
         'suggestedPeople' => $suggestedPeople,
+        'joinedCommunities' => $joinedCommunities,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
@@ -41,6 +49,26 @@ Route::middleware('auth')->group(function () {
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
     Route::post('/communities/{community}/join', [MembershipController::class, 'join'])->name('communities.join');
     Route::delete('/communities/{community}/leave', [MembershipController::class, 'leave'])->name('communities.leave');
+
+    // Posts - read routes
+    Route::resource('communities.posts', CommunityPostController::class)
+        ->only(['index', 'show']);
+
+    // Posts - write routes (member-only)
+    Route::middleware('ensure.community.member')
+        ->resource('communities.posts', CommunityPostController::class)
+        ->only(['create', 'store', 'edit', 'update', 'destroy']);
+
+    // Dashboard quick post (modal composer with community picker)
+    Route::post('/posts/quick-store', [CommunityPostController::class, 'quickStore'])
+        ->name('posts.quick-store');
+
+    // // Posts - public viewing for members
+    // Route::get('/communities/{community}/posts', [PostController::class, 'index'])->name('communities.posts.index');
+    // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
+
+    // // Posts - create/edit/delete (requires membership)
+    // Route::middleware('ensure.community.member')->resource('communities.posts', CommunityPostController::class)->only(['create', 'store', 'edit', 'update', 'destroy']);
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profiles/{user}', [ProfileController::class, 'show'])->name('profiles.show');
@@ -75,6 +103,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/communities', [CommunityAdminController::class, 'store'])->name('communities.store');
     Route::patch('/communities/{community}', [CommunityAdminController::class, 'update'])->name('communities.update');
     Route::delete('/communities/{community}', [CommunityAdminController::class, 'destroy'])->name('communities.destroy');
+
+    Route::resource('flairs', FlairAdminController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
 
     Route::get('/verifications', [VerificationAdminController::class, 'index'])->name('verifications.index');
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');
