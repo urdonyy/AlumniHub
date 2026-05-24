@@ -175,7 +175,7 @@ class ProfileController extends Controller
             $user->profileExperiences()->whereNotIn('id', $keptExperienceIds)->delete();
         });
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::back()->with('status', 'profile-updated');
     }
 
     private function normalizeExperienceMonth(?string $month): ?string
