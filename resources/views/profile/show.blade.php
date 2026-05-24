@@ -194,6 +194,54 @@
                             {{ __('This profile section will include alumni bio, career highlights, and social activity once the posting and connection modules are integrated.') }}
                         </p>
 
+                        @if ($canSeeCareerDetails)
+                            <div class="mt-5 rounded-lg border border-gray-200 bg-white p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                    {{ __('Skills') }}
+                                </p>
+                                @if (count($profileUser->parsedSkills()) > 0)
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        @foreach ($profileUser->parsedSkills() as $skill)
+                                            <span
+                                                class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                                                {{ $skill }}
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="mt-2 text-sm text-gray-600">{{ __('No skills listed yet.') }}</p>
+                                @endif
+                            </div>
+
+                            <div class="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                    {{ __('Experience') }}
+                                </p>
+                                @if ($profileUser->profileExperiences->isNotEmpty())
+                                    <div class="mt-3 space-y-3">
+                                        @foreach ($profileUser->profileExperiences as $experience)
+                                            <div class="rounded-md border border-gray-100 bg-gray-50 p-3">
+                                                <p class="font-semibold text-gray-900">{{ $experience->title }}</p>
+                                                <p class="text-sm text-gray-600">{{ $experience->organization }}</p>
+                                                @if ($experience->description)
+                                                    <p class="mt-1 text-sm text-gray-700">{{ $experience->description }}</p>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="mt-2 text-sm text-gray-600">{{ __('No experience entries yet.') }}</p>
+                                @endif
+                            </div>
+                        @else
+                            <div class="mt-5 rounded-lg border border-[#FFC107] bg-[#FFC107] p-4 text-sm text-red-900">
+                                {{ __('Experience is visible after verification.') }}
+                            </div>
+                            <div class="mt-3 rounded-lg border border-[#FFC107] bg-[#FFC107] p-4 text-sm text-red-900">
+                                {{ __('Skills are visible after verification.') }}
+                            </div>
+                        @endif
+
                         @if ($showFullDetails)
                             <div class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">

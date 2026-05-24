@@ -15,12 +15,53 @@ use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
-Route::get('/', function () {
+use App\Services\FeedService;
+
+Route::get('/', function (FeedService $feed) {
+    $user = auth()->user();
+
+    if ($user) {
+        $posts = $feed->getUserFeed($user, 10);
+
+        $featuredCommunities = Community::query()
+            ->withCount('members')
+            ->orderByDesc('members_count')
+            ->limit(5)
+            ->get();
+
+        $suggestedPeople = User::query()
+            ->where('id', '!=', $user->id)
+            ->where('role', 'alumni')
+            ->orderBy('name')
+            ->limit(5)
+            ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
+
+        $joinedCommunities = $user->communities()
+            ->orderBy('name')
+            ->get(['communities.id', 'communities.name', 'communities.system_key']);
+
+        // Available flairs: global and from joined communities
+        $availableFlairs = \App\Models\Flair::query()
+            ->whereNull('community_id')
+            ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
+            ->get();
+
+        return view('dashboard', [
+            'posts' => $posts,
+            'featuredCommunities' => $featuredCommunities,
+            'suggestedPeople' => $suggestedPeople,
+            'joinedCommunities' => $joinedCommunities,
+            'availableFlairs' => $availableFlairs,
+        ]);
+    }
+
     return view('welcome');
 });
 
-Route::get('/dashboard', function (Request $request) {
+Route::get('/dashboard', function (Request $request, FeedService $feed) {
     $user = $request->user();
+
+    $posts = $feed->getUserFeed($user, 10);
 
     $featuredCommunities = Community::query()
         ->withCount('members')
@@ -37,12 +78,19 @@ Route::get('/dashboard', function (Request $request) {
 
     $joinedCommunities = $user->communities()
         ->orderBy('name')
-        ->get(['communities.id', 'communities.name']);
+        ->get(['communities.id', 'communities.name', 'communities.system_key']);
+
+    $availableFlairs = \App\Models\Flair::query()
+        ->whereNull('community_id')
+        ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
+        ->get();
 
     return view('dashboard', [
+        'posts' => $posts,
         'featuredCommunities' => $featuredCommunities,
         'suggestedPeople' => $suggestedPeople,
         'joinedCommunities' => $joinedCommunities,
+        'availableFlairs' => $availableFlairs,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
