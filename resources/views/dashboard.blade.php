@@ -108,6 +108,7 @@
                 </button>
             </div>
 
+        {{-- post creation modal --}}
             <form method="post" action="{{ route('posts.quick-store') }}"
                 enctype="multipart/form-data" class="space-y-4 px-5 py-5">
                 @csrf
@@ -148,8 +149,6 @@
             </form>
         </div>
     </div>
-</div>
-                        </div>
 
                         @foreach ($feedCards as $card)
                             <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
