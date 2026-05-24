@@ -86,7 +86,7 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
-                        <x-dropdown-link :href="route('profile.edit')">
+                        <x-dropdown-link :href="route('profile.edit', ['section' => 'account-status'])">
                             <i class="fa-solid fa-pen-to-square"></i>
                             {{ __('Edit Profile Settings') }}
                         </x-dropdown-link>

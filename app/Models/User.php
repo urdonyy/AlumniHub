@@ -138,6 +138,13 @@ class User extends Authenticatable
         return $this->hasMany(VerificationDocument::class);
     }
 
+    public function profileEducations(): HasMany
+    {
+        return $this->hasMany(ProfileEducation::class)
+            ->orderByDesc('start_date')
+            ->orderByDesc('id');
+    }
+
     public function reviewedVerificationDocuments()
     {
         return $this->hasMany(VerificationDocument::class, 'reviewed_by');

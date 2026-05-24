@@ -19,7 +19,7 @@ class ProfileController extends Controller
     public function show(Request $request, User $user): View
     {
         $viewer = $request->user();
-        $user->load('profileExperiences');
+        $user->load(['profileExperiences', 'profileEducations']);
 
         $connectionState = null;
         $activeConnection = null;
@@ -57,7 +57,7 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $request->user()->load('profileExperiences');
+        $request->user()->load(['profileExperiences', 'profileEducations']);
 
         return view('profile.edit', [
             'user' => $request->user(),
@@ -169,10 +169,58 @@ class ProfileController extends Controller
 
             if (empty($keptExperienceIds)) {
                 $user->profileExperiences()->delete();
-                return;
+            } else {
+                $user->profileExperiences()->whereNotIn('id', $keptExperienceIds)->delete();
             }
 
-            $user->profileExperiences()->whereNotIn('id', $keptExperienceIds)->delete();
+            $submittedEducations = collect($validated['educations'] ?? [])
+                ->map(function (array $education): array {
+                    return [
+                        'id' => isset($education['id']) ? (int) $education['id'] : null,
+                        'school' => Str::of((string) ($education['school'] ?? ''))->trim()->value(),
+                        'degree' => Str::of((string) ($education['degree'] ?? ''))->trim()->value(),
+                        'start_date' => $this->normalizeDate($education['start_date'] ?? null),
+                        'end_date' => $this->normalizeDate($education['end_date'] ?? null),
+                    ];
+                })
+                ->filter(function (array $education): bool {
+                    return $education['school'] !== ''
+                        || $education['degree'] !== ''
+                        || $education['start_date'] !== null
+                        || $education['end_date'] !== null;
+                })
+                ->values();
+
+            $userEducationIds = $user->profileEducations()->pluck('id')->all();
+            $keptEducationIds = [];
+
+            foreach ($submittedEducations as $education) {
+                if ($education['school'] === '' || $education['degree'] === '') {
+                    continue;
+                }
+
+                $payload = [
+                    'school' => $education['school'],
+                    'degree' => $education['degree'],
+                    'start_date' => $education['start_date'],
+                    'end_date' => $education['end_date'],
+                ];
+
+                if ($education['id'] !== null && in_array($education['id'], $userEducationIds, true)) {
+                    $user->profileEducations()->whereKey($education['id'])->update($payload);
+                    $keptEducationIds[] = $education['id'];
+                    continue;
+                }
+
+                $createdEducation = $user->profileEducations()->create($payload);
+                $keptEducationIds[] = $createdEducation->id;
+            }
+
+            if (empty($keptEducationIds)) {
+                $user->profileEducations()->delete();
+            } else {
+                $user->profileEducations()->whereNotIn('id', $keptEducationIds)->delete();
+            }
         });
 
         return Redirect::back()->with('status', 'profile-updated');
@@ -191,6 +239,21 @@ class ProfileController extends Controller
         }
 
         return $monthValue . '-01';
+    }
+
+    private function normalizeDate(?string $date): ?string
+    {
+        if (! $date) {
+            return null;
+        }
+
+        $dateValue = trim($date);
+
+        if ($dateValue === '') {
+            return null;
+        }
+
+        return $dateValue;
     }
 
     /**

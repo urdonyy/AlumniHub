@@ -30,6 +30,29 @@
                 'description' => '',
             ]];
         }
+
+        $educationValues = old(
+            'educations',
+            $user->profileEducations->map(
+                fn($education) => [
+                    'id' => $education->id,
+                    'school' => $education->school,
+                    'degree' => $education->degree,
+                    'start_date' => $education->start_date?->format('Y-m-d'),
+                    'end_date' => $education->end_date?->format('Y-m-d'),
+                ],
+            )->values()->all(),
+        );
+
+        if (empty($educationValues)) {
+            $educationValues = [[
+                'id' => null,
+                'school' => '',
+                'degree' => '',
+                'start_date' => '',
+                'end_date' => '',
+            ]];
+        }
     @endphp
 
     <header>
@@ -145,14 +168,6 @@
             <p class="mt-1 text-sm text-gray-600">{{ __('Add your skills and work experience to make your profile more discoverable.') }}</p>
 
             <div class="mt-4">
-                <x-input-label for="skills" :value="__('Skills (comma-separated)')" />
-                <x-text-input id="skills" name="skills" type="text" class="mt-1 block w-full"
-                    :value="old('skills', data_get($user, 'skills'))" placeholder="{{ __('Laravel, UI Design, Embedded Systems') }}" />
-                <p class="mt-1 text-xs text-gray-500">{{ __('Example: Project Management, AutoCAD, Data Analysis') }}</p>
-                <x-input-error class="mt-2" :messages="$errors->get('skills')" />
-            </div>
-
-            <div class="mt-6">
                 <div class="flex items-center justify-between gap-3">
                     <x-input-label :value="__('Experience')" />
                     <button type="button" id="add-experience"
@@ -220,6 +235,78 @@
                         </div>
                     @endforeach
                 </div>
+            </div>
+
+            <div class="mt-4">
+                <div class="flex items-center justify-between gap-3">
+                    <x-input-label :value="__('Education')" />
+                    <button type="button" id="add-education"
+                        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition hover:bg-gray-100">
+                        {{ __('Add Education') }}
+                    </button>
+                </div>
+
+                <div id="education-list" class="mt-3 space-y-4" data-next-index="{{ count($educationValues) }}">
+                    @foreach ($educationValues as $index => $education)
+                        <div class="education-item rounded-lg border border-gray-200 bg-white p-4">
+                            <input type="hidden" name="educations[{{ $index }}][id]"
+                                value="{{ $education['id'] ?? '' }}" />
+
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <x-input-label :for="'education_school_' . $index" :value="__('School')" />
+                                    <x-text-input :id="'education_school_' . $index"
+                                        :name="'educations[' . $index . '][school]'" type="text"
+                                        class="mt-1 block w-full" :value="$education['school'] ?? ''"
+                                        placeholder="{{ __('Polytechnic University of the Philippines') }}" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('educations.' . $index . '.school')" />
+                                </div>
+
+                                <div>
+                                    <x-input-label :for="'education_degree_' . $index" :value="__('Degree/Field')" />
+                                    <x-text-input :id="'education_degree_' . $index"
+                                        :name="'educations[' . $index . '][degree]'" type="text"
+                                        class="mt-1 block w-full" :value="$education['degree'] ?? ''"
+                                        placeholder="{{ __('Bachelor of Science in Information Technology') }}" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('educations.' . $index . '.degree')" />
+                                </div>
+                            </div>
+
+                            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                                <div>
+                                    <x-input-label :for="'education_start_date_' . $index" :value="__('Start Date')" />
+                                    <x-text-input :id="'education_start_date_' . $index"
+                                        :name="'educations[' . $index . '][start_date]'" type="date"
+                                        class="mt-1 block w-full" :value="$education['start_date'] ?? ''" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('educations.' . $index . '.start_date')" />
+                                </div>
+
+                                <div>
+                                    <x-input-label :for="'education_end_date_' . $index" :value="__('End Date')" />
+                                    <x-text-input :id="'education_end_date_' . $index"
+                                        :name="'educations[' . $index . '][end_date]'" type="date"
+                                        class="mt-1 block w-full" :value="$education['end_date'] ?? ''" />
+                                    <x-input-error class="mt-2" :messages="$errors->get('educations.' . $index . '.end_date')" />
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex justify-end">
+                                <button type="button"
+                                    class="remove-education inline-flex items-center rounded-md border border-rose-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rose-700 transition hover:bg-rose-50">
+                                    {{ __('Remove') }}
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <x-input-label for="skills" :value="__('Skills (comma-separated)')" />
+                <x-text-input id="skills" name="skills" type="text" class="mt-1 block w-full"
+                    :value="old('skills', data_get($user, 'skills'))" placeholder="{{ __('Laravel, UI Design, Embedded Systems') }}" />
+                <p class="mt-1 text-xs text-gray-500">{{ __('Example: Project Management, AutoCAD, Data Analysis') }}</p>
+                <x-input-error class="mt-2" :messages="$errors->get('skills')" />
             </div>
         </div>
 
@@ -317,9 +404,53 @@
             </div>
         </div>
     </template>
+
+    <template id="education-template">
+        <div class="education-item rounded-lg border border-gray-200 bg-white p-4">
+            <input type="hidden" name="educations[__INDEX__][id]" value="" />
+
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="education_school___INDEX__">{{ __('School') }}</label>
+                    <input id="education_school___INDEX__" name="educations[__INDEX__][school]" type="text"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="{{ __('Polytechnic University of the Philippines') }}" />
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="education_degree___INDEX__">{{ __('Degree/Field') }}</label>
+                    <input id="education_degree___INDEX__" name="educations[__INDEX__][degree]" type="text"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="{{ __('Bachelor of Science in Information Technology') }}" />
+                </div>
+            </div>
+
+            <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="education_start_date___INDEX__">{{ __('Start Date') }}</label>
+                    <input id="education_start_date___INDEX__" name="educations[__INDEX__][start_date]" type="date"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+
+                <div>
+                    <label class="text-sm font-medium text-gray-700" for="education_end_date___INDEX__">{{ __('End Date') }}</label>
+                    <input id="education_end_date___INDEX__" name="educations[__INDEX__][end_date]" type="date"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                </div>
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <button type="button"
+                    class="remove-education inline-flex items-center rounded-md border border-rose-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-rose-700 transition hover:bg-rose-50">
+                    {{ __('Remove') }}
+                </button>
+            </div>
+        </div>
+    </template>
 </section>
 
 <script>
+    // manages the avatar cropping functionality, allowing users to adjust their profile photo before uploading.
     document.addEventListener('DOMContentLoaded', () => {
         const bannerInput = document.getElementById('banner');
         const bannerPreview = document.getElementById('banner-preview');
@@ -455,6 +586,7 @@
 </script>
 
 <script>
+    // manages the dynamic addition and removal of experience entries in the profile form.
     document.addEventListener('DOMContentLoaded', () => {
         const experienceList = document.getElementById('experience-list');
         const addExperienceButton = document.getElementById('add-experience');
@@ -493,6 +625,56 @@
             }
 
             const item = target.closest('.experience-item');
+            if (item) {
+                item.remove();
+                refreshRemoveButtons();
+            }
+        });
+
+        refreshRemoveButtons();
+    });
+</script>
+
+<script>
+    // manages the dynamic addition and removal of education entries in the profile form.
+    document.addEventListener('DOMContentLoaded', () => {
+        const educationList = document.getElementById('education-list');
+        const addEducationButton = document.getElementById('add-education');
+        const educationTemplate = document.getElementById('education-template');
+
+        if (!educationList || !addEducationButton || !educationTemplate) {
+            return;
+        }
+
+        const refreshRemoveButtons = () => {
+            const items = educationList.querySelectorAll('.education-item');
+            items.forEach((item) => {
+                const removeButton = item.querySelector('.remove-education');
+                if (!removeButton) {
+                    return;
+                }
+
+                removeButton.classList.toggle('hidden', items.length === 1);
+            });
+        };
+
+        const appendEducation = () => {
+            const nextIndex = Number(educationList.dataset.nextIndex || '0');
+            const templateHtml = educationTemplate.innerHTML.replaceAll('__INDEX__', String(nextIndex));
+            educationList.insertAdjacentHTML('beforeend', templateHtml);
+            educationList.dataset.nextIndex = String(nextIndex + 1);
+            refreshRemoveButtons();
+        };
+
+        addEducationButton.addEventListener('click', appendEducation);
+
+        educationList.addEventListener('click', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement) || !target.classList.contains('remove-education')) {
+                return;
+            }
+
+            const item = target.closest('.education-item');
             if (item) {
                 item.remove();
                 refreshRemoveButtons();
