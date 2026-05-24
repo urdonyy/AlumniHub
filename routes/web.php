@@ -4,6 +4,7 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\Admin\CommunityAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
+use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PostController;
@@ -12,13 +13,14 @@ use App\Http\Controllers\VerificationController;
 use App\Models\Community;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    $user = request()->user();
+Route::get('/dashboard', function (Request $request) {
+    $user = $request->user();
 
     $featuredCommunities = Community::query()
         ->withCount('members')
@@ -87,10 +89,10 @@ Route::middleware('auth')->group(function () {
         'description' => 'Notification center will be enabled once activity feed and social actions are integrated.',
     ])->name('notifications.index');
 
-    Route::view('/connections', 'placeholders.module', [
-        'title' => 'Connections',
-        'description' => 'Connections and follow requests are planned for a future phase.',
-    ])->name('connections.index');
+    Route::get('/connections', [ConnectionController::class, 'index'])->name('connections.index');
+    Route::post('/connections/invite/{user}', [ConnectionController::class, 'invite'])->name('connections.invite');
+    Route::post('/connections/{connection}/accept', [ConnectionController::class, 'accept'])->name('connections.accept');
+    Route::post('/connections/{connection}/ignore', [ConnectionController::class, 'ignore'])->name('connections.ignore');
 
     Route::view('/saved', 'placeholders.module', [
         'title' => 'Saved',
