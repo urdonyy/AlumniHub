@@ -17,12 +17,17 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(BaselineCommunitySeeder::class);
 
+        // Create initial admin and test alumni user
+        $this->call(InitialUsersSeeder::class);
+
         User::query()->firstOrCreate(
             ['email' => 'test@example.com'],
-            User::factory()->make([
+            [
                 'name' => 'Test User',
                 'email' => 'test@example.com',
-            ])->toArray()
+                // provide a default password so the row can be created
+                'password' => 'password',
+            ]
         );
 
         // Seed posts and flairs after baseline communities and a test user exist

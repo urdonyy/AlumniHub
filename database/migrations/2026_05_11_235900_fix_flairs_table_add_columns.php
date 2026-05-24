@@ -38,29 +38,10 @@ return new class extends Migration
             }
         });
 
-        // Add foreign key and indexes safely
-        Schema::table('flairs', function (Blueprint $table) {
-            // Add foreign key if communities table and column exist
-            if (Schema::hasTable('communities') && Schema::hasColumn('communities', 'id')) {
-                try {
-                } catch (\Throwable $e) {
-                    // ignore if foreign key exists or cannot be created
-                }
-            }
-
-            // unique constraint on community_id + slug if slug exists
-            if (Schema::hasColumn('flairs', 'slug')) {
-                try {
-                    $table->unique(['community_id', 'slug']);
-                } catch (\Throwable $e) {
-                }
-
-                try {
-                    $table->index('slug');
-                } catch (\Throwable $e) {
-                }
-            }
-        });
+        // Note: indexes and foreign key for (community_id, slug) are created in
+        // the original create_flairs_table migration. Avoid re-creating them here
+        // to prevent duplicate-key errors when running migrations after a
+        // refresh. This migration only adds missing columns above.
     }
 
     public function down(): void
