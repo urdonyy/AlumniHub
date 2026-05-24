@@ -58,8 +58,10 @@
 
                                 @if ($isOwnProfile)
                                     <a href="{{ route('profile.edit') }}"
-                                        class="inline-flex items-center justify-center px-3 py-1 sm:px-5 sm:py-1.5 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150">
-                                        {{ __('Edit Profile Settings') }}
+                                        class="inline-flex self-end items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0 lg:self-auto">
+                                        <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
+                                        <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
+                                        <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
                                     </a>
                                 @endif
                             </div>
