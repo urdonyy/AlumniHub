@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Connection;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,10 +21,34 @@ class ProfileController extends Controller
         $viewer = $request->user();
         $user->load('profileExperiences');
 
+        $connectionState = null;
+        $activeConnection = null;
+
+        if (! $viewer->is($user)) {
+            [$lowId, $highId] = Connection::normalizedPair($viewer->id, $user->id);
+
+            $activeConnection = Connection::query()
+                ->where('user_low_id', $lowId)
+                ->where('user_high_id', $highId)
+                ->first();
+
+            if ($activeConnection) {
+                $connectionState = match ($activeConnection->status) {
+                    Connection::STATUS_ACCEPTED => 'connected',
+                    Connection::STATUS_PENDING => $activeConnection->sender_id === $viewer->id
+                        ? 'invite_sent'
+                        : 'invite_received',
+                    default => null,
+                };
+            }
+        }
+
         return view('profile.show', [
             'profileUser' => $user,
             'viewer' => $viewer,
             'showFullDetails' => ! $user->hasLimitedProfileVisibility(),
+            'connectionState' => $connectionState,
+            'activeConnection' => $activeConnection,
         ]);
     }
 

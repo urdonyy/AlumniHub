@@ -63,6 +63,43 @@
                                         <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
                                         <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
                                     </a>
+                                @elseif ($viewer->canSendConnectionRequests())
+                                    @if ($connectionState === 'connected')
+                                        <span
+                                            class="inline-flex items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                                            {{ __('Connected') }}
+                                        </span>
+                                    @elseif ($connectionState === 'invite_sent')
+                                        <span
+                                            class="inline-flex items-center justify-center rounded-md border border-amber-200 bg-amber-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-700">
+                                            {{ __('Invited') }}
+                                        </span>
+                                    @elseif ($connectionState === 'invite_received' && $activeConnection)
+                                        <div class="flex items-center gap-2">
+                                            <form method="POST" action="{{ route('connections.accept', $activeConnection) }}">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-white hover:bg-emerald-500">
+                                                    {{ __('Accept') }}
+                                                </button>
+                                            </form>
+                                            <form method="POST" action="{{ route('connections.ignore', $activeConnection) }}">
+                                                @csrf
+                                                <button type="submit"
+                                                    class="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-gray-700 hover:bg-gray-50">
+                                                    {{ __('Ignore') }}
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @else
+                                        <form method="POST" action="{{ route('connections.invite', $profileUser) }}">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex items-center justify-center rounded-md bg-red-900 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2">
+                                                {{ __('Connect') }}
+                                            </button>
+                                        </form>
+                                    @endif
                                 @endif
                             </div>
 

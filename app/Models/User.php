@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Connection;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Database\Factories\UserFactory;
@@ -145,6 +146,47 @@ class User extends Authenticatable
     public function communities(): BelongsToMany
     {
         return $this->belongsToMany(Community::class)->withTimestamps();
+    }
+
+    public function sentConnections(): HasMany
+    {
+        return $this->hasMany(Connection::class, 'sender_id');
+    }
+
+    public function receivedConnections(): HasMany
+    {
+        return $this->hasMany(Connection::class, 'recipient_id');
+    }
+
+    public function pendingReceivedInvites(): HasMany
+    {
+        return $this->receivedConnections()->where('status', Connection::STATUS_PENDING);
+    }
+
+    public function pendingSentInvites(): HasMany
+    {
+        return $this->sentConnections()->where('status', Connection::STATUS_PENDING);
+    }
+
+    public function connections()
+    {
+        return Connection::query()
+            ->where(function ($query) {
+                $query->where('sender_id', $this->id)
+                    ->orWhere('recipient_id', $this->id);
+            })
+            ->where('status', Connection::STATUS_ACCEPTED);
+    }
+
+    public function isConnectedWith(User $other): bool
+    {
+        [$lowId, $highId] = Connection::normalizedPair($this->id, $other->id);
+
+        return Connection::query()
+            ->where('user_low_id', $lowId)
+            ->where('user_high_id', $highId)
+            ->where('status', Connection::STATUS_ACCEPTED)
+            ->exists();
     }
 
     public function profileExperiences(): HasMany
