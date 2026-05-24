@@ -43,7 +43,6 @@ return new class extends Migration
             // Add foreign key if communities table and column exist
             if (Schema::hasTable('communities') && Schema::hasColumn('communities', 'id')) {
                 try {
-                    $table->foreign('community_id')->references('id')->on('communities')->onDelete('cascade');
                 } catch (\Throwable $e) {
                     // ignore if foreign key exists or cannot be created
                 }
