@@ -21,8 +21,8 @@ class PostService
             'user_id' => $user->id,
             'title' => $data['title'] ?? null,
             'body_markdown' => $data['body_markdown'],
-            'status' => 'published',
-            'visibility' => 'members',
+            'status' => $data['status'] ?? 'published',
+            'visibility' => $data['visibility'] ?? 'members',
             'published_at' => now(),
         ]);
 
@@ -48,7 +48,9 @@ class PostService
     {
         $post->update([
             'title' => $data['title'] ?? $post->title,
-            'body_markdown' => $data['body_markdown'],
+            'body_markdown' => $data['body_markdown'] ?? $post->body_markdown,
+            'visibility' => $data['visibility'] ?? $post->visibility,
+            'status' => $data['status'] ?? $post->status,
         ]);
 
         // Update flairs if provided

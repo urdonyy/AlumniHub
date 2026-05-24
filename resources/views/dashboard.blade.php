@@ -119,16 +119,35 @@
                         class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Select one</option>
                         @foreach ($joinedCommunities ?? [] as $joinedCommunity)
-                            <option value="{{ $joinedCommunity->id }}">{{ $joinedCommunity->name }}</option>
+                            <option value="{{ $joinedCommunity->id }}"
+                                @selected(old('community_id', optional($joinedCommunities->firstWhere('system_key', 'general-alumni-hub'))->id) == $joinedCommunity->id)>
+                                {{ $joinedCommunity->name }}</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div>
-                    <input type="text" name="title"
+                    <input type="text" name="title" required
                         class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Title (optional)">
+                        placeholder="Title">
                 </div>
+
+                <div>
+                    <label class="mb-1 block text-sm text-gray-300">Audience</label>
+                    <select name="visibility" required
+                        class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+                        <option value="members" @selected(old('visibility', 'members') === 'members')>Communities only</option>
+                        <option value="connections" @selected(old('visibility') === 'connections')>Connections only</option>
+                        <option value="public" @selected(old('visibility') === 'public')>Public</option>
+                    </select>
+                </div>
+
+                @if(!empty($availableFlairs))
+                    <div>
+                        <label class="mb-1 block text-sm text-gray-300">Flair</label>
+                        <x-flair-selector :flairs="$availableFlairs" :selected="old('flairs', [])" />
+                    </div>
+                @endif
 
                 <div>
                     <textarea name="body_markdown" rows="7" required
@@ -150,31 +169,52 @@
         </div>
     </div>
 
-                        @foreach ($feedCards as $card)
-                            <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div>
-                                        <h3 class="text-base font-semibold text-gray-900">{{ $card['author'] }}</h3>
-                                        <p class="text-xs uppercase tracking-wide text-gray-500">{{ $card['meta'] }}</p>
+                        @if(isset($posts))
+                            @foreach($posts as $post)
+                                <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h3 class="text-base font-semibold text-gray-900">{{ $post->user->name }}</h3>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $post->community?->name ?? __('Post') }}</p>
+                                        </div>
+                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                            {{ ucfirst($post->visibility) }}
+                                        </span>
                                     </div>
-                                    <span
-                                        class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                                        {{ __('Placeholder') }}
-                                    </span>
-                                </div>
 
-                                <p class="mt-4 text-sm leading-6 text-gray-700">{{ $card['content'] }}</p>
+                                    <h4 class="mt-3 text-lg font-semibold text-gray-900">{{ $post->title }}</h4>
+                                    <p class="mt-2 text-sm leading-6 text-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_markdown), 300) }}</p>
 
-                                <div class="mt-5 flex flex-wrap gap-2 text-xs">
-                                    <button type="button" disabled
-                                        class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Like') }}</button>
-                                    <button type="button" disabled
-                                        class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Comment') }}</button>
-                                    <button type="button" disabled
-                                        class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Share') }}</button>
-                                </div>
-                            </article>
-                        @endforeach
+                                    <div class="mt-5 flex flex-wrap gap-2 text-xs">
+                                        <a href="{{ route('communities.posts.show', ['community' => $post->community, 'post' => $post]) }}" class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-700">{{ __('Open') }}</a>
+                                    </div>
+                                </article>
+                            @endforeach
+
+                            <div class="pt-4">{{ $posts->links() }}</div>
+                        @else
+                            @foreach ($feedCards as $card)
+                                <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                                    <div class="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h3 class="text-base font-semibold text-gray-900">{{ $card['author'] }}</h3>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $card['meta'] }}</p>
+                                        </div>
+                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                            {{ __('Placeholder') }}
+                                        </span>
+                                    </div>
+
+                                    <p class="mt-4 text-sm leading-6 text-gray-700">{{ $card['content'] }}</p>
+
+                                    <div class="mt-5 flex flex-wrap gap-2 text-xs">
+                                        <button type="button" disabled class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Like') }}</button>
+                                        <button type="button" disabled class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Comment') }}</button>
+                                        <button type="button" disabled class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Share') }}</button>
+                                    </div>
+                                </article>
+                            @endforeach
+                        @endif
                     </section>
 
                     <aside class="space-y-6 lg:col-span-3">

@@ -46,7 +46,7 @@ class ProfileController extends Controller
         return view('profile.show', [
             'profileUser' => $user,
             'viewer' => $viewer,
-            'showFullDetails' => ! $user->hasLimitedProfileVisibility(),
+            'showFullDetails' => $viewer->is($user) || ! $viewer->hasLimitedProfileVisibility(),
             'connectionState' => $connectionState,
             'activeConnection' => $activeConnection,
         ]);

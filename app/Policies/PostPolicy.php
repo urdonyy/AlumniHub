@@ -11,7 +11,7 @@ class PostPolicy
     /**
      * Determine if the user can view the post.
      */
-    public function view(User $user, Post $post): bool
+    public function view(?User $user, Post $post): bool
     {
         // Public posts are viewable by anyone
         if ($post->visibility === 'public') {
@@ -19,7 +19,24 @@ class PostPolicy
         }
 
         // Members-only posts: check if user is a community member
-        return $this->isCommunityMember($user, $post->community);
+        if ($post->visibility === 'members') {
+            if (!$user) {
+                return false;
+            }
+
+            return $this->isCommunityMember($user, $post->community);
+        }
+
+        // Connections visibility: check if user is connected with the post author or a community member
+        if ($post->visibility === 'connections') {
+            if (!$user) {
+                return false;
+            }
+
+            return $user->isConnectedWith($post->user) || $this->isCommunityMember($user, $post->community);
+        }
+
+        return false;
     }
 
     /**

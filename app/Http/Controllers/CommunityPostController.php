@@ -8,6 +8,7 @@ use App\Services\PostService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Validator;
 
 class CommunityPostController extends Controller
 {
@@ -63,8 +64,9 @@ class CommunityPostController extends Controller
         $this->authorize('create', [Post::class, $community]);
 
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
+            'title' => 'required|string|max:255',
             'body_markdown' => 'required|string|min:3',
+            'visibility' => 'sometimes|string|in:members,public,connections',
             'flairs' => 'sometimes|array',
             'flairs.*' => [
                 'integer',
@@ -114,8 +116,9 @@ class CommunityPostController extends Controller
         $this->authorize('update', $post);
 
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
+            'title' => 'required|string|max:255',
             'body_markdown' => 'required|string|min:3',
+            'visibility' => 'sometimes|string|in:members,public,connections',
             'flairs' => 'sometimes|array',
             'flairs.*' => [
                 'integer',
@@ -150,15 +153,24 @@ class CommunityPostController extends Controller
 
     public function quickStore(Request $request)
     {
-        $validated = $request->validate([
+        $community = Community::findOrFail($request->input('community_id'));
+
+        $validated = Validator::make($request->all(), [
             'community_id' => 'required|integer|exists:communities,id',
-            'title' => 'sometimes|string|max:255',
+            'title' => 'required|string|max:255',
             'body_markdown' => 'required|string|min:3',
+            'visibility' => 'sometimes|string|in:members,public,connections',
+            'flairs' => 'sometimes|array',
+            'flairs.*' => [
+                'integer',
+                Rule::exists('flairs', 'id')->where(function ($query) use ($community) {
+                    $query->where('community_id', $community->id)
+                        ->orWhereNull('community_id');
+                }),
+            ],
             'attachments' => 'sometimes|array',
             'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:5120',
-        ]);
-
-        $community = Community::findOrFail($validated['community_id']);
+        ])->validate();
 
         $this->authorize('create', [Post::class, $community]);
 
