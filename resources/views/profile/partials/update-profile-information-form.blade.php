@@ -223,38 +223,6 @@
             </div>
         </div>
 
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
-            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-900">{{ __('Profile Media') }}</h3>
-            <p class="mt-1 text-sm text-gray-600">
-                {{ __('Banner is uploaded as-is. Avatar opens a popup editor so you can adjust before saving.') }}
-            </p>
-
-            <div class="mt-4 space-y-6">
-                <div>
-                    <x-input-label for="banner" :value="__('Banner Photo')" />
-                    <img id="banner-preview" src="{{ $bannerPreviewUrl }}" alt="{{ __('Current banner preview') }}"
-                        onerror="this.onerror=null;this.src='{{ asset('images/default-banner.svg') }}';"
-                        class="mt-2 h-32 w-full rounded-lg border border-gray-200 object-cover sm:h-40" />
-                    <input id="banner" name="banner" type="file" accept="image/jpeg,image/png,image/webp"
-                        class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-gray-700" />
-                    <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 5MB.') }}</p>
-                    <x-input-error class="mt-2" :messages="$errors->get('banner')" />
-                </div>
-
-                <div>
-                    <x-input-label for="avatar" :value="__('Profile Photo (Avatar)')" />
-                    <img id="avatar-preview" src="{{ $avatarPreviewUrl }}" alt="{{ __('Current avatar preview') }}"
-                        onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';"
-                        class="mt-2 h-28 w-28 rounded-full border border-gray-200 object-cover" />
-                    <input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp"
-                        class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-gray-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-gray-700" />
-                    <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 3MB.') }}</p>
-                    <p id="avatar-crop-message" class="mt-2 text-xs text-emerald-700"></p>
-                    <x-input-error class="mt-2" :messages="$errors->get('avatar')" />
-                </div>
-            </div>
-        </div>
-
         <div id="avatar-crop-modal"
             class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 px-4 py-6" role="dialog"
             aria-modal="true" aria-labelledby="avatar-crop-title">
