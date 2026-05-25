@@ -4,10 +4,12 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\Admin\CommunityAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
+use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
 use App\Models\Community;
@@ -21,6 +23,7 @@ Route::get('/', function (FeedService $feed) {
     $user = auth()->user();
 
     if ($user) {
+        /** @var \App\Models\User $user */
         $posts = $feed->getUserFeed($user, 10);
 
         $featuredCommunities = Community::query()
@@ -60,6 +63,7 @@ Route::get('/', function (FeedService $feed) {
 
 Route::get('/dashboard', function (Request $request, FeedService $feed) {
     $user = $request->user();
+    /** @var \App\Models\User $user */
 
     $posts = $feed->getUserFeed($user, 10);
 
@@ -113,8 +117,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/quick-store', [CommunityPostController::class, 'quickStore'])
         ->name('posts.quick-store');
 
-    // // Posts - public viewing for members
-    // Route::get('/communities/{community}/posts', [PostController::class, 'index'])->name('communities.posts.index');
+    // Comments - CRUD routes
+    Route::middleware('auth')->group(function () {
+        Route::get('/communities/{community}/posts/{post}/api', [CommentController::class, 'getPostDetails'])
+            ->name('communities.posts.api');
+        Route::get('/communities/{community}/posts/{post}/comments', [CommentController::class, 'index'])
+            ->name('communities.posts.comments.index');
+        Route::post('/communities/{community}/posts/{post}/comments', [CommentController::class, 'store'])
+            ->name('communities.posts.comments.store');
+        Route::delete('/communities/{community}/posts/{post}/comments/{comment}', [CommentController::class, 'destroy'])
+            ->name('communities.posts.comments.destroy');
+    });
+
+    // Likes - toggle route
+    Route::post('/communities/{community}/posts/{post}/like', [PostLikeController::class, 'toggle'])
+        ->middleware('auth')
+        ->name('communities.posts.like');
     // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
 
     // // Posts - create/edit/delete (requires membership)
