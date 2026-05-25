@@ -23,13 +23,32 @@ class CommentPolicy
      */
     public function create(User $user, Post $post): bool
     {
-        // Users must be verified alumni to comment
-        if (!$user->isVerifiedAlumni()) {
+        // Admins can always comment
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        // Optionally block explicitly rejected accounts
+        if (($user->account_status ?? null) === 'rejected') {
             return false;
         }
 
-        // Only community members can comment on posts
-        return $this->isCommunityMember($user, $post->community);
+        // Public posts can be commented on by any authenticated user
+        if ($post->visibility === 'public') {
+            return true;
+        }
+
+        // Members-only posts require community membership
+        if ($post->visibility === 'members') {
+            return $this->isCommunityMember($user, $post->community);
+        }
+
+        // Connections visibility: allow if connected with author OR a community member
+        if ($post->visibility === 'connections') {
+            return $user->isConnectedWith($post->user) || $this->isCommunityMember($user, $post->community);
+        }
+
+        return false;
     }
 
     /**
@@ -94,6 +113,6 @@ class CommentPolicy
         }
 
         // Check if user is a system admin
-        return $user->is_admin ?? false;
+        return $user->role === 'admin';
     }
 }
