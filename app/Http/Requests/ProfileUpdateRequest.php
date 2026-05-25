@@ -58,6 +58,22 @@ class ProfileUpdateRequest extends FormRequest
             'experiences.*.start_month' => ['nullable', 'date_format:Y-m'],
             'experiences.*.end_month' => ['nullable', 'date_format:Y-m'],
             'experiences.*.description' => ['nullable', 'string', 'max:1000'],
+            'educations' => ['nullable', 'array', 'max:10'],
+            'educations.*.id' => ['nullable', 'integer'],
+            'educations.*.school' => [
+                'nullable',
+                'string',
+                'max:160',
+                'required_with:educations.*.degree,educations.*.start_date,educations.*.end_date',
+            ],
+            'educations.*.degree' => [
+                'nullable',
+                'string',
+                'max:160',
+                'required_with:educations.*.school,educations.*.start_date,educations.*.end_date',
+            ],
+            'educations.*.start_date' => ['nullable', 'date'],
+            'educations.*.end_date' => ['nullable', 'date', 'after_or_equal:educations.*.start_date'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
             'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
         ];

@@ -15,7 +15,7 @@
         <div>
             <x-input-label for="document" :value="__('Select Document')" />
             <input id="document" name="document" type="file"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer"
                 accept=".pdf,.jpg,.jpeg,.png" required />
             <p class="mt-2 text-sm text-gray-500">{{ __('Supported formats: PDF, JPG, JPEG, PNG (Max 5MB)') }}</p>
             <x-input-error class="mt-2" :messages="$errors->get('document')" />
