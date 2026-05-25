@@ -1,0 +1,38 @@
+ALUMNIHUB — QUICK HANDOFF (PLAINTEXT)
+
+Goal
+- AlumniHub is a capstone social platform (Facebook + LinkedIn + Reddit style) for alumni of PUP-ITECH.
+
+Current Stack (Monolith)
+- Laravel backend + Blade templates + Tailwind CSS + Vite
+- DB: MySQL (or any Laravel-supported SQL DB)
+- Auth: Laravel session/cookies (NOT JWT)
+- Email: Laravel mailer/notifications
+- Real-time: Laravel Reverb (WebSockets) + Laravel Echo (frontend listener)
+
+Architecture Decision
+- Do NOT split into separate frontend/backend repos.
+- Keep one Laravel repo + one deployment.
+- FastAPI is not required for auth, email, notifications, or chat.
+
+Two User Types
+- Admin and Alumni/Student
+- Enforce via users.role or users.is_admin + middleware protecting /admin routes.
+
+Core Social Features
+- Posts: create/read/update/delete based on policy
+- Likes/Hearts: likes table with unique (user_id, post_id) and a toggle endpoint
+- Comments: comments table (post_id, user_id, body)
+- Notifications: database notifications for in-app; optionally mail notifications
+- Messaging: messages table + broadcast MessageSent event via Reverb
+
+Implementation Priorities
+1) Auth + roles + admin middleware
+2) Likes + comments (non-refresh optional using Fetch/Livewire)
+3) Notifications (DB + optional email)
+4) Messaging via Reverb/Echo
+5) Polish admin tools + verification flow
+
+Deployment Notes
+- One host that supports PHP + queues + a long-running Reverb process.
+- Use queues for email/notification sending if needed.
