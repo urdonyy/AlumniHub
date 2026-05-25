@@ -85,7 +85,7 @@
                         </section>
                     </aside>
 
-                    <section class="space-y-6 lg:col-span-6">
+                    <section class="space-y-6 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
                         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm" x-data="{ openComposer: false }">
     <button type="button"
         @click="openComposer = true"
@@ -171,22 +171,69 @@
 
                         @if(isset($posts))
                             @foreach($posts as $post)
-                                <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <h3 class="text-base font-semibold text-gray-900">{{ $post->user->name }}</h3>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $post->community?->name ?? __('Post') }}</p>
+                                <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
+                                    @click.self="openPostModal($event)"
+                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300">
+                                    
+                                    <!-- Post Header -->
+                                    <div class="p-5 pb-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <h3 class="text-base font-semibold text-gray-900">{{ $post->user->name }}</h3>
+                                                <p class="text-xs uppercase tracking-wide text-gray-500">{{ $post->community?->name ?? __('Post') }}</p>
+                                            </div>
+                                            <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                                {{ ucfirst($post->visibility) }}
+                                            </span>
                                         </div>
-                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                                            {{ ucfirst($post->visibility) }}
-                                        </span>
+
+                                        <h4 class="mt-3 text-lg font-semibold text-gray-900">{{ $post->title }}</h4>
+                                        <p class="mt-2 text-sm leading-6 text-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_markdown), 200) }}</p>
+
+                                        @if($post->flairs->count() > 0)
+                                            <div class="mt-3 flex flex-wrap gap-2">
+                                                @foreach($post->flairs as $flair)
+                                                    <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                                                        <span class="inline-block h-1.5 w-1.5 rounded-full" style="background-color: {{ $flair->color ?? '#9ca3af' }}"></span>
+                                                        {{ $flair->name }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
                                     </div>
 
-                                    <h4 class="mt-3 text-lg font-semibold text-gray-900">{{ $post->title }}</h4>
-                                    <p class="mt-2 text-sm leading-6 text-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_markdown), 300) }}</p>
+                                    <!-- Post Media -->
+                                    @if($post->media->count() > 0)
+                                        <div class="relative h-40 overflow-hidden bg-gray-100">
+                                            <img src="/storage/{{ $post->media->first()->file_path }}" 
+                                                alt="{{ $post->media->first()->alt_text ?? 'Post image' }}"
+                                                class="h-full w-full object-cover">
+                                            @if($post->media->count() > 1)
+                                                <div class="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs font-medium text-white">
+                                                    +{{ $post->media->count() - 1 }}
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
 
-                                    <div class="mt-5 flex flex-wrap gap-2 text-xs">
-                                        <a href="{{ route('communities.posts.show', ['community' => $post->community, 'post' => $post]) }}" class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-700">{{ __('Open') }}</a>
+                                    <!-- Post Footer -->
+                                    <div class="flex items-center justify-between gap-2 border-t border-gray-100 px-5 py-3 text-xs text-gray-600">
+                                        <div class="flex gap-4">
+                                            <button type="button" @click.stop="toggleLike()" :class="isLiked ? 'text-red-600' : 'text-gray-600'"
+                                                class="flex items-center gap-1 font-medium hover:text-red-600 transition">
+                                                <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                </svg>
+                                                <span x-text="likeCount"></span>
+                                            </button>
+                                            <span class="flex items-center gap-1">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
+                                                </svg>
+                                                {{ $post->comments_count ?? 0 }}
+                                            </span>
+                                        </div>
+                                        <span class="text-gray-400">Click to view</span>
                                     </div>
                                 </article>
                             @endforeach
@@ -194,20 +241,22 @@
                             <div class="pt-4">{{ $posts->links() }}</div>
                         @else
                             @foreach ($feedCards as $card)
-                                <article class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                                    <div class="flex items-start justify-between gap-3">
-                                        <div>
-                                            <h3 class="text-base font-semibold text-gray-900">{{ $card['author'] }}</h3>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $card['meta'] }}</p>
+                                <article class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                    <div class="p-5">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div>
+                                                <h3 class="text-base font-semibold text-gray-900">{{ $card['author'] }}</h3>
+                                                <p class="text-xs uppercase tracking-wide text-gray-500">{{ $card['meta'] }}</p>
+                                            </div>
+                                            <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                                {{ __('Placeholder') }}
+                                            </span>
                                         </div>
-                                        <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                                            {{ __('Placeholder') }}
-                                        </span>
+
+                                        <p class="mt-4 text-sm leading-6 text-gray-700">{{ $card['content'] }}</p>
                                     </div>
 
-                                    <p class="mt-4 text-sm leading-6 text-gray-700">{{ $card['content'] }}</p>
-
-                                    <div class="mt-5 flex flex-wrap gap-2 text-xs">
+                                    <div class="mt-5 flex flex-wrap gap-2 border-t border-gray-100 px-5 py-3 text-xs">
                                         <button type="button" disabled class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Like') }}</button>
                                         <button type="button" disabled class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Comment') }}</button>
                                         <button type="button" disabled class="rounded-md border border-gray-200 px-3 py-1 font-semibold text-gray-500">{{ __('Share') }}</button>
@@ -215,6 +264,8 @@
                                 </article>
                             @endforeach
                         @endif
+
+                        <x-post-detail-modal />
                     </section>
 
                     <aside class="space-y-6 lg:col-span-3">
@@ -266,4 +317,86 @@
             @endif
         </div>
     </div>
+
+    <script>
+        function feedManager() {
+            return {
+                showModal: false,
+                selectedPostId: null,
+                apiUrl: null,
+                commentsUrl: null,
+
+                openPostModal(event, postId, apiUrl, commentsUrl) {
+                    // Prevent default link behavior if any
+                    event?.preventDefault();
+                    
+                    this.selectedPostId = postId;
+                    this.apiUrl = apiUrl;
+                    this.commentsUrl = commentsUrl;
+                    this.showModal = true;
+                    
+                    // Dispatch event to load post and comments
+                    window.dispatchEvent(new CustomEvent('post-modal-opened', {
+                        detail: { postId, apiUrl, commentsUrl }
+                    }));
+                },
+
+                closeModal() {
+                    this.showModal = false;
+                    this.selectedPostId = null;
+                    this.apiUrl = null;
+                    this.commentsUrl = null;
+                }
+            };
+        }
+
+        function postCard(postId, initialLikeCount, apiUrl, likeUrl, isInitiallyLiked = false) {
+            return {
+                postId,
+                likeCount: initialLikeCount,
+                apiUrl,
+                likeUrl,
+                isLiked: isInitiallyLiked,
+                isLikingLoading: false,
+
+                openPostModal(event) {
+                    if (event.target.closest('button') || event.target.closest('svg')) {
+                        return; // Don't open modal when clicking the like button
+                    }
+                    
+                    const commentsUrl = this.apiUrl.replace('/api', '/comments');
+                    window.dispatchEvent(new CustomEvent('feedManager-openPostModal', {
+                        detail: { postId: this.postId, apiUrl: this.apiUrl, commentsUrl }
+                    }));
+                },
+
+                toggleLike() {
+                    if (this.isLikingLoading) return;
+
+                    this.isLikingLoading = true;
+
+                    fetch(this.likeUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                        },
+                    })
+                        .then(response => {
+                            if (!response.ok) throw new Error('Failed to like post');
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.isLiked = data.liked;
+                            this.likeCount = data.like_count;
+                            this.isLikingLoading = false;
+                        })
+                        .catch(err => {
+                            console.error('Error liking post:', err);
+                            this.isLikingLoading = false;
+                        });
+                }
+            };
+        }
+    </script>
 </x-app-layout>

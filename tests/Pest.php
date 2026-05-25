@@ -44,7 +44,29 @@ pest()->extend(TestCase::class)
 |
 */
 
-function something()
+use App\Models\Community;
+use App\Models\User;
+use Illuminate\Support\Str;
+
+function createVerifiedUser()
 {
-    // ..
+    return User::factory()->create([
+        'role' => 'alumni',
+        'account_status' => 'approved',
+    ]);
+}
+
+function createCommunityWithMembers(...$users): Community
+{
+    $community = Community::create([
+        'name' => 'Test Community',
+        'slug' => Str::slug('Test Community') . '-' . Str::random(6),
+        'description' => 'Test community description',
+        'created_by' => $users[0]->id,
+    ]);
+
+    $userIds = collect($users)->map(fn($u) => $u->id)->toArray();
+    $community->members()->attach($userIds);
+
+    return $community;
 }

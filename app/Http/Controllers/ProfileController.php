@@ -223,7 +223,7 @@ class ProfileController extends Controller
             }
         });
 
-        return Redirect::back()->with('status', 'profile-updated');
+        return Redirect::to('/profile')->with('status', 'profile-updated');
     }
 
     private function normalizeExperienceMonth(?string $month): ?string
