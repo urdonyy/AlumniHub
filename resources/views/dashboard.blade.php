@@ -80,7 +80,7 @@
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('communities.index') }}">{{ __('My Communities') }}</a>
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('connections.index') }}">{{ __('Connections') }}</a>
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('saved.index') }}">{{ __('Saved') }}</a>
-                                <a class="block text-gray-700 hover:text-gray-900" href="{{ route('profile.edit') }}">{{ __('Account Settings') }}</a>
+                                <a class="block text-gray-700 hover:text-gray-900" href="{{ route('profile.edit', ['section' => 'account-status']) }}">{{ __('Account Settings') }}</a>
                             </div>
                         </section>
                     </aside>

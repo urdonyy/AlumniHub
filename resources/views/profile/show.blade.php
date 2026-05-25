@@ -85,7 +85,7 @@
                                 </div>
 
                                 @if ($isOwnProfile)
-                                    <a href="{{ route('profile.edit') }}"
+                                    <a href="{{ route('profile.edit', ['section' => 'account-status']) }}"
                                         class="inline-flex self-end items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0 lg:self-auto">
                                         <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
                                         <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
@@ -188,15 +188,66 @@
 
                 <section class="!mt-3 grid gap-3 lg:grid-cols-3">
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
-                        <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-700">{{ __('About') }}
+                        <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-900">{{ __('Career Profile') }}
                         </h3>
-                        <p class="mt-3 text-sm leading-6 text-gray-600">
-                            {{ __('This profile section will include alumni bio, career highlights, and social activity once the posting and connection modules are integrated.') }}
-                        </p>
 
                         @if ($canSeeCareerDetails)
+                            <div class="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                                    {{ __('Experience') }}
+                                </p>
+                                @if ($profileUser->profileExperiences->isNotEmpty())
+                                    <div class="mt-3 space-y-3">
+                                        @foreach ($profileUser->profileExperiences as $experience)
+                                            <div class="rounded-md border border-gray-100 bg-gray-50 p-3">
+                                                <p class="font-semibold text-gray-900">{{ $experience->title }}</p>
+                                                <p class="text-sm text-gray-600">{{ $experience->organization }}</p>
+                                                @if ($experience->start_date || $experience->end_date)
+                                                    <p class="mt-1 text-sm text-gray-700">
+                                                        {{ optional($experience->start_date)->format('M Y') ?? __('N/A') }}
+                                                        —
+                                                        {{ optional($experience->end_date)->format('M Y') ?? __('Present') }}
+                                                    </p>
+                                                @endif
+
+                                                @if ($experience->description)
+                                                    <p class="mt-1 text-sm text-gray-700">{{ $experience->description }}</p>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="mt-2 text-sm text-gray-600">{{ __('No experience entries yet.') }}</p>
+                                @endif
+                            </div>
+
                             <div class="mt-5 rounded-lg border border-gray-200 bg-white p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                                    {{ __('Education') }}
+                                </p>
+                                @if ($profileUser->profileEducations->isNotEmpty())
+                                    <div class="mt-3 space-y-3">
+                                        @foreach ($profileUser->profileEducations as $education)
+                                            <div class="rounded-md border border-gray-100 bg-gray-50 p-3">
+                                                <p class="font-semibold text-gray-900">{{ $education->school }}</p>
+                                                <p class="text-sm text-gray-600">{{ $education->degree }}</p>
+                                                @if ($education->start_date || $education->end_date)
+                                                    <p class="mt-1 text-sm text-gray-700">
+                                                        {{ optional($education->start_date)->format('M Y') ?? __('N/A') }}
+                                                        —
+                                                        {{ optional($education->end_date)->format('M Y') ?? __('Present') }}
+                                                    </p>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <p class="mt-2 text-sm text-gray-600">{{ __('No education entries yet.') }}</p>
+                                @endif
+                            </div>
+
+                            <div class="mt-5 rounded-lg border border-gray-200 bg-white p-4">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-700">
                                     {{ __('Skills') }}
                                 </p>
                                 @if (count($profileUser->parsedSkills()) > 0)
@@ -212,27 +263,6 @@
                                     <p class="mt-2 text-sm text-gray-600">{{ __('No skills listed yet.') }}</p>
                                 @endif
                             </div>
-
-                            <div class="mt-4 rounded-lg border border-gray-200 bg-white p-4">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                    {{ __('Experience') }}
-                                </p>
-                                @if ($profileUser->profileExperiences->isNotEmpty())
-                                    <div class="mt-3 space-y-3">
-                                        @foreach ($profileUser->profileExperiences as $experience)
-                                            <div class="rounded-md border border-gray-100 bg-gray-50 p-3">
-                                                <p class="font-semibold text-gray-900">{{ $experience->title }}</p>
-                                                <p class="text-sm text-gray-600">{{ $experience->organization }}</p>
-                                                @if ($experience->description)
-                                                    <p class="mt-1 text-sm text-gray-700">{{ $experience->description }}</p>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <p class="mt-2 text-sm text-gray-600">{{ __('No experience entries yet.') }}</p>
-                                @endif
-                            </div>
                         @else
                             <div class="mt-5 rounded-lg border border-[#FFC107] bg-[#FFC107] p-4 text-sm text-red-900">
                                 {{ __('Experience is visible after verification.') }}
@@ -242,7 +272,7 @@
                             </div>
                         @endif
 
-                        @if ($showFullDetails)
+                        <!-- @if ($showFullDetails)
                             <div class="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">
                                     {{ __('Full Contact Details') }}
@@ -255,7 +285,7 @@
                             <div class="mt-5 rounded-lg border border-[#FFC107] bg-[#FFC107] p-4 text-sm text-red-900">
                                 {{ __('Additional profile details are hidden until your account is verified.') }}
                             </div>
-                        @endif
+                        @endif -->
                     </article>
 
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
