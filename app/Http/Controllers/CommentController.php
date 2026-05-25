@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Notifications\PostCommentedNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
@@ -53,6 +54,15 @@ class CommentController extends Controller
 
         $comment->load('user');
 
+        // Notify the post author (skip notifying self)
+        if ((int) $postModel->user_id !== (int) $request->user()->id) {
+            $postModel->user->notify(new PostCommentedNotification(
+                post: $postModel,
+                comment: $comment,
+                actor: $request->user(),
+            ));
+        }
+
         return response()->json([
             'success' => true,
             'comment' => [
@@ -64,6 +74,7 @@ class CommentController extends Controller
                 'body' => $comment->body,
                 'created_at' => $comment->created_at->diffForHumans(),
                 'parent_comment_id' => $comment->parent_comment_id,
+                'can_delete' => true,
                 'replies' => [],
             ],
         ]);
@@ -107,6 +118,7 @@ class CommentController extends Controller
                 'body_markdown' => $postModel->body_markdown,
                 'body_html' => $postModel->body_html,
                 'visibility' => $postModel->visibility,
+                'like_count' => $postModel->like_count,
                 'created_at' => $postModel->created_at->diffForHumans(),
                 'user' => [
                     'id' => $postModel->user->id,
@@ -166,6 +178,7 @@ class CommentController extends Controller
             'body' => $comment->body,
             'created_at' => $comment->created_at->diffForHumans(),
             'parent_comment_id' => $comment->parent_comment_id,
+            'can_delete' => auth()->user()?->can('delete', $comment) ?? false,
             'replies' => $comment->replies->map(function ($reply) {
                 return $this->formatComment($reply);
             })->toArray(),

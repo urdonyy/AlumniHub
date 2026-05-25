@@ -86,7 +86,7 @@
                     </aside>
 
                     <section class="space-y-6 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
-                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm" x-data="{ openComposer: false }">
+                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3" x-data="{ openComposer: false }">
     <button type="button"
         @click="openComposer = true"
         class="w-full rounded-full border border-gray-300 bg-gray-50 px-5 py-3 text-left text-gray-500 transition hover:bg-gray-100">
@@ -117,10 +117,16 @@
                     <label class="mb-1 block text-sm text-gray-300">Choose community</label>
                     <select name="community_id" required
                         class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
+                        @php
+                            /** @var \Illuminate\Support\Collection<int, \App\Models\Community> $joinedCommunitiesCollection */
+                            $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
+                            $defaultCommunityId = old('community_id')
+                                ?? ($joinedCommunitiesCollection->firstWhere('system_key', 'general-alumni-hub')->id ?? null);
+                        @endphp
                         <option value="">Select one</option>
-                        @foreach ($joinedCommunities ?? [] as $joinedCommunity)
+                        @foreach ($joinedCommunitiesCollection as $joinedCommunity)
                             <option value="{{ $joinedCommunity->id }}"
-                                @selected(old('community_id', optional($joinedCommunities->firstWhere('system_key', 'general-alumni-hub'))->id) == $joinedCommunity->id)>
+                                @selected($defaultCommunityId == $joinedCommunity->id)>
                                 {{ $joinedCommunity->name }}</option>
                         @endforeach
                     </select>
@@ -171,8 +177,8 @@
 
                         @if(isset($posts))
                             @foreach($posts as $post)
-                                <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
-                                    @click.self="openPostModal($event)"
+                                <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
+                                    @click="openPostModal($event)"
                                     class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300">
                                     
                                     <!-- Post Header -->
@@ -182,6 +188,7 @@
                                                 <h3 class="text-base font-semibold text-gray-900">{{ $post->user->name }}</h3>
                                                 <p class="text-xs uppercase tracking-wide text-gray-500">{{ $post->community?->name ?? __('Post') }}</p>
                                             </div>
+
                                             <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
                                                 {{ ucfirst($post->visibility) }}
                                             </span>
@@ -189,7 +196,6 @@
 
                                         <h4 class="mt-3 text-lg font-semibold text-gray-900">{{ $post->title }}</h4>
                                         <p class="mt-2 text-sm leading-6 text-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_markdown), 200) }}</p>
-
                                         @if($post->flairs->count() > 0)
                                             <div class="mt-3 flex flex-wrap gap-2">
                                                 @foreach($post->flairs as $flair)
@@ -230,7 +236,7 @@
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
                                                 </svg>
-                                                {{ $post->comments_count ?? 0 }}
+                                                <span x-text="commentCount"></span>
                                             </span>
                                         </div>
                                         <span class="text-gray-400">Click to view</span>
@@ -350,22 +356,32 @@
             };
         }
 
-        function postCard(postId, initialLikeCount, apiUrl, likeUrl, isInitiallyLiked = false) {
+        function postCard(postId, initialLikeCount, initialCommentCount, apiUrl, likeUrl, isInitiallyLiked = false) {
             return {
                 postId,
                 likeCount: initialLikeCount,
+                commentCount: initialCommentCount,
                 apiUrl,
                 likeUrl,
                 isLiked: isInitiallyLiked,
                 isLikingLoading: false,
 
+                init() {
+                    window.addEventListener('post-comment-count-changed', (event) => {
+                        if ((event?.detail?.postId ?? null) !== this.postId) return;
+                        if (typeof event.detail.count === 'number') {
+                            this.commentCount = event.detail.count;
+                        }
+                    });
+                },
+
                 openPostModal(event) {
-                    if (event.target.closest('button') || event.target.closest('svg')) {
+                    if (event.target.closest('button')) {
                         return; // Don't open modal when clicking the like button
                     }
                     
                     const commentsUrl = this.apiUrl.replace('/api', '/comments');
-                    window.dispatchEvent(new CustomEvent('feedManager-openPostModal', {
+                    window.dispatchEvent(new CustomEvent('post-modal-opened', {
                         detail: { postId: this.postId, apiUrl: this.apiUrl, commentsUrl }
                     }));
                 },
@@ -390,6 +406,10 @@
                             this.isLiked = data.liked;
                             this.likeCount = data.like_count;
                             this.isLikingLoading = false;
+
+                            window.dispatchEvent(new CustomEvent('post-like-count-changed', {
+                                detail: { postId: this.postId, count: this.likeCount, liked: this.isLiked }
+                            }));
                         })
                         .catch(err => {
                             console.error('Error liking post:', err);
@@ -399,4 +419,14 @@
             };
         }
     </script>
+
+    @if (session()->has('openPostModal'))
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const detail = @json(session('openPostModal'));
+                if (!detail) return;
+                window.dispatchEvent(new CustomEvent('post-modal-opened', { detail }));
+            });
+        </script>
+    @endif
 </x-app-layout>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Like;
 use App\Models\Post;
+use App\Notifications\PostLikedNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
@@ -40,6 +41,15 @@ class PostLikeController extends Controller
             ]);
             $postModel->increment('like_count');
             $liked = true;
+
+            // Notify the post author (skip notifying self)
+            if ((int) $postModel->user_id !== (int) $user->id) {
+                $postModel->loadMissing('user');
+                $postModel->user->notify(new PostLikedNotification(
+                    post: $postModel,
+                    actor: $user,
+                ));
+            }
         }
 
         return response()->json([

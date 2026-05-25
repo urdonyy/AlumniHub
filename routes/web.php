@@ -10,9 +10,11 @@ use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
 use App\Models\Community;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
@@ -121,6 +123,19 @@ Route::middleware('auth')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/posts/{post}/api', [CommentController::class, 'getPostDetails'])
             ->name('communities.posts.api');
+        Route::get('/communities/{community}/posts/{post}/open', function (Community $community, Post $post, Request $request) {
+            if ((int) $post->community_id !== (int) $community->id) {
+                abort(404);
+            }
+
+            $request->user()?->can('view', $post) ?: abort(403);
+
+            return redirect()->route('dashboard')->with('openPostModal', [
+                'postId' => $post->id,
+                'apiUrl' => route('communities.posts.api', ['community' => $community->id, 'post' => $post->id]),
+                'commentsUrl' => route('communities.posts.comments.index', ['community' => $community->id, 'post' => $post->id]),
+            ]);
+        })->name('communities.posts.open');
         Route::get('/communities/{community}/posts/{post}/comments', [CommentController::class, 'index'])
             ->name('communities.posts.comments.index');
         Route::post('/communities/{community}/posts/{post}/comments', [CommentController::class, 'store'])
@@ -150,10 +165,9 @@ Route::middleware('auth')->group(function () {
         'description' => 'Direct messaging will be available after the messaging backend is implemented.',
     ])->name('messages.index');
 
-    Route::view('/notifications', 'placeholders.module', [
-        'title' => 'Notifications',
-        'description' => 'Notification center will be enabled once activity feed and social actions are integrated.',
-    ])->name('notifications.index');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     Route::get('/connections', [ConnectionController::class, 'index'])->name('connections.index');
     Route::post('/connections/invite/{user}', [ConnectionController::class, 'invite'])->name('connections.invite');

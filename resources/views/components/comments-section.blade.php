@@ -3,7 +3,7 @@
 
     <!-- Comments header -->
     <h3 class="font-semibold text-gray-900">
-        Comments (<span x-text="comments.length"></span>)
+        Comments (<span x-text="totalComments"></span>)
     </h3>
 
     <!-- Error alert -->
@@ -62,10 +62,12 @@
                                 class="text-blue-600 hover:text-blue-700">
                                 Reply
                             </button>
-                            <button type="button" @click="deleteComment(comment.id)"
-                                class="text-red-600 hover:text-red-700">
-                                Delete
-                            </button>
+                            <template x-if="comment.can_delete">
+                                <button type="button" @click="deleteComment(comment.id)"
+                                    class="text-red-600 hover:text-red-700">
+                                    Delete
+                                </button>
+                            </template>
                         </div>
 
                         <!-- Reply form (if toggled) -->
@@ -108,10 +110,12 @@
                                                     <span x-text="reply.body"></span>
                                                 </p>
                                                 <div class="mt-2 flex gap-3 text-xs">
-                                                    <button type="button" @click="deleteComment(reply.id)"
-                                                        class="text-red-600 hover:text-red-700">
-                                                        Delete
-                                                    </button>
+                                                    <template x-if="reply.can_delete">
+                                                        <button type="button" @click="deleteComment(reply.id)"
+                                                            class="text-red-600 hover:text-red-700">
+                                                            Delete
+                                                        </button>
+                                                    </template>
                                                 </div>
                                             </div>
                                         </div>
@@ -154,13 +158,46 @@
             error: null,
             successMessage: null,
 
+            get totalComments() {
+                return this.countAll(this.comments);
+            },
+
+            countAll(comments) {
+                return (comments || []).reduce((acc, comment) => {
+                    const replies = comment?.replies || [];
+                    return acc + 1 + this.countAll(replies);
+                }, 0);
+            },
+
+            dispatchCountChanged() {
+                if (!this.postId) return;
+                window.dispatchEvent(new CustomEvent('post-comment-count-changed', {
+                    detail: { postId: this.postId, count: this.totalComments }
+                }));
+            },
+
+            removeFromTree(items, targetId) {
+                if (!Array.isArray(items)) return items;
+                return items
+                    .filter(item => item?.id !== targetId)
+                    .map(item => ({
+                        ...item,
+                        replies: this.removeFromTree(item?.replies || [], targetId),
+                    }));
+            },
+
             loadComments(postId, commentsUrl) {
                 this.isLoading = true;
                 this.error = null;
                 this.postId = postId;
                 this.commentsUrl = commentsUrl;
 
-                fetch(commentsUrl)
+                fetch(commentsUrl, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                })
                     .then(response => {
                         if (!response.ok) throw new Error('Failed to load comments');
                         return response.json();
@@ -168,6 +205,7 @@
                     .then(data => {
                         this.comments = data.comments || [];
                         this.isLoading = false;
+                        this.dispatchCountChanged();
                     })
                     .catch(err => {
                         console.error('Error loading comments:', err);
@@ -182,11 +220,13 @@
                 this.isSubmitting = true;
                 this.error = null;
                 this.successMessage = null;
-                const url = this.commentsUrl.replace('/comments', '') + '/comments';
+                const url = this.commentsUrl;
 
                 fetch(url, {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                     },
@@ -196,10 +236,13 @@
                 })
                     .then(response => {
                         if (!response.ok) {
-                            return response.json().then(data => {
-                                throw new Error(data.error || data.message || 'Failed to post comment');
-                            }).catch(err => {
-                                throw new Error('Failed to post comment: ' + response.status);
+                            return response.text().then(text => {
+                                try {
+                                    const data = JSON.parse(text);
+                                    throw new Error(data.error || data.message || 'Failed to post comment');
+                                } catch (e) {
+                                    throw new Error('Failed to post comment: ' + response.status);
+                                }
                             });
                         }
                         return response.json();
@@ -212,6 +255,7 @@
                         this.newComment.body = '';
                         this.successMessage = 'Comment posted!';
                         this.isSubmitting = false;
+                        this.dispatchCountChanged();
                         setTimeout(() => this.successMessage = null, 3000);
                     })
                     .catch(err => {
@@ -227,11 +271,13 @@
                 this.isSubmitting = true;
                 this.error = null;
                 this.successMessage = null;
-                const url = this.commentsUrl.replace('/comments', '') + '/comments';
+                const url = this.commentsUrl;
 
                 fetch(url, {
                     method: 'POST',
                     headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                     },
@@ -242,10 +288,13 @@
                 })
                     .then(response => {
                         if (!response.ok) {
-                            return response.json().then(data => {
-                                throw new Error(data.error || data.message || 'Failed to post reply');
-                            }).catch(err => {
-                                throw new Error('Failed to post reply: ' + response.status);
+                            return response.text().then(text => {
+                                try {
+                                    const data = JSON.parse(text);
+                                    throw new Error(data.error || data.message || 'Failed to post reply');
+                                } catch (e) {
+                                    throw new Error('Failed to post reply: ' + response.status);
+                                }
                             });
                         }
                         return response.json();
@@ -264,6 +313,7 @@
                         this.replyingTo = null;
                         this.successMessage = 'Reply posted!';
                         this.isSubmitting = false;
+                        this.dispatchCountChanged();
                         setTimeout(() => this.successMessage = null, 3000);
                     })
                     .catch(err => {
@@ -282,27 +332,34 @@
             deleteComment(commentId) {
                 if (!confirm('Are you sure you want to delete this comment?')) return;
 
-                const url = this.commentsUrl.replace('/comments', '') + `/comments/${commentId}`;
+                const url = `${this.commentsUrl}/${commentId}`;
 
                 fetch(url, {
                     method: 'DELETE',
                     headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                     },
                 })
                     .then(response => {
-                        if (!response.ok) throw new Error('Failed to delete comment');
+                        if (!response.ok) {
+                            return response.text().then(() => {
+                                throw new Error('Failed to delete comment: ' + response.status);
+                            });
+                        }
                         return response.json();
                     })
                     .then(() => {
                         // Remove comment from list
-                        this.comments = this.comments.filter(c => c.id !== commentId);
+                        this.comments = this.removeFromTree(this.comments, commentId);
                         this.successMessage = 'Comment deleted.';
+                        this.dispatchCountChanged();
                         setTimeout(() => this.successMessage = null, 2000);
                     })
                     .catch(err => {
                         console.error('Error deleting comment:', err);
-                        this.error = 'Failed to delete comment';
+                        this.error = err.message || 'Failed to delete comment';
                     });
             }
         };
