@@ -304,7 +304,7 @@
                                                     </svg>
                                                 </button>
                                                 <img id="singleImagePreview" src="" alt="" class="hidden w-full max-h-56 object-cover">
-                                                <div id="multiImageGrid" class="hidden gap-0.5"></div>
+                                                <div id="multiImageGrid" class="hidden grid gap-0.5"></div>
                                             </div>
 
                                             <!-- Attach image button -->
@@ -436,25 +436,15 @@
                                         @if($post->title)
                                             <h4 class="mt-2 text-base font-semibold text-gray-900">{{ $post->title }}</h4>
                                         @endif
-                                        <p class="mt-2 text-sm leading-6 text-gray-700"
-                                            x-ref="postBody"
-                                            :class="isBodyExpanded ? '' : 'line-clamp-3'">
-                                            {{ strip_tags($post->body_html ?? $post->body_markdown) }}
-                                        </p>
-                                        <button type="button"
-                                            x-show="isBodyOverflowing"
-                                            @click.stop="toggleBody()"
-                                            class="mt-1 text-sm font-semibold text-red-900 hover:underline">
-                                            <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
-                                        </button>
+                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 200) }}</p>
                                     </div>
 
                                     <!-- Post Media -->
                                     @if($post->media->count() > 0)
-                                        <div class="relative overflow-hidden bg-gray-50 max-h-80">
-                                                <img src="/storage/{{ $post->media->first()->file_path }}"
-                                                    alt="Post image"
-                                                    class="w-full max-h-80 object-contain">
+                                        <div class="relative overflow-hidden bg-gray-50">
+                                            <img src="/storage/{{ $post->media->first()->file_path }}"
+                                                alt="Post image"
+                                                class="w-full max-h-80 object-contain">
                                             @if($post->media->count() > 1)
                                                 <div class="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white">
                                                     +{{ $post->media->count() - 1 }} more
@@ -672,7 +662,6 @@
                         container.classList.add('hidden');
                         single.src = '';
                         grid.innerHTML = '';
-                        grid.className = 'hidden gap-0.5';
                         event.target.value = '';
                     };
                 },

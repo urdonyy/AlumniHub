@@ -97,6 +97,7 @@
 
             {{-- Post content --}}
             <template x-if="!isLoading && post">
+<<<<<<< frontend
                 <div class="sm:min-h-0" :class="(post.media && post.media.length > 0) ? 'sm:flex sm:items-stretch sm:h-full sm:min-h-0' : ''">
 
                     {{-- Media carousel (mobile: above content) --}}
@@ -201,6 +202,11 @@
                             :class="(post.media && post.media.length > 0) ? 'sm:flex-1 sm:min-h-0 sm:overflow-y-auto' : ''">
                             {{-- Community + Flair badges together --}}
                             <div class="flex flex-wrap items-center gap-1.5 px-4 pt-4 pb-1">
+=======
+                <div>
+                                    {{-- Community + Flair badges together --}}
+                    <div class="flex flex-wrap items-center gap-1.5 px-4 pt-4 pb-1">
+>>>>>>> dev
                         <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -446,8 +452,12 @@
                         this.isLoading = false;
                         this.$nextTick(() => {
                             this.refreshBodyOverflow();
+<<<<<<< frontend
                             const scrollEl = this.$refs?.rightScrollBody || this.$refs?.scrollBody;
                             if (scrollEl) scrollEl.scrollTop = 0;
+=======
+                            if (this.$refs.scrollBody) this.$refs.scrollBody.scrollTop = 0;
+>>>>>>> dev
                             window.dispatchEvent(new CustomEvent('post-comments-load', {
                                 detail: { postId, commentsUrl }
                             }));
