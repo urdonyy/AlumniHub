@@ -18,6 +18,11 @@ class PostPolicy
             return true;
         }
 
+        // Authors can always view their own posts regardless of visibility
+        if ($user && $user->id === $post->user_id) {
+            return true;
+        }
+
         // Members-only posts: check if user is a community member
         if ($post->visibility === 'members') {
             if (!$user) {

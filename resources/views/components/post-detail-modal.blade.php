@@ -95,8 +95,8 @@
             {{-- Post content --}}
             <template x-if="!isLoading && post">
                 <div>
-                    {{-- Community badge --}}
-                    <div class="px-4 pt-4 pb-1">
+                                    {{-- Community + Flair badges together --}}
+                    <div class="flex flex-wrap items-center gap-1.5 px-4 pt-4 pb-1">
                         <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -104,23 +104,19 @@
                             </svg>
                             <span x-text="post.community?.name"></span>
                         </span>
-                    </div>
-
-                    {{-- Title --}}
-                    <template x-if="post.title">
-                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug" x-text="post.title"></h2>
-                    </template>
-
-                    {{-- Flair tags --}}
-                    <template x-if="post.flairs && post.flairs.length > 0">
-                        <div class="flex flex-wrap gap-1.5 px-4 pt-2">
+                        <template x-if="post.flairs && post.flairs.length > 0">
                             <template x-for="flair in post.flairs" :key="flair.id">
                                 <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
                                     :style="`background-color:${flair.color ? flair.color + '20' : '#f3f4f6'};color:${flair.color || '#374151'};border:1px solid ${flair.color || '#e5e7eb'}`">
                                     <span x-text="flair.name"></span>
                                 </span>
                             </template>
-                        </div>
+                        </template>
+                    </div>
+
+                    {{-- Title --}}
+                    <template x-if="post.title">
+                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug" x-text="post.title"></h2>
                     </template>
 
                     {{-- Body --}}
@@ -190,13 +186,15 @@
                     {{-- Action buttons (Like / Comment) --}}
                     <div class="mx-4 flex border-b border-gray-100 pb-1">
                         <button type="button"
-                            @click="$dispatch('post-like-toggle', { postId: post.id })"
-                            class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            @click="toggleLike()"
+                            :disabled="isLikingLoading"
+                            :class="isLiked ? 'text-red-700' : 'text-gray-600'"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold hover:bg-gray-50 transition disabled:opacity-60">
+                            <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                             </svg>
-                            Like
+                            <span x-text="isLiked ? 'Liked' : 'Like'"></span>
                         </button>
                         <button type="button"
                             @click="window.dispatchEvent(new CustomEvent('focus-comment-input'))"
@@ -262,6 +260,31 @@
             isBodyExpanded: false,
             isBodyOverflowing: false,
             scrollLockScrollY: 0,
+            isLiked: false,
+            isLikingLoading: false,
+            likeUrl: null,
+
+            toggleLike() {
+                if (this.isLikingLoading || !this.likeUrl) return;
+                this.isLikingLoading = true;
+                fetch(this.likeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    },
+                })
+                .then(r => { if (!r.ok) throw new Error('Failed'); return r.json(); })
+                .then(data => {
+                    this.isLiked = data.liked;
+                    if (this.post) this.post.like_count = data.like_count;
+                    this.isLikingLoading = false;
+                    window.dispatchEvent(new CustomEvent('post-like-count-changed', {
+                        detail: { postId: this.post?.id, count: data.like_count, liked: data.liked }
+                    }));
+                })
+                .catch(() => { this.isLikingLoading = false; });
+            },
 
             get authorMeta() {
                 if (!this.post?.user) return '';
@@ -338,6 +361,8 @@
                 this.lightboxOpen = false;
                 this.isBodyExpanded = false;
                 this.isBodyOverflowing = false;
+                this.isLiked = false;
+                this.likeUrl = apiUrl.replace('/api', '/like');
                 this.lockScroll();
 
                 fetch(apiUrl)
@@ -347,14 +372,15 @@
                     })
                     .then(data => {
                         this.post = data.post;
+                        this.isLiked = data.post.is_liked ?? false;
                         this.isLoading = false;
                         this.$nextTick(() => {
                             this.refreshBodyOverflow();
                             if (this.$refs.scrollBody) this.$refs.scrollBody.scrollTop = 0;
+                            window.dispatchEvent(new CustomEvent('post-comments-load', {
+                                detail: { postId, commentsUrl }
+                            }));
                         });
-                        window.dispatchEvent(new CustomEvent('post-comments-load', {
-                            detail: { postId, commentsUrl }
-                        }));
                     })
                     .catch(err => {
                         this.error = err.message || 'Error loading post';
@@ -371,6 +397,8 @@
                 this.activeMediaIndex = 0;
                 this.isBodyExpanded = false;
                 this.isBodyOverflowing = false;
+                this.isLiked = false;
+                this.likeUrl = null;
                 this.unlockScroll();
             }
         };

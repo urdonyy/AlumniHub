@@ -158,10 +158,15 @@ class CommunityPostController extends Controller
 
     public function quickStore(Request $request)
     {
-        $community = Community::findOrFail($request->input('community_id'));
+        $isConnectionsOnly = $request->input('visibility') === 'connections';
+        $communityId = $request->input('community_id');
+
+        $community = $communityId ? Community::findOrFail($communityId) : null;
 
         $validated = Validator::make($request->all(), [
-            'community_id' => 'required|integer|exists:communities,id',
+            'community_id' => $isConnectionsOnly
+                ? 'nullable|integer|exists:communities,id'
+                : 'required|integer|exists:communities,id',
             'title' => 'nullable|string|max:255',
             'body_markdown' => 'required|string|min:3',
             'visibility' => 'sometimes|string|in:members,public,connections',
@@ -169,15 +174,21 @@ class CommunityPostController extends Controller
             'flairs.*' => [
                 'integer',
                 Rule::exists('flairs', 'id')->where(function ($query) use ($community) {
-                    $query->where('community_id', $community->id)
-                        ->orWhereNull('community_id');
+                    if ($community) {
+                        $query->where('community_id', $community->id)
+                            ->orWhereNull('community_id');
+                    } else {
+                        $query->whereNull('community_id');
+                    }
                 }),
             ],
             'attachments' => 'sometimes|array',
             'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:5120',
         ])->validate();
 
-        $this->authorize('create', [Post::class, $community]);
+        if ($community) {
+            $this->authorize('create', [Post::class, $community]);
+        }
 
         $this->postService->createPost(
             community: $community,
@@ -185,7 +196,10 @@ class CommunityPostController extends Controller
             data: $validated
         );
 
-        return redirect()->route('communities.posts.index', $community)
-            ->with('success', 'Post created successfully!');
+        $redirect = $community
+            ? route('communities.posts.index', $community)
+            : route('dashboard');
+
+        return redirect($redirect)->with('success', 'Post created successfully!');
     }
 }
