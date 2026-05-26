@@ -30,7 +30,12 @@ class CommunityPostController extends Controller
             ->orderByDesc('published_at')
             ->paginate(15);
 
-        return view('communities.posts.index', compact('community', 'posts'));
+        $flairs = $community->flairs()
+            ->forCommunity($community->id)
+            ->orderBy('name')
+            ->get();
+
+        return view('communities.posts.index', compact('community', 'posts', 'flairs'));
     }
 
     public function show(Community $community, Post $post)
@@ -64,7 +69,7 @@ class CommunityPostController extends Controller
         $this->authorize('create', [Post::class, $community]);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'body_markdown' => 'required|string|min:3',
             'visibility' => 'sometimes|string|in:members,public,connections',
             'flairs' => 'sometimes|array',
@@ -116,7 +121,7 @@ class CommunityPostController extends Controller
         $this->authorize('update', $post);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'body_markdown' => 'required|string|min:3',
             'visibility' => 'sometimes|string|in:members,public,connections',
             'flairs' => 'sometimes|array',
@@ -157,7 +162,7 @@ class CommunityPostController extends Controller
 
         $validated = Validator::make($request->all(), [
             'community_id' => 'required|integer|exists:communities,id',
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'body_markdown' => 'required|string|min:3',
             'visibility' => 'sometimes|string|in:members,public,connections',
             'flairs' => 'sometimes|array',

@@ -103,37 +103,17 @@
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div>
-                <x-input-label for="batch_year" :value="__('Batch Year')" />
-                <x-text-input id="batch_year" name="batch_year" type="number" class="mt-1 block w-full"
-                    :value="old('batch_year', $user->batch_year)" min="2024" max="{{ now()->format('Y') }}" required />
-                <x-input-error class="mt-2" :messages="$errors->get('batch_year')" />
+                <x-input-label :value="__('Batch Year')" />
+                <p class="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-700">
+                    {{ $user->batch_year ?? '—' }}
+                </p>
             </div>
 
             <div>
-                <x-input-label for="program_course" :value="__('Program / Course')" />
-                <select id="program_course" name="program_course"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    required>
-                    <option value="" disabled {{ old('program_course', $user->program_course) ? '' : 'selected' }}>
-                        {{ __('Select program/course') }}</option>
-                    <option value="Diploma in Civil Engineering Technology (DCvET)" {{ old('program_course', $user->program_course) === 'Diploma in Civil Engineering Technology (DCvET)' ? 'selected' : '' }}>
-                        Diploma in Civil Engineering Technology (DCvET)</option>
-                    <option value="Diploma in Computer Engineering Technology (DCET)" {{ old('program_course', $user->program_course) === 'Diploma in Computer Engineering Technology (DCET)' ? 'selected' : '' }}>
-                        Diploma in Computer Engineering Technology (DCET)</option>
-                    <option value="Diploma in Electrical Engineering Technology (DEET)" {{ old('program_course', $user->program_course) === 'Diploma in Electrical Engineering Technology (DEET)' ? 'selected' : '' }}>
-                        Diploma in Electrical Engineering Technology (DEET)</option>
-                    <option value="Diploma in Electronics Engineering Technology (DECET)" {{ old('program_course', $user->program_course) === 'Diploma in Electronics Engineering Technology (DECET)' ? 'selected' : '' }}>
-                        Diploma in Electronics Engineering Technology (DECET)</option>
-                    <option value="Diploma in Information Communication Technology (DICT)" {{ old('program_course', $user->program_course) === 'Diploma in Information Communication Technology (DICT)' ? 'selected' : '' }}>
-                        Diploma in Information Communication Technology (DICT)</option>
-                    <option value="Diploma in Mechanical Engineering Technology (DMET)" {{ old('program_course', $user->program_course) === 'Diploma in Mechanical Engineering Technology (DMET)' ? 'selected' : '' }}>
-                        Diploma in Mechanical Engineering Technology (DMET)</option>
-                    <option value="Diploma in Office Management Technology (DOMT)" {{ old('program_course', $user->program_course) === 'Diploma in Office Management Technology (DOMT)' ? 'selected' : '' }}>
-                        Diploma in Office Management Technology (DOMT)</option>
-                    <option value="Diploma in Railway Engineering Technology (DRET)" {{ old('program_course', $user->program_course) === 'Diploma in Railway Engineering Technology (DRET)' ? 'selected' : '' }}>
-                        Diploma in Railway Engineering Technology (DRET)</option>
-                </select>
-                <x-input-error class="mt-2" :messages="$errors->get('program_course')" />
+                <x-input-label :value="__('Program / Course')" />
+                <p class="mt-1 block w-full rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-700">
+                    {{ $user->program_course ?? '—' }}
+                </p>
             </div>
         </div>
 

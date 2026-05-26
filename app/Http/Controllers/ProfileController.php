@@ -85,8 +85,6 @@ class ProfileController extends Controller
             'first_name' => $firstName,
             'last_name' => $lastName,
             'email' => Str::of($validated['email'])->trim()->value(),
-            'batch_year' => (int) $validated['batch_year'],
-            'program_course' => Str::of($validated['program_course'])->trim()->value(),
             'skills' => $skills->isEmpty() ? null : $skills->implode(', '),
         ]);
 
@@ -222,6 +220,10 @@ class ProfileController extends Controller
                 $user->profileEducations()->whereNotIn('id', $keptEducationIds)->delete();
             }
         });
+
+        if ($request->input('redirect_to') === 'profile_show') {
+            return Redirect::route('profiles.show', $user)->with('status', 'profile-updated');
+        }
 
         return Redirect::to('/profile')->with('status', 'profile-updated');
     }
