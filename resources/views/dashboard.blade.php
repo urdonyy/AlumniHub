@@ -9,7 +9,7 @@
     </x-slot>
 
     <div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @if (session('status') === 'registration-complete')
                 <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3">
                     <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +97,7 @@
                         </section>
                     </aside>
 
-                    <section class="space-y-3 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
+                    <section class="space-y-6 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
                         @php
                             /** @var \Illuminate\Support\Collection<int, \App\Models\Community> $joinedCommunitiesCollection */
                             $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
@@ -378,7 +378,7 @@
                             @foreach($posts as $post)
                                 <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
                                     @click="openPostModal($event)"
-                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300 min-w-0">
+                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300">
 
                                     <!-- Post Header -->
                                     <div class="p-4 pb-3">
@@ -713,8 +713,6 @@
                 likeUrl,
                 isLiked: isInitiallyLiked,
                 isLikingLoading: false,
-                isBodyExpanded: false,
-                isBodyOverflowing: false,
 
                 init() {
                     window.addEventListener('post-comment-count-changed', (event) => {
@@ -723,23 +721,6 @@
                             this.commentCount = event.detail.count;
                         }
                     });
-
-                    this.refreshBodyOverflow();
-                },
-
-                refreshBodyOverflow() {
-                    this.isBodyOverflowing = false;
-                    if (this.isBodyExpanded) return;
-                    this.$nextTick(() => {
-                        const el = this.$refs?.postBody;
-                        if (!el) return;
-                        this.isBodyOverflowing = el.scrollHeight > el.clientHeight + 2;
-                    });
-                },
-
-                toggleBody() {
-                    this.isBodyExpanded = !this.isBodyExpanded;
-                    if (!this.isBodyExpanded) this.refreshBodyOverflow();
                 },
 
                 openPostModal(event) {
@@ -793,5 +774,3 @@
         </script>
     @endif
 </x-app-layout>
-
-<x-footer />

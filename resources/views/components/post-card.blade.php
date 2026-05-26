@@ -23,7 +23,7 @@
         @endif
 
         <!-- Excerpt -->
-        <p class="mb-3 line-clamp-2 text-gray-600 break-words break-normal">
+        <p class="mb-3 line-clamp-2 text-gray-600">
             {{ strip_tags($post->body_html) }}
         </p>
 
