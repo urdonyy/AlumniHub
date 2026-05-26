@@ -98,121 +98,159 @@
                     </aside>
 
                     <section class="space-y-6 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
-                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3" x-data="{ openComposer: false }">
-    <button type="button"
-        @click="openComposer = true"
-        class="w-full rounded-full border border-gray-300 bg-gray-50 px-5 py-3 text-left text-gray-500 transition hover:bg-gray-100">
-        What's on your mind, {{ auth()->user()->name }}?
-    </button>
-
-    <div x-show="openComposer"
-        x-transition.opacity
-        @keydown.escape.window="openComposer = false"
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-        style="display: none;">
-        <div @click.away="openComposer = false"
-            class="w-full max-w-2xl rounded-2xl border border-gray-700 bg-gray-900 text-gray-100 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-gray-700 px-5 py-4">
-                <h3 class="text-xl font-semibold">Create post</h3>
-                <button type="button" @click="openComposer = false"
-                    class="h-9 w-9 rounded-full bg-gray-700 text-lg leading-none hover:bg-gray-600">
-                    ×
-                </button>
-            </div>
-
-        {{-- post creation modal --}}
-            <form method="post" action="{{ route('posts.quick-store') }}"
-                enctype="multipart/form-data" class="space-y-4 px-5 py-5">
-                @csrf
-
-                <div>
-                    <label class="mb-1 block text-sm text-gray-300">Choose community</label>
-                    <select name="community_id" required
-                        class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
                         @php
                             /** @var \Illuminate\Support\Collection<int, \App\Models\Community> $joinedCommunitiesCollection */
                             $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
                             $defaultCommunityId = old('community_id')
                                 ?? ($joinedCommunitiesCollection->firstWhere('system_key', 'general-alumni-hub')->id ?? null);
                         @endphp
-                        <option value="">Select one</option>
-                        @foreach ($joinedCommunitiesCollection as $joinedCommunity)
-                            <option value="{{ $joinedCommunity->id }}"
-                                @selected($defaultCommunityId == $joinedCommunity->id)>
-                                {{ $joinedCommunity->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
 
-                <div>
-                    <input type="text" name="title" required
-                        class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="Title">
-                </div>
+                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3"
+                            x-data="postComposer(@js($flairsByCommunity ?? []), {{ $defaultCommunityId ?? 'null' }})">
+                            <button type="button"
+                                @click="open = true"
+                                class="w-full rounded-full border border-gray-300 bg-gray-50 px-5 py-3 text-left text-gray-500 transition hover:bg-gray-100">
+                                What's on your mind, {{ auth()->user()->name }}?
+                            </button>
 
-                <div>
-                    <label class="mb-1 block text-sm text-gray-300">Audience</label>
-                    <select name="visibility" required
-                        class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="members" @selected(old('visibility', 'members') === 'members')>Communities only</option>
-                        <option value="connections" @selected(old('visibility') === 'connections')>Connections only</option>
-                        <option value="public" @selected(old('visibility') === 'public')>Public</option>
-                    </select>
-                </div>
+                            <div x-show="open"
+                                x-transition.opacity
+                                @keydown.escape.window="open = false"
+                                class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                                style="display: none;">
+                                <div @click.away="open = false"
+                                    class="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                                    <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                                        <h3 class="text-lg font-semibold text-gray-900">Create post</h3>
+                                        <button type="button" @click="open = false"
+                                            class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xl leading-none text-gray-600 hover:bg-gray-200">
+                                            ×
+                                        </button>
+                                    </div>
 
-                @if(!empty($availableFlairs))
-                    <div>
-                        <label class="mb-1 block text-sm text-gray-300">Flair</label>
-                        <x-flair-selector :flairs="$availableFlairs" :selected="old('flairs', [])" />
-                    </div>
-                @endif
+                                    <form method="post" action="{{ route('posts.quick-store') }}"
+                                        enctype="multipart/form-data" class="max-h-[80vh] overflow-y-auto space-y-4 px-5 py-5">
+                                        @csrf
 
-                <div>
-                    <textarea name="body_markdown" rows="7" required
-                        class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                        placeholder="What's on your mind, {{ auth()->user()->name }}?"></textarea>
-                </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700">Community</label>
+                                            <select name="community_id" required
+                                                x-model="communityId"
+                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 shadow-sm focus:border-red-900 focus:ring-red-900">
+                                                <option value="">Select community</option>
+                                                @foreach ($joinedCommunitiesCollection as $joinedCommunity)
+                                                    <option value="{{ $joinedCommunity->id }}"
+                                                        @selected($defaultCommunityId == $joinedCommunity->id)>
+                                                        {{ $joinedCommunity->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
 
-                <div>
-                    <label class="mb-1 block text-sm text-gray-300">Add images</label>
-                    <input type="file" name="attachments[]" multiple accept="image/*"
-                        class="block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 file:mr-4 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white hover:file:bg-blue-500">
-                </div>
+                                        <div>
+                                            <input type="text" name="title"
+                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-900 focus:ring-red-900"
+                                                placeholder="Post title (optional)">
+                                        </div>
 
-                <button type="submit"
-                    class="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-500">
-                    Post
-                </button>
-            </form>
-        </div>
-    </div>
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700">Audience</label>
+                                            <select name="visibility"
+                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 shadow-sm focus:border-red-900 focus:ring-red-900">
+                                                <option value="members" @selected(old('visibility', 'members') === 'members')>Community members only</option>
+                                                <option value="connections" @selected(old('visibility') === 'connections')>Connections only</option>
+                                                <option value="public" @selected(old('visibility') === 'public')>Public</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <textarea name="body_markdown" rows="6" required
+                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-900 focus:ring-red-900"
+                                                placeholder="What's on your mind, {{ auth()->user()->name }}?"></textarea>
+                                        </div>
+
+                                        <template x-if="filteredFlairs.length > 0">
+                                            <div>
+                                                <label class="mb-2 block text-sm font-medium text-gray-700">Flair tag</label>
+                                                <div class="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                                                    <template x-for="flair in filteredFlairs" :key="flair.id">
+                                                        <label class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50">
+                                                            <input type="checkbox" name="flairs[]" :value="flair.id"
+                                                                class="h-3.5 w-3.5 rounded border-gray-300 text-red-900 focus:ring-red-900" />
+                                                            <div class="flex flex-1 items-center gap-1.5 min-w-0">
+                                                                <span x-show="flair.icon" x-text="flair.icon" class="text-xs leading-none"></span>
+                                                                <span x-text="flair.name" class="truncate text-xs font-medium text-gray-900"></span>
+                                                                <span x-show="flair.color"
+                                                                    class="ml-auto inline-block h-2 w-2 shrink-0 rounded-full"
+                                                                    :style="`background-color: ${flair.color}`"></span>
+                                                            </div>
+                                                        </label>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                        <div>
+                                            <label class="mb-1 block text-sm font-medium text-gray-700">Add images</label>
+                                            <input type="file" name="attachments[]" multiple accept="image/*"
+                                                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-800">
+                                        </div>
+
+                                        <button type="submit"
+                                            class="w-full rounded-lg bg-red-900 px-4 py-3 font-semibold text-white hover:bg-red-800 transition">
+                                            Post
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>{{-- end composer card --}}
 
                         @if(isset($posts))
                             @foreach($posts as $post)
                                 <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
                                     @click="openPostModal($event)"
                                     class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300">
-                                    
-                                    <!-- Post Header -->
-                                    <div class="p-5 pb-3">
-                                        <div class="flex items-start justify-between gap-3">
-                                            <div>
-                                                <h3 class="text-base font-semibold text-gray-900">{{ $post->user->name }}</h3>
-                                                <p class="text-xs uppercase tracking-wide text-gray-500">{{ $post->community?->name ?? __('Post') }}</p>
-                                            </div>
 
-                                            <span class="inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                                                {{ ucfirst($post->visibility) }}
+                                    <!-- Post Header -->
+                                    <div class="p-4 pb-3">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="flex items-center gap-3">
+                                                <img src="{{ $post->user->profileAvatarUrl() }}"
+                                                    alt="{{ $post->user->name }}"
+                                                    class="h-10 w-10 shrink-0 rounded-full border border-gray-200 object-cover"
+                                                    onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+                                                <div>
+                                                    <p class="text-sm font-semibold text-gray-900">{{ $post->user->name }}</p>
+                                                    <p class="text-xs text-gray-500">
+                                                        {{ $post->community?->name ?? __('Post') }}
+                                                        @if($post->published_at)
+                                                            · {{ $post->published_at->diffForHumans() }}
+                                                        @endif
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            @php
+                                                $visibilityConfig = match($post->visibility) {
+                                                    'public'      => ['bg-green-50 text-green-700 ring-green-200', 'Public'],
+                                                    'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', 'Connections'],
+                                                    default       => ['bg-gray-100 text-gray-600 ring-gray-200', 'Members'],
+                                                };
+                                            @endphp
+                                            <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
+                                                {{ $visibilityConfig[1] }}
                                             </span>
                                         </div>
 
-                                        <h4 class="mt-3 text-lg font-semibold text-gray-900">{{ $post->title }}</h4>
-                                        <p class="mt-2 text-sm leading-6 text-gray-700">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_markdown), 200) }}</p>
+                                        @if($post->title)
+                                            <h4 class="mt-3 text-base font-semibold text-gray-900">{{ $post->title }}</h4>
+                                        @endif
+                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 200) }}</p>
+
                                         @if($post->flairs->count() > 0)
-                                            <div class="mt-3 flex flex-wrap gap-2">
+                                            <div class="mt-3 flex flex-wrap gap-1.5">
                                                 @foreach($post->flairs as $flair)
-                                                    <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                                                        <span class="inline-block h-1.5 w-1.5 rounded-full" style="background-color: {{ $flair->color ?? '#9ca3af' }}"></span>
+                                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                                        style="background-color: {{ $flair->color ? $flair->color . '20' : '#f3f4f6' }}; color: {{ $flair->color ?? '#374151' }}; border: 1px solid {{ $flair->color ?? '#e5e7eb' }};">
+                                                        @if($flair->icon)<span>{{ $flair->icon }}</span>@endif
                                                         {{ $flair->name }}
                                                     </span>
                                                 @endforeach
@@ -222,36 +260,38 @@
 
                                     <!-- Post Media -->
                                     @if($post->media->count() > 0)
-                                        <div class="relative h-40 overflow-hidden bg-gray-100">
-                                            <img src="/storage/{{ $post->media->first()->file_path }}" 
-                                                alt="{{ $post->media->first()->alt_text ?? 'Post image' }}"
+                                        <div class="relative h-48 overflow-hidden bg-gray-100">
+                                            <img src="/storage/{{ $post->media->first()->file_path }}"
+                                                alt="Post image"
                                                 class="h-full w-full object-cover">
                                             @if($post->media->count() > 1)
-                                                <div class="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs font-medium text-white">
-                                                    +{{ $post->media->count() - 1 }}
+                                                <div class="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white">
+                                                    +{{ $post->media->count() - 1 }} more
                                                 </div>
                                             @endif
                                         </div>
                                     @endif
 
                                     <!-- Post Footer -->
-                                    <div class="flex items-center justify-between gap-2 border-t border-gray-100 px-5 py-3 text-xs text-gray-600">
-                                        <div class="flex gap-4">
-                                            <button type="button" @click.stop="toggleLike()" :class="isLiked ? 'text-red-600' : 'text-gray-600'"
-                                                class="flex items-center gap-1 font-medium hover:text-red-600 transition">
+                                    <div class="border-t border-gray-100 px-2 py-1">
+                                        <div class="flex">
+                                            <button type="button" @click.stop="toggleLike()"
+                                                :disabled="isLikingLoading"
+                                                :class="{ 'text-red-700': isLiked, 'text-gray-600': !isLiked, 'opacity-60': isLikingLoading }"
+                                                class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition hover:bg-gray-50">
                                                 <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                                                 </svg>
-                                                <span x-text="likeCount"></span>
+                                                <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
                                             </button>
-                                            <span class="flex items-center gap-1">
+                                            <button type="button" @click.stop="openPostModal($event)"
+                                                class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
                                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
                                                 </svg>
-                                                <span x-text="commentCount"></span>
-                                            </span>
+                                                <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
+                                            </button>
                                         </div>
-                                        <span class="text-gray-400">Click to view</span>
                                     </div>
                                 </article>
                             @endforeach
@@ -337,6 +377,27 @@
     </div>
 
     <script>
+        function postComposer(flairsByCommunity, defaultCommunityId) {
+            return {
+                open: false,
+                communityId: defaultCommunityId ? String(defaultCommunityId) : '',
+                flairsByCommunity,
+
+                get filteredFlairs() {
+                    const global = this.flairsByCommunity['global'] || [];
+                    const community = this.communityId
+                        ? (this.flairsByCommunity[String(this.communityId)] || [])
+                        : [];
+                    const seen = new Set();
+                    return [...global, ...community].filter(f => {
+                        if (seen.has(f.id)) return false;
+                        seen.add(f.id);
+                        return true;
+                    });
+                }
+            };
+        }
+
         function feedManager() {
             return {
                 showModal: false,
@@ -345,15 +406,11 @@
                 commentsUrl: null,
 
                 openPostModal(event, postId, apiUrl, commentsUrl) {
-                    // Prevent default link behavior if any
                     event?.preventDefault();
-                    
                     this.selectedPostId = postId;
                     this.apiUrl = apiUrl;
                     this.commentsUrl = commentsUrl;
                     this.showModal = true;
-                    
-                    // Dispatch event to load post and comments
                     window.dispatchEvent(new CustomEvent('post-modal-opened', {
                         detail: { postId, apiUrl, commentsUrl }
                     }));
@@ -388,10 +445,8 @@
                 },
 
                 openPostModal(event) {
-                    if (event.target.closest('button')) {
-                        return; // Don't open modal when clicking the like button
-                    }
-                    
+                    // Both article and comment button call this; buttons use @click.stop so
+                    // only non-button areas bubble up through the article click handler.
                     const commentsUrl = this.apiUrl.replace('/api', '/comments');
                     window.dispatchEvent(new CustomEvent('post-modal-opened', {
                         detail: { postId: this.postId, apiUrl: this.apiUrl, commentsUrl }
@@ -400,7 +455,6 @@
 
                 toggleLike() {
                     if (this.isLikingLoading) return;
-
                     this.isLikingLoading = true;
 
                     fetch(this.likeUrl, {
@@ -418,7 +472,6 @@
                             this.isLiked = data.liked;
                             this.likeCount = data.like_count;
                             this.isLikingLoading = false;
-
                             window.dispatchEvent(new CustomEvent('post-like-count-changed', {
                                 detail: { postId: this.postId, count: this.likeCount, liked: this.isLiked }
                             }));

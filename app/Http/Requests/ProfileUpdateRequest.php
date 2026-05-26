@@ -21,17 +21,6 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'batch_year' => ['required', 'integer', 'between:2024,' . $currentYear],
-            'program_course' => ['required', Rule::in([
-                'Diploma in Civil Engineering Technology (DCvET)',
-                'Diploma in Computer Engineering Technology (DCET)',
-                'Diploma in Electrical Engineering Technology (DEET)',
-                'Diploma in Electronics Engineering Technology (DECET)',
-                'Diploma in Information Communication Technology (DICT)',
-                'Diploma in Mechanical Engineering Technology (DMET)',
-                'Diploma in Office Management Technology (DOMT)',
-                'Diploma in Railway Engineering Technology (DRET)',
-            ])],
             'email' => [
                 'required',
                 'string',

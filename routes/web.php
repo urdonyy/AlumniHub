@@ -8,7 +8,6 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\MembershipController;
-use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -16,14 +15,14 @@ use App\Http\Controllers\VerificationController;
 use App\Models\Community;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-
 use App\Services\FeedService;
 
 Route::get('/', function (FeedService $feed) {
-    $user = auth()->user();
-    /** @var \App\Models\User $user */
+    /** @var \App\Models\User|null $user */
+    $user = Auth::user();
 
     if ($user) {
         if (empty($user->first_name)) {
@@ -55,12 +54,19 @@ Route::get('/', function (FeedService $feed) {
             ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
             ->get();
 
+        $flairsByCommunity = $availableFlairs
+            ->groupBy(fn($f) => $f->community_id ?? 'global')
+            ->map(fn($group) => $group->values()->map(fn($f) => [
+                'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
+            ]));
+
         return view('dashboard', [
             'posts' => $posts,
             'featuredCommunities' => $featuredCommunities,
             'suggestedPeople' => $suggestedPeople,
             'joinedCommunities' => $joinedCommunities,
             'availableFlairs' => $availableFlairs,
+            'flairsByCommunity' => $flairsByCommunity,
         ]);
     }
 
@@ -99,12 +105,19 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
         ->get();
 
+    $flairsByCommunity = $availableFlairs
+        ->groupBy(fn($f) => $f->community_id ?? 'global')
+        ->map(fn($group) => $group->values()->map(fn($f) => [
+            'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
+        ]));
+
     return view('dashboard', [
         'posts' => $posts,
         'featuredCommunities' => $featuredCommunities,
         'suggestedPeople' => $suggestedPeople,
         'joinedCommunities' => $joinedCommunities,
         'availableFlairs' => $availableFlairs,
+        'flairsByCommunity' => $flairsByCommunity,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

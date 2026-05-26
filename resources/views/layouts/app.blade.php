@@ -32,6 +32,30 @@
             </header>
         @endisset
 
+        <!-- Flash messages -->
+        @if(session('success'))
+            <div x-data="{ show: true }" x-show="show" x-transition.opacity
+                x-init="setTimeout(() => show = false, 4000)"
+                class="fixed bottom-5 right-5 z-[200] flex items-center gap-3 rounded-xl border border-green-200 bg-green-50 px-5 py-3 text-sm font-medium text-green-800 shadow-lg">
+                <svg class="h-4 w-4 shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                {{ session('success') }}
+                <button @click="show = false" class="ml-1 text-green-600 hover:text-green-800" aria-label="Dismiss">×</button>
+            </div>
+        @endif
+        @if(session('error'))
+            <div x-data="{ show: true }" x-show="show" x-transition.opacity
+                x-init="setTimeout(() => show = false, 5000)"
+                class="fixed bottom-5 right-5 z-[200] flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-medium text-red-800 shadow-lg">
+                <svg class="h-4 w-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {{ session('error') }}
+                <button @click="show = false" class="ml-1 text-red-600 hover:text-red-800" aria-label="Dismiss">×</button>
+            </div>
+        @endif
+
         <!-- Page Content -->
         <main>
             {{ $slot }}

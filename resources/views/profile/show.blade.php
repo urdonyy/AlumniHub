@@ -331,10 +331,9 @@
                                 @csrf
                                 @method('patch')
 
+                                <input type="hidden" name="redirect_to" value="profile_show" />
                                 <input type="hidden" name="first_name" value="{{ old('first_name', $profileUser->first_name) }}" />
                                 <input type="hidden" name="last_name" value="{{ old('last_name', $profileUser->last_name) }}" />
-                                <input type="hidden" name="batch_year" value="{{ old('batch_year', $profileUser->batch_year) }}" />
-                                <input type="hidden" name="program_course" value="{{ old('program_course', $profileUser->program_course) }}" />
                                 <input type="hidden" name="email" value="{{ old('email', $profileUser->email) }}" />
                                 <input type="hidden" name="skills" value="{{ old('skills', $profileUser->skills) }}" />
 

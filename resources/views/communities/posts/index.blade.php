@@ -39,43 +39,48 @@
             <div x-show="openComposer" x-transition.opacity @keydown.escape.window="openComposer = false"
                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" style="display: none;">
                 <div @click.away="openComposer = false"
-                    class="w-full max-w-2xl rounded-2xl border border-gray-700 bg-gray-900 text-gray-100 shadow-2xl">
-                    <div class="flex items-center justify-between border-b border-gray-700 px-5 py-4">
-                        <h3 class="text-xl font-semibold">Create post</h3>
+                    class="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                    <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Create post</h3>
                         <button type="button" @click="openComposer = false"
-                            class="h-9 w-9 rounded-full bg-gray-700 text-lg leading-none hover:bg-gray-600">
+                            class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xl leading-none text-gray-600 hover:bg-gray-200">
                             ×
                         </button>
                     </div>
 
                     <form method="post" action="{{ route('communities.posts.store', $community) }}"
-                        enctype="multipart/form-data" class="space-y-4 px-5 py-5">
+                        enctype="multipart/form-data" class="max-h-[80vh] overflow-y-auto space-y-4 px-5 py-5">
                         @csrf
 
-                        <div>
-                            <p class="text-sm text-gray-300">Posting to {{ $community->name }}</p>
-                        </div>
+                        <p class="text-sm text-gray-500">Posting to <span class="font-medium text-gray-900">{{ $community->name }}</span></p>
 
                         <div>
                             <input type="text" name="title" value="{{ old('title') }}"
-                                class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
-                                placeholder="Title (optional)">
+                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-900 focus:ring-red-900"
+                                placeholder="Post title (optional)">
                         </div>
 
                         <div>
-                            <textarea name="body_markdown" rows="7" required
-                                class="w-full rounded-lg border border-gray-700 bg-gray-800 text-gray-100 placeholder:text-gray-400 focus:border-blue-500 focus:ring-blue-500"
+                            <textarea name="body_markdown" rows="6" required
+                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-900 focus:ring-red-900"
                                 placeholder="What's on your mind, {{ auth()->user()->name }}?">{{ old('body_markdown') }}</textarea>
                         </div>
 
+                        @if(!empty($flairs) && $flairs->count() > 0)
+                            <div>
+                                <label class="mb-2 block text-sm font-medium text-gray-700">Flair tag</label>
+                                <x-flair-selector :flairs="$flairs" :selected="old('flairs', [])" />
+                            </div>
+                        @endif
+
                         <div>
-                            <label class="mb-1 block text-sm text-gray-300">Add images</label>
+                            <label class="mb-1 block text-sm font-medium text-gray-700">Add images</label>
                             <input type="file" name="attachments[]" multiple accept="image/*"
-                                class="block w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-200 file:mr-4 file:rounded-md file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white hover:file:bg-blue-500">
+                                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-800">
                         </div>
 
                         <button type="submit"
-                            class="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-500">
+                            class="w-full rounded-lg bg-red-900 px-4 py-3 font-semibold text-white transition hover:bg-red-800">
                             Post
                         </button>
                     </form>
