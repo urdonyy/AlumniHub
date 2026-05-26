@@ -5,12 +5,22 @@ namespace App\Http\Controllers;
 use App\Models\Like;
 use App\Models\Post;
 use App\Notifications\PostLikedNotification;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class PostLikeController extends Controller
 {
     use AuthorizesRequests;
+
+    private function syncPostLikeCount(Post $post): void
+    {
+        $post->like_count = Like::query()
+            ->where('post_id', $post->id)
+            ->count();
+        $post->save();
+        $post->refresh();
+    }
     /**
      * Toggle a like on a post.
      */
@@ -31,19 +41,27 @@ class PostLikeController extends Controller
         if ($like) {
             // Unlike the post
             $like->delete();
-            $postModel->decrement('like_count');
             $liked = false;
         } else {
             // Like the post
-            Like::create([
-                'post_id' => $postModel->id,
-                'user_id' => $user->id,
-            ]);
-            $postModel->increment('like_count');
+            $createdLike = false;
+            try {
+                Like::create([
+                    'post_id' => $postModel->id,
+                    'user_id' => $user->id,
+                ]);
+                $createdLike = true;
+            } catch (QueryException $e) {
+                // In rare race conditions, the unique constraint may be hit; treat as already-liked.
+                if ((string) $e->getCode() !== '23000') {
+                    throw $e;
+                }
+            }
+
             $liked = true;
 
             // Notify the post author (skip notifying self)
-            if ((int) $postModel->user_id !== (int) $user->id) {
+            if ($createdLike && (int) $postModel->user_id !== (int) $user->id) {
                 $postModel->loadMissing('user');
                 $postModel->user->notify(new PostLikedNotification(
                     post: $postModel,
@@ -51,6 +69,8 @@ class PostLikeController extends Controller
                 ));
             }
         }
+
+        $this->syncPostLikeCount($postModel);
 
         return response()->json([
             'success' => true,

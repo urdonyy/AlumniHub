@@ -12,6 +12,14 @@ class CommentController extends Controller
 {
     use AuthorizesRequests;
 
+    private function syncPostCommentCount(Post $post): void
+    {
+        $post->comment_count = Comment::query()
+            ->where('post_id', $post->id)
+            ->count();
+        $post->save();
+    }
+
     /**
      * Store a newly created comment in storage.
      */
@@ -53,6 +61,8 @@ class CommentController extends Controller
         ]);
 
         $comment->load('user');
+
+        $this->syncPostCommentCount($postModel);
 
         // Notify the post author (skip notifying self)
         if ((int) $postModel->user_id !== (int) $request->user()->id) {
@@ -97,6 +107,8 @@ class CommentController extends Controller
 
         $commentModel->delete();
 
+        $this->syncPostCommentCount($postModel);
+
         return response()->json(['success' => true]);
     }
 
@@ -119,6 +131,7 @@ class CommentController extends Controller
                 'body_html' => $postModel->body_html,
                 'visibility' => $postModel->visibility,
                 'like_count' => $postModel->like_count,
+                'comment_count' => $postModel->comment_count,
                 'created_at' => $postModel->created_at->diffForHumans(),
                 'user' => [
                     'id' => $postModel->user->id,

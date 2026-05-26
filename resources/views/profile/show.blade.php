@@ -289,16 +289,161 @@
                     </article>
 
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-700">{{ __('Activity') }}
-                        </h3>
-                        <ul class="mt-3 space-y-3 text-sm text-gray-700">
-                            <li class="rounded-lg border border-[#FFC107] bg-[#FFC107] px-3 py-2 text-red-900">
-                                {{ __('Recent interactions will appear here.') }}
-                            </li>
-                            <li class="rounded-lg border border-[#FFC107] bg-[#FFC107] px-3 py-2 text-red-900">
-                                {{ __('Saved content and milestones are coming in a future update.') }}
-                            </li>
-                        </ul>
+                        @php
+                            $activityPostsForCarousel = $activityPosts
+                                ->where('user_id', $profileUser->id)
+                                ->values();
+
+                            $activityPostsCounts = $activityPostsForCarousel
+                                ->map(fn($p) => [
+                                    'id' => $p->id,
+                                    'like_count' => (int) ($p->likes_count ?? $p->like_count),
+                                    'comment_count' => (int) ($p->comments_count ?? $p->comment_count),
+                                ])
+                                ->values();
+                        @endphp
+
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-700">{{ __('Activity Posts') }}</h3>
+                            <span class="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-700">
+                                {{ $activityPostsForCarousel->count() }}
+                            </span>
+                        </div>
+
+                        @if ($activityPostsForCarousel->isEmpty())
+                            <div class="mt-4 rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600">
+                                {{ __('No posts yet.') }}
+                            </div>
+                        @else
+                            <div class="mt-4" x-data="postCardsCarousel(@js($activityPostsCounts))">
+                                <div class="relative overflow-hidden">
+                                    <div class="flex transition-transform duration-300 ease-out"
+                                        :style="`transform: translateX(-${activeIndex * 100}%);`">
+                                        @foreach ($activityPostsForCarousel as $post)
+                                            @php
+                                                $visibilityConfig = match($post->visibility) {
+                                                    'public'      => ['bg-green-50 text-green-700 ring-green-200', __('Public')],
+                                                    'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', __('Connections')],
+                                                    default       => ['bg-gray-100 text-gray-600 ring-gray-200', __('Members')],
+                                                };
+                                            @endphp
+                                            <div class="w-full shrink-0">
+                                                <article
+                                                    class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md"
+                                                    @click="openPostModal($event, {{ $post->id }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post]) }}')">
+
+                                                    <!-- Top section -->
+                                                    <div class="p-4 pb-3">
+                                                        <div class="flex items-start justify-between gap-3">
+                                                            <div class="flex items-center gap-3 min-w-0">
+                                                                <img src="{{ $post->user->profileAvatarUrl() }}"
+                                                                    alt="{{ $post->user->name }}"
+                                                                    class="h-10 w-10 shrink-0 rounded-full border border-gray-200 object-cover"
+                                                                    onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+                                                                <div class="min-w-0">
+                                                                    <p class="truncate text-sm font-semibold text-gray-900">{{ $post->user->name }}</p>
+                                                                    <p class="truncate text-xs text-gray-500">
+                                                                        <span class="truncate">{{ $post->community?->name ?? __('Post') }}</span>
+                                                                        <span class="mx-1">·</span>
+                                                                        <span>{{ $post->published_at?->diffForHumans() ?? $post->created_at->diffForHumans() }}</span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <span
+                                                                class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
+                                                                {{ $visibilityConfig[1] }}
+                                                            </span>
+                                                        </div>
+
+                                                        @if ($post->flairs->count() > 0)
+                                                            <div class="mt-3 flex flex-wrap gap-1.5">
+                                                                @foreach ($post->flairs->take(4) as $flair)
+                                                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                                                        style="background-color: {{ $flair->color ? $flair->color . '20' : '#f3f4f6' }}; color: {{ $flair->color ?? '#374151' }}; border: 1px solid {{ $flair->color ?? '#e5e7eb' }};">
+                                                                        @if ($flair->icon)
+                                                                            <span>{{ $flair->icon }}</span>
+                                                                        @endif
+                                                                        {{ $flair->name }}
+                                                                    </span>
+                                                                @endforeach
+                                                                @if ($post->flairs->count() > 4)
+                                                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold text-gray-600">
+                                                                        +{{ $post->flairs->count() - 4 }}
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                        @endif
+                                                    </div>
+
+                                                    <!-- Lower section -->
+                                                    <div class="px-4 pb-4">
+                                                        @if ($post->title)
+                                                            <h4 class="text-base font-semibold text-gray-900 line-clamp-2">{{ $post->title }}</h4>
+                                                        @endif
+
+                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">
+                                                            {{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 220) }}
+                                                        </p>
+
+                                                        @if ($post->media->count() > 0)
+                                                            <div class="mt-4 grid grid-cols-3 gap-2">
+                                                                @foreach ($post->media->take(3) as $idx => $media)
+                                                                    <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-100">
+                                                                        <img src="/storage/{{ $media->file_path }}" alt="{{ __('Post image') }}"
+                                                                            class="h-full w-full object-cover" />
+                                                                        @if ($idx === 2 && $post->media->count() > 3)
+                                                                            <div class="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white">
+                                                                                +{{ $post->media->count() - 3 }}
+                                                                            </div>
+                                                                        @endif
+                                                                    </div>
+                                                                @endforeach
+                                                            </div>
+                                                        @endif
+
+                                                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                                </svg>
+                                                                <span x-text="getLikeCount({{ $post->id }}, {{ (int) ($post->likes_count ?? $post->like_count) }})"></span>
+                                                            </span>
+                                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
+                                                                </svg>
+                                                                <span x-text="getCommentCount({{ $post->id }}, {{ (int) ($post->comments_count ?? $post->comment_count) }})"></span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    <!-- Carousel controls (same interaction style as modal media controls) -->
+                                    <template x-if="count > 1">
+                                        <div>
+                                            <button type="button" @click="prev()"
+                                                class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-gray-900/10 px-3 py-2 text-gray-900 hover:bg-gray-900/20"
+                                                aria-label="{{ __('Previous post') }}">
+                                                ‹
+                                            </button>
+                                            <button type="button" @click="next()"
+                                                class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-gray-900/10 px-3 py-2 text-gray-900 hover:bg-gray-900/20"
+                                                aria-label="{{ __('Next post') }}">
+                                                ›
+                                            </button>
+                                            <div
+                                                class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-gray-900/60 px-3 py-1 text-xs text-white">
+                                                <span x-text="activeIndex + 1"></span>/<span x-text="count"></span>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        @endif
                     </article>
                 </section>
 
@@ -422,6 +567,69 @@
     </div>
 
     <script>
+        function postCardsCarousel(initialPosts) {
+            const items = Array.isArray(initialPosts) ? initialPosts : [];
+            const initialById = {};
+            for (const item of items) {
+                if (!item || typeof item.id !== 'number') continue;
+                initialById[item.id] = {
+                    like_count: Number(item.like_count) || 0,
+                    comment_count: Number(item.comment_count) || 0,
+                };
+            }
+
+            return {
+                count: items.length,
+                activeIndex: 0,
+                countsByPostId: initialById,
+
+                init() {
+                    window.addEventListener('post-like-count-changed', (event) => {
+                        const postId = event?.detail?.postId ?? null;
+                        const count = event?.detail?.count;
+                        if (typeof postId !== 'number' || typeof count !== 'number') return;
+                        if (!this.countsByPostId[postId]) this.countsByPostId[postId] = { like_count: 0, comment_count: 0 };
+                        this.countsByPostId[postId].like_count = count;
+                    });
+
+                    window.addEventListener('post-comment-count-changed', (event) => {
+                        const postId = event?.detail?.postId ?? null;
+                        const count = event?.detail?.count;
+                        if (typeof postId !== 'number' || typeof count !== 'number') return;
+                        if (!this.countsByPostId[postId]) this.countsByPostId[postId] = { like_count: 0, comment_count: 0 };
+                        this.countsByPostId[postId].comment_count = count;
+                    });
+                },
+
+                getLikeCount(postId, fallback = 0) {
+                    const entry = this.countsByPostId?.[postId];
+                    return typeof entry?.like_count === 'number' ? entry.like_count : fallback;
+                },
+
+                getCommentCount(postId, fallback = 0) {
+                    const entry = this.countsByPostId?.[postId];
+                    return typeof entry?.comment_count === 'number' ? entry.comment_count : fallback;
+                },
+
+                next() {
+                    if (this.count <= 1) return;
+                    this.activeIndex = (this.activeIndex + 1) % this.count;
+                },
+
+                prev() {
+                    if (this.count <= 1) return;
+                    this.activeIndex = (this.activeIndex - 1 + this.count) % this.count;
+                },
+
+                openPostModal(event, postId, apiUrl, commentsUrl) {
+                    event?.preventDefault?.();
+                    window.dispatchEvent(new CustomEvent('post-modal-opened', {
+                        detail: { postId, apiUrl, commentsUrl }
+                    }));
+                },
+            };
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const profileMediaModal = document.getElementById('profile-media-modal');
             const openProfileMediaButtons = document.querySelectorAll('[data-profile-media-open]');
@@ -604,6 +812,8 @@
             });
         });
     </script>
+
+    <x-post-detail-modal />
 
     <x-footer />
 </x-app-layout>
