@@ -97,7 +97,7 @@
                         </section>
                     </aside>
 
-                    <section class="space-y-6 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
+                    <section class="space-y-3 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
                         @php
                             /** @var \Illuminate\Support\Collection<int, \App\Models\Community> $joinedCommunitiesCollection */
                             $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
@@ -436,7 +436,17 @@
                                         @if($post->title)
                                             <h4 class="mt-2 text-base font-semibold text-gray-900">{{ $post->title }}</h4>
                                         @endif
-                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 200) }}</p>
+                                        <p class="mt-2 text-sm leading-6 text-gray-700"
+                                            x-ref="postBody"
+                                            :class="isBodyExpanded ? '' : 'line-clamp-3'">
+                                            {{ strip_tags($post->body_html ?? $post->body_markdown) }}
+                                        </p>
+                                        <button type="button"
+                                            x-show="isBodyOverflowing"
+                                            @click.stop="toggleBody()"
+                                            class="mt-1 text-sm font-semibold text-red-900 hover:underline">
+                                            <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
+                                        </button>
                                     </div>
 
                                     <!-- Post Media -->
@@ -713,6 +723,8 @@
                 likeUrl,
                 isLiked: isInitiallyLiked,
                 isLikingLoading: false,
+                isBodyExpanded: false,
+                isBodyOverflowing: false,
 
                 init() {
                     window.addEventListener('post-comment-count-changed', (event) => {
@@ -721,6 +733,23 @@
                             this.commentCount = event.detail.count;
                         }
                     });
+
+                    this.refreshBodyOverflow();
+                },
+
+                refreshBodyOverflow() {
+                    this.isBodyOverflowing = false;
+                    if (this.isBodyExpanded) return;
+                    this.$nextTick(() => {
+                        const el = this.$refs?.postBody;
+                        if (!el) return;
+                        this.isBodyOverflowing = el.scrollHeight > el.clientHeight + 2;
+                    });
+                },
+
+                toggleBody() {
+                    this.isBodyExpanded = !this.isBodyExpanded;
+                    if (!this.isBodyExpanded) this.refreshBodyOverflow();
                 },
 
                 openPostModal(event) {
