@@ -251,11 +251,6 @@
                                             </span>
                                         </div>
 
-                                        @if($post->title)
-                                            <h4 class="mt-3 text-base font-semibold text-gray-900">{{ $post->title }}</h4>
-                                        @endif
-                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 200) }}</p>
-
                                         @if($post->flairs->count() > 0)
                                             <div class="mt-3 flex flex-wrap gap-1.5">
                                                 @foreach($post->flairs as $flair)
@@ -267,14 +262,19 @@
                                                 @endforeach
                                             </div>
                                         @endif
+
+                                        @if($post->title)
+                                            <h4 class="mt-2 text-base font-semibold text-gray-900">{{ $post->title }}</h4>
+                                        @endif
+                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">{{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 200) }}</p>
                                     </div>
 
                                     <!-- Post Media -->
                                     @if($post->media->count() > 0)
-                                        <div class="relative h-48 overflow-hidden bg-gray-100">
+                                        <div class="relative overflow-hidden bg-gray-50">
                                             <img src="/storage/{{ $post->media->first()->file_path }}"
                                                 alt="Post image"
-                                                class="h-full w-full object-cover">
+                                                class="w-full max-h-80 object-contain">
                                             @if($post->media->count() > 1)
                                                 <div class="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white">
                                                     +{{ $post->media->count() - 1 }} more
