@@ -123,6 +123,9 @@ class CommentController extends Controller
                 'user' => [
                     'id' => $postModel->user->id,
                     'name' => $postModel->user->name,
+                    'batch_year' => $postModel->user->batch_year,
+                    'program_course' => $postModel->user->program_course,
+                    'avatar_path' => $postModel->user->avatar_path,
                 ],
                 'community' => [
                     'id' => $postModel->community->id,

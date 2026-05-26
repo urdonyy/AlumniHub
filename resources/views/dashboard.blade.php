@@ -220,7 +220,18 @@
                                                     onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
                                                 <div>
                                                     <p class="text-sm font-semibold text-gray-900">{{ $post->user->name }}</p>
+                                                    @php
+                                                        $batchLabel = $post->user->batch_year ? 'Batch ' . $post->user->batch_year : null;
+                                                        $programAbbr = null;
+                                                        if ($post->user->program_course && preg_match('/\(([^)]+)\)$/', $post->user->program_course, $m)) {
+                                                            $programAbbr = $m[1];
+                                                        }
+                                                    @endphp
                                                     <p class="text-xs text-gray-500">
+                                                        @if($batchLabel || $programAbbr)
+                                                            {{ implode(' · ', array_filter([$batchLabel, $programAbbr])) }}
+                                                            <span class="mx-1">·</span>
+                                                        @endif
                                                         {{ $post->community?->name ?? __('Post') }}
                                                         @if($post->published_at)
                                                             · {{ $post->published_at->diffForHumans() }}
