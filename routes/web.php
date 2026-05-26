@@ -23,9 +23,13 @@ use App\Services\FeedService;
 
 Route::get('/', function (FeedService $feed) {
     $user = auth()->user();
+    /** @var \App\Models\User $user */
 
     if ($user) {
-        /** @var \App\Models\User $user */
+        if (empty($user->first_name)) {
+            return redirect()->route('register.complete');
+        }
+
         $posts = $feed->getUserFeed($user, 10);
 
         $featuredCommunities = Community::query()
@@ -66,6 +70,10 @@ Route::get('/', function (FeedService $feed) {
 Route::get('/dashboard', function (Request $request, FeedService $feed) {
     $user = $request->user();
     /** @var \App\Models\User $user */
+
+    if (empty($user->first_name)) {
+        return redirect()->route('register.complete');
+    }
 
     $posts = $feed->getUserFeed($user, 10);
 
