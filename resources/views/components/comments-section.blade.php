@@ -21,20 +21,18 @@
     </template>
 
     <!-- Comment form -->
-    <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <textarea x-model="newComment.body" placeholder="Add a comment..." rows="3"
-            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-        </textarea>
-        <div class="mt-3 flex justify-end gap-2">
-            <button type="button" @click="newComment.body = ''"
-                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-                Cancel
-            </button>
-            <button type="button" @click="submitComment()" :disabled="!newComment.body.trim() || isSubmitting"
-                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:bg-gray-300">
-                Post Comment
-            </button>
-        </div>
+    <textarea x-model="newComment.body" placeholder="Add a comment..." rows="3"
+        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
+    </textarea>
+    <div class="mt-3 flex justify-end gap-2">
+        <button type="button" @click="newComment.body = ''"
+            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+            Cancel
+        </button>
+        <button type="button" @click="submitComment()" :disabled="!newComment.body.trim() || isSubmitting"
+            class="rounded-lg bg-red-900 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:bg-gray-300">
+            Post Comment
+        </button>
     </div>
 
     <!-- Comments list -->
@@ -52,7 +50,7 @@
                                 <span x-text="comment.created_at"></span>
                             </p>
                         </div>
-                        <p class="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+                        <p class="flex w-full text-left mt-2 text-sm text-gray-700 whitespace-pre-wrap">
                             <span x-text="comment.body"></span>
                         </p>
 
@@ -74,7 +72,7 @@
                         <template x-if="replyingTo === comment.id">
                             <div class="mt-4 space-y-3 rounded-lg bg-gray-50 p-3">
                                 <textarea x-model="replyComment.body" placeholder="Write a reply..." rows="2"
-                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
                                 </textarea>
                                 <div class="flex justify-end gap-2">
                                     <button type="button" @click="toggleReplyForm(null)"
@@ -83,7 +81,7 @@
                                     </button>
                                     <button type="button" @click="submitReply(comment.id)"
                                         :disabled="!replyComment.body.trim() || isSubmitting"
-                                        class="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-500 disabled:bg-gray-300">
+                                        class="rounded-lg bg-red-900 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:bg-gray-300">
                                         Reply
                                     </button>
                                 </div>
