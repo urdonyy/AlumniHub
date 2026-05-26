@@ -59,7 +59,7 @@
                 @endphp
 
                 <div class="grid gap-6 lg:grid-cols-12">
-                    <aside class="space-y-6 lg:col-span-3">
+                    <aside class="space-y-3 lg:col-span-3">
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Profile') }}</p>
                             <h3 class="mt-2 text-lg font-semibold text-gray-900">{{ auth()->user()->name }}</h3>
@@ -69,7 +69,7 @@
                                 {{ auth()->user()->accountStatusLabel() }}
                             </div>
                             <a href="{{ route('profiles.show', auth()->id()) }}"
-                                class="mt-4 inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700">
+                                class="mt-4 inline-flex items-center px-3 py-1 sm:px-5 sm:py-1.5 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150">
                                 {{ __('Open Profile') }}
                             </a>
                         </section>
@@ -274,7 +274,7 @@
                         <x-post-detail-modal />
                     </section>
 
-                    <aside class="space-y-6 lg:col-span-3">
+                    <aside class="space-y-3 lg:col-span-3">
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <div class="flex items-center justify-between gap-2">
                                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
