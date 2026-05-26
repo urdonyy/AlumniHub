@@ -8,19 +8,21 @@
     x-transition:leave="transition ease-in duration-150"
     x-transition:leave-start="opacity-100"
     x-transition:leave-end="opacity-0"
-    class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+    class="fixed inset-0 z-[500] flex items-end sm:items-center justify-center"
     style="display: none;">
 
     {{-- Backdrop --}}
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" @click="closeModal()"></div>
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-[2px]" @click="closeModal()"></div>
 
     {{-- Modal panel --}}
-    <div class="relative z-10 flex w-full max-w-xl flex-col bg-white shadow-2xl
+    <div class="relative z-10 flex w-full max-w-xl flex-col bg-white shadow-2xl overflow-hidden
                 h-[92dvh] sm:h-[88vh] sm:rounded-2xl sm:border sm:border-gray-200
-                rounded-t-2xl">
+                rounded-t-2xl"
+        :class="(post?.media?.length ?? 0) > 0 ? 'sm:max-w-5xl' : ''">
 
         {{-- ── Header ── --}}
-        <div class="shrink-0 border-b border-gray-100 px-4 py-3">
+        <div class="shrink-0 border-b border-gray-100 px-4 py-3"
+            :class="(post?.media?.length ?? 0) > 0 ? 'sm:hidden' : ''">
             {{-- Loading skeleton --}}
             <template x-if="isLoading">
                 <div class="flex items-center gap-3 animate-pulse">
@@ -72,7 +74,8 @@
         </div>
 
         {{-- ── Scrollable body ── --}}
-        <div class="flex-1 min-h-0 overflow-y-auto" x-ref="scrollBody">
+        <div class="flex-1 min-h-0 overflow-y-auto" x-ref="scrollBody"
+            :class="(post?.media?.length ?? 0) > 0 ? 'sm:overflow-hidden' : ''">
 
             {{-- Loading state --}}
             <template x-if="isLoading">
@@ -94,9 +97,116 @@
 
             {{-- Post content --}}
             <template x-if="!isLoading && post">
+<<<<<<< frontend
+                <div class="sm:min-h-0" :class="(post.media && post.media.length > 0) ? 'sm:flex sm:items-stretch sm:h-full sm:min-h-0' : ''">
+
+                    {{-- Media carousel (mobile: above content) --}}
+                    <template x-if="post.media && post.media.length > 0">
+                        <div class="sm:hidden px-4 pt-4">
+                            <div class="relative overflow-hidden rounded-xl bg-gray-100">
+                                <img :src="`/storage/${post.media[activeMediaIndex].path}`"
+                                    :alt="post.media[activeMediaIndex].alt_text || 'Post image'"
+                                    class="w-full aspect-[4/5] object-cover cursor-zoom-in"
+                                    @click="lightboxOpen = true" />
+
+                                <template x-if="post.media.length > 1">
+                                    <div>
+                                        <button type="button" @click.stop="prevMedia()"
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-gray-900/60 px-3 py-2 text-white hover:bg-gray-900/20"
+                                            aria-label="Previous image">
+                                            ‹
+                                        </button>
+                                        <button type="button" @click.stop="nextMedia()"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-gray-900/60 px-3 py-2 text-white hover:bg-gray-900/20"
+                                            aria-label="Next image">
+                                            ›
+                                        </button>
+                                        <div
+                                            class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-gray-900/60 px-3 py-1 text-xs text-white">
+                                            <span x-text="activeMediaIndex + 1"></span>/<span x-text="post.media.length"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    {{-- Media carousel (desktop: fixed left column, centered) --}}
+                    <template x-if="post.media && post.media.length > 0">
+                        <div class="hidden sm:flex sm:w-1/2 sm:min-h-0 items-center justify-center bg-gray-900 px-4 py-4">
+                            <div class="relative w-full flex items-center justify-center min-h-[60vh]">
+                                <img :src="`/storage/${post.media[activeMediaIndex].path}`"
+                                    :alt="post.media[activeMediaIndex].alt_text || 'Post image'"
+                                    class="max-h-[60vh] max-w-full object-contain rounded-xl cursor-zoom-in"
+                                    @click="lightboxOpen = true" />
+
+                                <template x-if="post.media.length > 1">
+                                    <div>
+                                        <button type="button" @click.stop="prevMedia()"
+                                            class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/50 px-3 py-2 text-white hover:bg-white/20"
+                                            aria-label="Previous image">
+                                            ‹
+                                        </button>
+                                        <button type="button" @click.stop="nextMedia()"
+                                            class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/50 px-3 py-2 text-white hover:bg-white/20"
+                                            aria-label="Next image">
+                                            ›
+                                        </button>
+                                        <div
+                                            class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
+                                            <span x-text="activeMediaIndex + 1"></span>/<span x-text="post.media.length"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    {{-- Right column: existing content (unchanged) --}}
+                    <div :class="(post.media && post.media.length > 0) ? 'sm:w-1/2 sm:min-h-0 sm:flex sm:flex-col' : ''">
+
+                        {{-- Right column sticky header (only for media posts on desktop) --}}
+                        <template x-if="post.media && post.media.length > 0">
+                            <div class="hidden sm:block shrink-0 sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3">
+                                <div class="flex items-start gap-3">
+                                    <img :src="post.user?.avatar_path ? `/storage/${post.user.avatar_path}` : '{{ asset('images/default-avatar.svg') }}'"
+                                        :alt="post.user?.name"
+                                        class="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover"
+                                        onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-bold text-gray-900 leading-snug" x-text="post.user?.name"></p>
+                                        <p class="text-xs text-gray-500 leading-snug mt-0.5" x-text="authorMeta"></p>
+                                        <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                            <span class="text-xs text-gray-400" x-text="post.created_at"></span>
+                                            <span class="text-gray-300">·</span>
+                                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
+                                                :class="{
+                                                    'bg-green-50 text-green-700 ring-green-200': post.visibility === 'public',
+                                                    'bg-blue-50 text-blue-700 ring-blue-200': post.visibility === 'connections',
+                                                    'bg-gray-100 text-gray-600 ring-gray-200': post.visibility === 'members'
+                                                }"
+                                                x-text="post.visibility === 'public' ? 'Public' : post.visibility === 'connections' ? 'Connections' : 'Members'">
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="closeModal()"
+                                        class="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
+                                        aria-label="Close">
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+
+                        <div x-ref="rightScrollBody"
+                            :class="(post.media && post.media.length > 0) ? 'sm:flex-1 sm:min-h-0 sm:overflow-y-auto' : ''">
+                            {{-- Community + Flair badges together --}}
+                            <div class="flex flex-wrap items-center gap-1.5 px-4 pt-4 pb-1">
+=======
                 <div>
                                     {{-- Community + Flair badges together --}}
                     <div class="flex flex-wrap items-center gap-1.5 px-4 pt-4 pb-1">
+>>>>>>> dev
                         <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -132,47 +242,6 @@
                             <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
                         </button>
                     </div>
-
-                    {{-- Media grid --}}
-                    <template x-if="post.media && post.media.length > 0">
-                        <div class="mt-2 px-4">
-                            <div class="overflow-hidden rounded-xl"
-                                :class="{
-                                    'grid grid-cols-1': post.media.length === 1,
-                                    'grid grid-cols-2 gap-1': post.media.length === 2,
-                                    'grid grid-cols-2 gap-1': post.media.length >= 3
-                                }">
-
-                                {{-- Single image --}}
-                                <template x-if="post.media.length === 1">
-                                    <img :src="`/storage/${post.media[0].path}`"
-                                        :alt="post.media[0].alt_text || 'Post image'"
-                                        class="w-full max-h-80 object-cover rounded-xl cursor-zoom-in"
-                                        @click="activeMediaIndex = 0; lightboxOpen = true" />
-                                </template>
-
-                                {{-- Multiple images --}}
-                                <template x-if="post.media.length > 1">
-                                    <div :class="`grid gap-1 ${post.media.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`">
-                                        <template x-for="(image, index) in post.media.slice(0, 4)" :key="image.id">
-                                            <div class="relative cursor-zoom-in"
-                                                @click="activeMediaIndex = index; lightboxOpen = true">
-                                                <img :src="`/storage/${image.path}`"
-                                                    :alt="image.alt_text || 'Post image'"
-                                                    class="w-full object-cover rounded-lg"
-                                                    :class="post.media.length === 2 ? 'h-52' : 'h-36'" />
-                                                <template x-if="index === 3 && post.media.length > 4">
-                                                    <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
-                                                        <span class="text-xl font-bold text-white" x-text="`+${post.media.length - 4}`"></span>
-                                                    </div>
-                                                </template>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
 
                     {{-- Reaction counts --}}
                     <div class="mx-4 mt-3 flex items-center justify-between border-y border-gray-100 py-2 text-xs text-gray-500">
@@ -210,6 +279,8 @@
                     {{-- Comments --}}
                     <div class="px-4 pb-4">
                         <x-comments-section />
+                    </div>
+                        </div>
                     </div>
                 </div>
             </template>
@@ -323,11 +394,14 @@
 
             lockScroll() {
                 this.scrollLockScrollY = window.scrollY;
+                const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.top = `-${this.scrollLockScrollY}px`;
                 document.body.style.left = '0';
                 document.body.style.right = '0';
+                document.body.style.width = '100%';
+                document.body.style.paddingRight = scrollBarWidth > 0 ? `${scrollBarWidth}px` : '';
             },
 
             unlockScroll() {
@@ -336,6 +410,8 @@
                 document.body.style.top = '';
                 document.body.style.left = '';
                 document.body.style.right = '';
+                document.body.style.width = '';
+                document.body.style.paddingRight = '';
                 window.scrollTo(0, this.scrollLockScrollY);
                 this.scrollLockScrollY = 0;
             },
@@ -376,7 +452,12 @@
                         this.isLoading = false;
                         this.$nextTick(() => {
                             this.refreshBodyOverflow();
+<<<<<<< frontend
+                            const scrollEl = this.$refs?.rightScrollBody || this.$refs?.scrollBody;
+                            if (scrollEl) scrollEl.scrollTop = 0;
+=======
                             if (this.$refs.scrollBody) this.$refs.scrollBody.scrollTop = 0;
+>>>>>>> dev
                             window.dispatchEvent(new CustomEvent('post-comments-load', {
                                 detail: { postId, commentsUrl }
                             }));

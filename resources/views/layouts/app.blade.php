@@ -20,7 +20,7 @@
 </head>
 
 <body class="font-sans antialiased">
-    <div class="min-h-screen bg-[#FDFDFC] ">
+    <div class="min-h-screen bg-[#FDFDFC] overflow-x-hidden lg:overflow-x-auto">
         @include('layouts.navigation')
 
         <!-- Page Heading -->
