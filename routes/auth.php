@@ -36,6 +36,12 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    // Complete registration (Step 3 — after email verification)
+    Route::get('register/complete', [RegisteredUserController::class, 'showComplete'])
+        ->name('register.complete');
+    Route::post('register/complete', [RegisteredUserController::class, 'storeComplete'])
+        ->name('register.complete.store');
+
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');
 

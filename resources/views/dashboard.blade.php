@@ -10,6 +10,18 @@
 
     <div>
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            @if (session('status') === 'registration-complete')
+                <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3">
+                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold text-amber-800">Registration submitted — pending admin review</p>
+                        <p class="mt-0.5 text-sm text-amber-700">Your verification document has been received. You'll gain full access once an admin approves your account.</p>
+                    </div>
+                </div>
+            @endif
+
             @if (auth()->user()->canManageCommunities())
                 <div class="grid gap-6 lg:grid-cols-2">
                     <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
