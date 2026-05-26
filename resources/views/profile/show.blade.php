@@ -11,7 +11,7 @@
         </x-slot>
 
         <div class="pb-24">
-            <div class="max-w-5xl mx-auto space-y-6 sm:px-6 lg:px-8">
+            <div class="max-w-5xl mx-auto space-y-6 px-4 sm:px-6 lg:px-8">
                 @php
                     $isOwnProfile = $viewer->is($profileUser);
                     $canSeeCareerDetails = $isOwnProfile || $showFullDetails;
@@ -187,7 +187,7 @@
                 </section>
 
                 <section class="!mt-3 grid gap-3 lg:grid-cols-3">
-                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2">
+                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 max-w-full overflow-hidden">
                         <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-900">{{ __('Career Profile') }}
                         </h3>
 
@@ -288,7 +288,7 @@
                         @endif -->
                     </article>
 
-                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm max-w-full overflow-hidden">
                         @php
                             $activityPostsForCarousel = $activityPosts
                                 ->where('user_id', $profileUser->id)
@@ -316,8 +316,8 @@
                             </div>
                         @else
                             <div class="mt-4" x-data="postCardsCarousel(@js($activityPostsCounts))">
-                                <div class="relative overflow-hidden">
-                                    <div class="flex transition-transform duration-300 ease-out"
+                                    <div class="relative overflow-hidden" style="touch-action: pan-y;">
+                                    <div class="flex transition-transform duration-300 ease-out min-w-0 js-post-cards-track"
                                         :style="`transform: translateX(-${activeIndex * 100}%);`">
                                         @foreach ($activityPostsForCarousel as $post)
                                             @php
@@ -327,7 +327,7 @@
                                                     default       => ['bg-gray-100 text-gray-600 ring-gray-200', __('Members')],
                                                 };
                                             @endphp
-                                            <div class="w-full shrink-0">
+                                            <div class="w-full shrink-0 min-w-0">
                                                 <article
                                                     class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md"
                                                     @click="openPostModal($event, {{ $post->id }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post]) }}')">
@@ -382,16 +382,16 @@
                                                             <h4 class="text-base font-semibold text-gray-900 line-clamp-2">{{ $post->title }}</h4>
                                                         @endif
 
-                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3">
+                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words">
                                                             {{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 220) }}
                                                         </p>
 
-                                                        @if ($post->media->count() > 0)
+                                                            @if ($post->media->count() > 0)
                                                             <div class="mt-4 grid grid-cols-3 gap-2">
                                                                 @foreach ($post->media->take(3) as $idx => $media)
-                                                                    <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-100">
+                                                                    <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 max-h-48">
                                                                         <img src="/storage/{{ $media->file_path }}" alt="{{ __('Post image') }}"
-                                                                            class="h-full w-full object-cover" />
+                                                                            class="h-full w-full object-cover max-h-48" />
                                                                         @if ($idx === 2 && $post->media->count() > 3)
                                                                             <div class="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white">
                                                                                 +{{ $post->media->count() - 3 }}
@@ -599,6 +599,17 @@
                         if (!this.countsByPostId[postId]) this.countsByPostId[postId] = { like_count: 0, comment_count: 0 };
                         this.countsByPostId[postId].comment_count = count;
                     });
+                    // ensure carousel track recalculates transform on resize
+                    const track = this.$el?.querySelector('.js-post-cards-track');
+                    if (track) {
+                        const update = () => {
+                            // force re-apply transform to account for layout changes
+                            track.style.transform = `translateX(-${this.activeIndex * 100}%)`;
+                        };
+                        window.addEventListener('resize', update);
+                        // run once after init
+                        setTimeout(update, 50);
+                    }
                 },
 
                 getLikeCount(postId, fallback = 0) {
