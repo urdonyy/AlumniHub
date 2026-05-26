@@ -92,10 +92,15 @@
                                             </p>
                                             <p class="mt-1 text-xs text-gray-500">
                                                 <span x-text="post.created_at"></span>
+                                                <span class="hidden lg:inline"> · </span>
+                                                <span
+                                                    class="hidden lg:inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                                    <span x-text="post.visibility"></span>
+                                                </span>
                                             </p>
                                         </div>
                                         <span
-                                            class="shrink-0 inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
+                                            class="shrink-0 inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 lg:hidden">
                                             <span x-text="post.visibility"></span>
                                         </span>
                                     </div>
