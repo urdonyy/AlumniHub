@@ -104,7 +104,7 @@
                                                         <span x-text="reply.created_at"></span>
                                                     </p>
                                                 </div>
-                                                <p class="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+                                                <p class="flex w-full text-left mt-2 text-sm text-gray-700 whitespace-pre-wrap">
                                                     <span x-text="reply.body"></span>
                                                 </p>
                                                 <div class="mt-2 flex gap-3 text-xs">
