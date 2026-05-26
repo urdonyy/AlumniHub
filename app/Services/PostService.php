@@ -13,16 +13,16 @@ class PostService
     /**
      * Create a new post with attachments and flairs.
      */
-    public function createPost(Community $community, User $user, array $data): Post
+    public function createPost(?Community $community, User $user, array $data): Post
     {
         // Create the post
         $post = new Post([
-            'community_id' => $community->id,
+            'community_id' => $community?->id,
             'user_id' => $user->id,
             'title' => $data['title'] ?? null,
             'body_markdown' => $data['body_markdown'],
             'status' => $data['status'] ?? 'published',
-            'visibility' => $data['visibility'] ?? 'members',
+            'visibility' => $data['visibility'] ?? ($community ? 'members' : 'connections'),
             'published_at' => now(),
         ]);
 
@@ -76,11 +76,12 @@ class PostService
         foreach ($files as $file) {
             $order++;
 
-            // Store file in storage/app/public/posts/{community_id}/{post_id}/
-            $path = $file->store(
-                "posts/{$post->community_id}/{$post->id}",
-                'public'
-            );
+            // Store file in storage/app/public/posts/{community_id}/{post_id}/ or posts/personal/{post_id}/
+            $storagePath = $post->community_id
+                ? "posts/{$post->community_id}/{$post->id}"
+                : "posts/personal/{$post->id}";
+
+            $path = $file->store($storagePath, 'public');
 
             // Extract file metadata
             $fileSize = $file->getSize();

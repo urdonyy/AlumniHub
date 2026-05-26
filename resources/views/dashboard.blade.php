@@ -105,11 +105,11 @@
                                 ?? ($joinedCommunitiesCollection->firstWhere('system_key', 'general-alumni-hub')->id ?? null);
                         @endphp
 
-                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-3"
+                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
                             x-data="postComposer(@js($flairsByCommunity ?? []), {{ $defaultCommunityId ?? 'null' }})">
                             <button type="button"
                                 @click="open = true"
-                                class="w-full rounded-full border border-gray-300 bg-gray-50 px-5 py-3 text-left text-gray-500 transition hover:bg-gray-100">
+                                class="w-full rounded-full border border-gray-300 bg-gray-50 px-5 py-3 text-left text-sm text-gray-500 transition hover:bg-gray-100">
                                 What's on your mind, {{ auth()->user()->name }}?
                             </button>
 
@@ -119,86 +119,256 @@
                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
                                 style="display: none;">
                                 <div @click.away="open = false"
-                                    class="w-full max-w-2xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-                                    <div class="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                                        <h3 class="text-lg font-semibold text-gray-900">Create post</h3>
+                                    class="w-full max-w-xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
+
+                                    <!-- Modal header -->
+                                    <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
+                                        <h3 class="text-sm font-semibold text-gray-900">Create post</h3>
                                         <button type="button" @click="open = false"
-                                            class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xl leading-none text-gray-600 hover:bg-gray-200">
-                                            ×
+                                            class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
                                         </button>
                                     </div>
 
                                     <form method="post" action="{{ route('posts.quick-store') }}"
-                                        enctype="multipart/form-data" class="max-h-[80vh] overflow-y-auto space-y-4 px-5 py-5">
+                                        enctype="multipart/form-data" class="flex flex-col overflow-y-auto flex-1"
+                                        @submit.prevent="submitPost($el)">
                                         @csrf
+                                        <input type="hidden" name="community_id" :value="isConnectionsOnly ? '' : communityId">
+                                        <input type="hidden" name="visibility" :value="visibility">
 
-                                        <div>
-                                            <label class="mb-1 block text-sm font-medium text-gray-700">Community</label>
-                                            <select name="community_id" required
-                                                x-model="communityId"
-                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 shadow-sm focus:border-red-900 focus:ring-red-900">
-                                                <option value="">Select community</option>
-                                                @foreach ($joinedCommunitiesCollection as $joinedCommunity)
-                                                    <option value="{{ $joinedCommunity->id }}"
-                                                        @selected($defaultCommunityId == $joinedCommunity->id)>
-                                                        {{ $joinedCommunity->name }}</option>
-                                                @endforeach
-                                            </select>
+                                        <!-- Avatar + Name + Audience (stacked under name) -->
+                                        <div class="flex items-start gap-3 px-5 pt-4 pb-3">
+                                            <img src="{{ auth()->user()->profileAvatarUrl() }}"
+                                                alt="{{ auth()->user()->name }}"
+                                                class="h-10 w-10 shrink-0 rounded-full border border-gray-200 object-cover"
+                                                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+                                            <div class="flex flex-col gap-1.5">
+                                                <span class="text-sm font-semibold text-gray-900 leading-none">{{ auth()->user()->name }}</span>
+
+                                                <!-- Audience button under name -->
+                                                <div class="relative">
+                                                    <button type="button"
+                                                        @click="audienceOpen = !audienceOpen"
+                                                        class="inline-flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition">
+                                                        <template x-if="visibility === 'public'">
+                                                            <svg class="h-3 w-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                            </svg>
+                                                        </template>
+                                                        <template x-if="visibility === 'connections'">
+                                                            <svg class="h-3 w-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                            </svg>
+                                                        </template>
+                                                        <template x-if="visibility === 'members'">
+                                                            <svg class="h-3 w-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                            </svg>
+                                                        </template>
+                                                        <span x-text="{'public': 'Public', 'connections': 'Connections', 'members': 'Community'}[visibility]"></span>
+                                                        <svg class="h-2.5 w-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                                        </svg>
+                                                    </button>
+
+                                                    <!-- Audience dropdown -->
+                                                    <div x-show="audienceOpen"
+                                                        @click.away="audienceOpen = false"
+                                                        x-transition:enter="transition ease-out duration-100"
+                                                        x-transition:enter-start="opacity-0 translate-y-1"
+                                                        x-transition:enter-end="opacity-100 translate-y-0"
+                                                        x-transition:leave="transition ease-in duration-75"
+                                                        x-transition:leave-start="opacity-100 translate-y-0"
+                                                        x-transition:leave-end="opacity-0 translate-y-1"
+                                                        class="absolute left-0 top-full mt-1 w-72 rounded-xl border border-gray-200 bg-white shadow-lg z-20">
+                                                        <div class="p-1.5">
+                                                            <p class="px-2 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Who can see your post?</p>
+
+                                                            <button type="button" @click="onVisibilityChange('public')"
+                                                                class="w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-50"
+                                                                :class="{ 'bg-red-50 hover:bg-red-50': visibility === 'public' }">
+                                                                <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                                                                    <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span class="text-sm font-medium text-gray-900">Public</span>
+                                                                        <svg x-show="visibility === 'public'" class="h-4 w-4 text-red-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <p class="text-xs text-gray-500 mt-0.5">Anyone on AlumniHub can see this post</p>
+                                                                </div>
+                                                            </button>
+
+                                                            <button type="button" @click="onVisibilityChange('connections')"
+                                                                class="w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-50"
+                                                                :class="{ 'bg-red-50 hover:bg-red-50': visibility === 'connections' }">
+                                                                <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                                                                    <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span class="text-sm font-medium text-gray-900">Connections</span>
+                                                                        <svg x-show="visibility === 'connections'" class="h-4 w-4 text-red-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <p class="text-xs text-gray-500 mt-0.5">Only people you are connected with will see this</p>
+                                                                </div>
+                                                            </button>
+
+                                                            <button type="button" @click="onVisibilityChange('members')"
+                                                                class="w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-50"
+                                                                :class="{ 'bg-red-50 hover:bg-red-50': visibility === 'members' }">
+                                                                <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                                                                    <svg class="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                                    </svg>
+                                                                </div>
+                                                                <div class="flex-1 min-w-0">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span class="text-sm font-medium text-gray-900">Community</span>
+                                                                        <svg x-show="visibility === 'members'" class="h-4 w-4 text-red-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                                                        </svg>
+                                                                    </div>
+                                                                    <p class="text-xs text-gray-500 mt-0.5">Only members of the selected community can see this</p>
+                                                                </div>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
-                                        <div>
+                                        <!-- Community selector (hidden when connections-only) -->
+                                        <div x-show="!isConnectionsOnly" class="px-5 pb-3">
+                                            <div class="relative">
+                                                <select name="community_selector" x-model="communityId"
+                                                    class="w-full appearance-none rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-gray-700 shadow-sm focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
+                                                    <option value="">Select a community</option>
+                                                    @foreach ($joinedCommunitiesCollection as $joinedCommunity)
+                                                        <option value="{{ $joinedCommunity->id }}"
+                                                            @selected($defaultCommunityId == $joinedCommunity->id)>
+                                                            {{ $joinedCommunity->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+                                                    <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Connections-only info banner -->
+                                        <div x-show="isConnectionsOnly" style="display:none;" class="mx-5 mb-3 flex items-start gap-2.5 rounded-lg border border-blue-100 bg-blue-50 px-3.5 py-3">
+                                            <svg class="mt-0.5 h-4 w-4 shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            <div class="text-xs text-blue-800 leading-relaxed">
+                                                <span class="font-semibold">Connections only</span> — Your post will be visible only to people in your connections list. It will not appear in community feeds, public discovery, or to anyone outside your network.
+                                            </div>
+                                        </div>
+
+                                        <!-- Divider -->
+                                        <div class="mx-5 border-t border-gray-100 mb-3"></div>
+
+                                        <!-- Title input -->
+                                        <div class="px-5 pb-2">
                                             <input type="text" name="title"
-                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-900 focus:ring-red-900"
-                                                placeholder="Post title (optional)">
+                                                class="w-full border-0 border-b border-gray-200 bg-transparent pb-1.5 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-0"
+                                                placeholder="Add a title (optional)">
                                         </div>
 
-                                        <div>
-                                            <label class="mb-1 block text-sm font-medium text-gray-700">Audience</label>
-                                            <select name="visibility"
-                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 shadow-sm focus:border-red-900 focus:ring-red-900">
-                                                <option value="members" @selected(old('visibility', 'members') === 'members')>Community members only</option>
-                                                <option value="connections" @selected(old('visibility') === 'connections')>Connections only</option>
-                                                <option value="public" @selected(old('visibility') === 'public')>Public</option>
-                                            </select>
-                                        </div>
-
-                                        <div>
-                                            <textarea name="body_markdown" rows="6" required
-                                                class="w-full rounded-lg border border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 shadow-sm focus:border-red-900 focus:ring-red-900"
+                                        <!-- Body area: textarea + image preview + attach button -->
+                                        <div class="px-5 pb-3 flex-1 flex flex-col gap-2">
+                                            <textarea name="body_markdown" required rows="4"
+                                                class="w-full border-0 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 resize-none leading-relaxed"
                                                 placeholder="What's on your mind, {{ auth()->user()->name }}?"></textarea>
+
+                                            <!-- Image preview (Facebook-style) -->
+                                            <div id="imagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                                                <button type="button" id="removeImageBtn"
+                                                    class="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/75 transition">
+                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                                <img id="singleImagePreview" src="" alt="" class="hidden w-full max-h-56 object-cover">
+                                                <div id="multiImageGrid" class="hidden grid gap-0.5"></div>
+                                            </div>
+
+                                            <!-- Attach image button -->
+                                            <label class="self-start cursor-pointer inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 transition">
+                                                <svg class="h-3.5 w-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                </svg>
+                                                Attach Image
+                                                <input type="file" name="attachments[]" id="imageUploadInput" multiple accept="image/*"
+                                                    @change="handleImageUpload($event)"
+                                                    class="hidden">
+                                            </label>
                                         </div>
 
-                                        <template x-if="filteredFlairs.length > 0">
-                                            <div>
-                                                <label class="mb-2 block text-sm font-medium text-gray-700">Flair tag</label>
-                                                <div class="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                                                    <template x-for="flair in filteredFlairs" :key="flair.id">
-                                                        <label class="flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50">
-                                                            <input type="checkbox" name="flairs[]" :value="flair.id"
-                                                                class="h-3.5 w-3.5 rounded border-gray-300 text-red-900 focus:ring-red-900" />
-                                                            <div class="flex flex-1 items-center gap-1.5 min-w-0">
-                                                                <span x-show="flair.icon" x-text="flair.icon" class="text-xs leading-none"></span>
-                                                                <span x-text="flair.name" class="truncate text-xs font-medium text-gray-900"></span>
-                                                                <span x-show="flair.color"
-                                                                    class="ml-auto inline-block h-2 w-2 shrink-0 rounded-full"
-                                                                    :style="`background-color: ${flair.color}`"></span>
-                                                            </div>
-                                                        </label>
+                                        <!-- Flair tags (required, 1–3, hidden when connections-only) -->
+                                        <template x-if="filteredFlairs.length > 0 && !isConnectionsOnly">
+                                            <div class="px-5 pb-3 pt-3 border-t border-gray-100">
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                        Flair tag <span class="text-red-500 normal-case font-normal">* required</span>
+                                                    </span>
+                                                    <span class="text-xs text-gray-400" x-text="`${selectedFlairs.length} / 3 selected`"></span>
+                                                </div>
+
+                                                <p x-show="flairError" class="mb-2 text-xs font-medium text-red-600">Please select at least 1 flair tag (max 3).</p>
+
+                                                <div class="flex flex-wrap gap-1.5">
+                                                    <template x-for="flair in visibleFlairs" :key="flair.id">
+                                                        <button type="button"
+                                                            @click="toggleFlair(flair.id)"
+                                                            :disabled="!canSelectFlair(flair.id)"
+                                                            class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition"
+                                                            :class="{
+                                                                'border-red-900 bg-red-900 text-white shadow-sm': selectedFlairs.includes(flair.id),
+                                                                'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50': !selectedFlairs.includes(flair.id) && canSelectFlair(flair.id),
+                                                                'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed': !canSelectFlair(flair.id)
+                                                            }">
+                                                            <span x-show="flair.icon" x-text="flair.icon" class="leading-none"></span>
+                                                            <span x-text="flair.name"></span>
+                                                        </button>
+                                                    </template>
+
+                                                    <template x-if="filteredFlairs.length > 4">
+                                                        <button type="button" @click="flairsExpanded = !flairsExpanded"
+                                                            class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 transition">
+                                                            <span x-text="flairsExpanded ? 'Show less' : `+${filteredFlairs.length - 4} more`"></span>
+                                                        </button>
                                                     </template>
                                                 </div>
+
+                                                <!-- Hidden inputs for form submission -->
+                                                <template x-for="id in selectedFlairs" :key="id">
+                                                    <input type="hidden" name="flairs[]" :value="id">
+                                                </template>
                                             </div>
                                         </template>
 
-                                        <div>
-                                            <label class="mb-1 block text-sm font-medium text-gray-700">Add images</label>
-                                            <input type="file" name="attachments[]" multiple accept="image/*"
-                                                class="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-800">
+                                        <!-- Footer -->
+                                        <div class="border-t border-gray-100 px-5 py-3 flex items-center justify-end">
+                                            <button type="submit"
+                                                class="rounded-lg bg-red-900 px-7 py-2 text-sm font-semibold text-white hover:bg-red-800 transition">
+                                                Post
+                                            </button>
                                         </div>
-
-                                        <button type="submit"
-                                            class="w-full rounded-lg bg-red-900 px-4 py-3 font-semibold text-white hover:bg-red-800 transition">
-                                            Post
-                                        </button>
                                     </form>
                                 </div>
                             </div>
@@ -393,10 +563,19 @@
                 open: false,
                 communityId: defaultCommunityId ? String(defaultCommunityId) : '',
                 flairsByCommunity,
+                visibility: 'members',
+                audienceOpen: false,
+                selectedFlairs: [],
+                flairsExpanded: false,
+                flairError: false,
+
+                get isConnectionsOnly() {
+                    return this.visibility === 'connections';
+                },
 
                 get filteredFlairs() {
                     const global = this.flairsByCommunity['global'] || [];
-                    const community = this.communityId
+                    const community = this.communityId && !this.isConnectionsOnly
                         ? (this.flairsByCommunity[String(this.communityId)] || [])
                         : [];
                     const seen = new Set();
@@ -405,6 +584,95 @@
                         seen.add(f.id);
                         return true;
                     });
+                },
+
+                get visibleFlairs() {
+                    return this.flairsExpanded ? this.filteredFlairs : this.filteredFlairs.slice(0, 4);
+                },
+
+                toggleFlair(id) {
+                    const idx = this.selectedFlairs.indexOf(id);
+                    if (idx >= 0) {
+                        this.selectedFlairs.splice(idx, 1);
+                    } else if (this.selectedFlairs.length < 3) {
+                        this.selectedFlairs.push(id);
+                    }
+                    this.flairError = false;
+                },
+
+                canSelectFlair(id) {
+                    return this.selectedFlairs.includes(id) || this.selectedFlairs.length < 3;
+                },
+
+                onVisibilityChange(newVisibility) {
+                    this.visibility = newVisibility;
+                    this.audienceOpen = false;
+                    if (newVisibility === 'connections') {
+                        this.communityId = '';
+                        this.selectedFlairs = [];
+                    }
+                },
+
+                handleImageUpload(event) {
+                    const files = event.target.files;
+                    const container = document.getElementById('imagePreviewContainer');
+                    const single = document.getElementById('singleImagePreview');
+                    const grid = document.getElementById('multiImageGrid');
+                    const removeBtn = document.getElementById('removeImageBtn');
+
+                    if (!files || files.length === 0) {
+                        container.classList.add('hidden');
+                        return;
+                    }
+
+                    container.classList.remove('hidden');
+
+                    if (files.length === 1) {
+                        grid.classList.add('hidden');
+                        single.classList.remove('hidden');
+                        const reader = new FileReader();
+                        reader.onload = e => { single.src = e.target.result; };
+                        reader.readAsDataURL(files[0]);
+                    } else {
+                        single.classList.add('hidden');
+                        grid.classList.remove('hidden');
+                        const show = Math.min(files.length, 4);
+                        grid.className = `grid gap-0.5 ${show === 2 ? 'grid-cols-2' : show === 3 ? 'grid-cols-3' : 'grid-cols-2'}`;
+                        grid.innerHTML = '';
+                        Array.from(files).slice(0, 4).forEach((file, i) => {
+                            const wrap = document.createElement('div');
+                            wrap.className = 'relative';
+                            const img = document.createElement('img');
+                            img.className = 'w-full h-32 object-cover';
+                            const reader = new FileReader();
+                            reader.onload = e => { img.src = e.target.result; };
+                            reader.readAsDataURL(file);
+                            wrap.appendChild(img);
+                            if (i === 3 && files.length > 4) {
+                                const overlay = document.createElement('div');
+                                overlay.className = 'absolute inset-0 flex items-center justify-center bg-black/50 text-white font-semibold text-lg';
+                                overlay.textContent = `+${files.length - 4}`;
+                                wrap.appendChild(overlay);
+                            }
+                            grid.appendChild(wrap);
+                        });
+                    }
+
+                    removeBtn.onclick = () => {
+                        container.classList.add('hidden');
+                        single.src = '';
+                        grid.innerHTML = '';
+                        event.target.value = '';
+                    };
+                },
+
+                submitPost(form) {
+                    if (this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {
+                        this.flairError = true;
+                        return;
+                    }
+                    this.flairError = false;
+                    form.submit();
                 }
             };
         }

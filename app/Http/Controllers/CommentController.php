@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Notifications\PostCommentedNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CommentController extends Controller
 {
@@ -194,7 +195,7 @@ class CommentController extends Controller
             'body' => $comment->body,
             'created_at' => $comment->created_at->diffForHumans(),
             'parent_comment_id' => $comment->parent_comment_id,
-            'can_delete' => auth()->user()?->can('delete', $comment) ?? false,
+            'can_delete' => Gate::allows('delete', $comment),
             'replies' => $comment->replies->map(function ($reply) {
                 return $this->formatComment($reply);
             })->toArray(),
