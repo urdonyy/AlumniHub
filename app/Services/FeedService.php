@@ -29,9 +29,12 @@ class FeedService
                         $q2->where('visibility', 'members')
                             ->whereIn('community_id', $user->communities()->pluck('communities.id'));
                     })
-                    ->orWhere(function ($q3) use ($connectedUserIds) {
+                    ->orWhere(function ($q3) use ($user, $connectedUserIds) {
                         $q3->where('visibility', 'connections')
-                            ->whereIn('user_id', $connectedUserIds);
+                            ->where(function ($q4) use ($user, $connectedUserIds) {
+                                $q4->whereIn('user_id', $connectedUserIds)
+                                    ->orWhere('user_id', $user->id);
+                            });
                     });
             })
             ->orderByDesc('published_at');
