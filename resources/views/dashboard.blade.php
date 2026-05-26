@@ -9,7 +9,7 @@
     </x-slot>
 
     <div>
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
             @if (session('status') === 'registration-complete')
                 <div class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 flex items-start gap-3">
                     <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,7 +304,7 @@
                                                     </svg>
                                                 </button>
                                                 <img id="singleImagePreview" src="" alt="" class="hidden w-full max-h-56 object-cover">
-                                                <div id="multiImageGrid" class="hidden grid gap-0.5"></div>
+                                                <div id="multiImageGrid" class="hidden gap-0.5"></div>
                                             </div>
 
                                             <!-- Attach image button -->
@@ -378,7 +378,7 @@
                             @foreach($posts as $post)
                                 <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
                                     @click="openPostModal($event)"
-                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300">
+                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300 min-w-0">
 
                                     <!-- Post Header -->
                                     <div class="p-4 pb-3">
@@ -451,10 +451,10 @@
 
                                     <!-- Post Media -->
                                     @if($post->media->count() > 0)
-                                        <div class="relative overflow-hidden bg-gray-50">
-                                            <img src="/storage/{{ $post->media->first()->file_path }}"
-                                                alt="Post image"
-                                                class="w-full max-h-80 object-contain">
+                                        <div class="relative overflow-hidden bg-gray-50 max-h-80">
+                                                <img src="/storage/{{ $post->media->first()->file_path }}"
+                                                    alt="Post image"
+                                                    class="w-full max-h-80 object-contain">
                                             @if($post->media->count() > 1)
                                                 <div class="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white">
                                                     +{{ $post->media->count() - 1 }} more
@@ -672,6 +672,7 @@
                         container.classList.add('hidden');
                         single.src = '';
                         grid.innerHTML = '';
+                        grid.className = 'hidden gap-0.5';
                         event.target.value = '';
                     };
                 },
@@ -803,3 +804,5 @@
         </script>
     @endif
 </x-app-layout>
+
+<x-footer />

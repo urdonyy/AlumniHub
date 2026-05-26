@@ -388,11 +388,14 @@
 
             lockScroll() {
                 this.scrollLockScrollY = window.scrollY;
+                const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
                 document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.top = `-${this.scrollLockScrollY}px`;
                 document.body.style.left = '0';
                 document.body.style.right = '0';
+                document.body.style.width = '100%';
+                document.body.style.paddingRight = scrollBarWidth > 0 ? `${scrollBarWidth}px` : '';
             },
 
             unlockScroll() {
@@ -401,6 +404,8 @@
                 document.body.style.top = '';
                 document.body.style.left = '';
                 document.body.style.right = '';
+                document.body.style.width = '';
+                document.body.style.paddingRight = '';
                 window.scrollTo(0, this.scrollLockScrollY);
                 this.scrollLockScrollY = 0;
             },
