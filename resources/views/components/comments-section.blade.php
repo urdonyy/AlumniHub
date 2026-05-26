@@ -22,6 +22,8 @@
 
     <!-- Comment form -->
     <textarea x-model="newComment.body" placeholder="Add a comment..." rows="3"
+        x-ref="commentInput"
+        @focus-comment-input.window="$el.focus(); $el.scrollIntoView({ behavior: 'smooth', block: 'center' })"
         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
     </textarea>
     <div class="mt-3 flex justify-end gap-2">

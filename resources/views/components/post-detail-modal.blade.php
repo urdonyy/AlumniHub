@@ -1,184 +1,253 @@
 <div x-data="postDetailModal()"
     @post-modal-opened.window="openModal($event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)"
-    class="fixed inset-0 z-50 overflow-hidden" x-show="isOpen" x-transition.opacity
-    @keydown.escape.window="closeModal()" style="display: none;">
+    @keydown.escape.window="closeModal()"
+    x-show="isOpen"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center"
+    style="display: none;">
 
-    <button type="button" class="fixed inset-0 bg-black/60" @click="closeModal()"
-        aria-label="Close modal backdrop"></button>
+    {{-- Backdrop --}}
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-[2px]" @click="closeModal()"></div>
 
-    <div class="relative z-10 flex h-full w-full items-start justify-center p-0 sm:p-4 sm:items-center">
-        <!-- Modal content -->
-        <div @click.away="closeModal()"
-            class="relative w-full max-w-4xl sm:max-w-5xl h-[100dvh] sm:h-[90vh] overflow-hidden bg-white shadow-2xl sm:rounded-2xl sm:border sm:border-gray-200">
+    {{-- Modal panel --}}
+    <div class="relative z-10 flex w-full max-w-xl flex-col bg-white shadow-2xl
+                h-[92dvh] sm:h-[88vh] sm:rounded-2xl sm:border sm:border-gray-200
+                rounded-t-2xl">
 
-            <!-- Close button (keep icon, remove heading) -->
-            <button type="button" @click="closeModal()"
-                class="absolute left-3 top-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-xl leading-none hover:bg-gray-200 sm:left-auto sm:right-3"
-                aria-label="Close">
-                ×
-            </button>
-
-            <!-- Modal body -->
-            <div class="flex h-full min-h-0 flex-col">
-            <!-- Loading state -->
-                <div x-show="isLoading" class="flex justify-center py-12">
-                    <div class="text-gray-500">Loading post details...</div>
+        {{-- ── Header ── --}}
+        <div class="shrink-0 border-b border-gray-100 px-4 py-3">
+            {{-- Loading skeleton --}}
+            <template x-if="isLoading">
+                <div class="flex items-center gap-3 animate-pulse">
+                    <div class="h-11 w-11 rounded-full bg-gray-200"></div>
+                    <div class="flex-1 space-y-1.5">
+                        <div class="h-3.5 w-32 rounded bg-gray-200"></div>
+                        <div class="h-3 w-48 rounded bg-gray-200"></div>
+                    </div>
                 </div>
+            </template>
 
-            <!-- Post content -->
-                <div x-show="!isLoading && post" class="h-full min-h-0">
-                    <div class="grid h-full min-h-0 grid-cols-1 grid-rows-1"
-                        :class="(post?.media && post.media.length > 0) ? 'grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-2' : 'lg:grid-cols-1'">
+            {{-- Author row --}}
+            <template x-if="!isLoading && post">
+                <div class="flex items-start gap-3">
+                    <img :src="post.user?.avatar_path ? `/storage/${post.user.avatar_path}` : '{{ asset('images/default-avatar.svg') }}'"
+                        :alt="post.user?.name"
+                        class="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover"
+                        onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-gray-900 leading-snug" x-text="post.user?.name"></p>
+                        <p class="text-xs text-gray-500 leading-snug mt-0.5" x-text="authorMeta"></p>
+                        <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span class="text-xs text-gray-400" x-text="post.created_at"></span>
+                            <span class="text-gray-300">·</span>
+                            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset"
+                                :class="{
+                                    'bg-green-50 text-green-700 ring-green-200': post.visibility === 'public',
+                                    'bg-blue-50 text-blue-700 ring-blue-200': post.visibility === 'connections',
+                                    'bg-gray-100 text-gray-600 ring-gray-200': post.visibility === 'members'
+                                }"
+                                x-text="post.visibility === 'public' ? 'Public' : post.visibility === 'connections' ? 'Connections' : 'Members'">
+                            </span>
+                        </div>
+                    </div>
+                    <button type="button" @click="closeModal()"
+                        class="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
+                        aria-label="Close">
+                        ×
+                    </button>
+                </div>
+            </template>
 
-                        <!-- Media carousel (left on large screens, top on mobile) -->
-                        <template x-if="post.media && post.media.length > 0">
-                            <div class="relative bg-black/95 p-3 sm:p-4 lg:p-5 min-h-0">
-                                <div class="relative h-[55vh] sm:h-[70vh] lg:h-full overflow-hidden rounded-xl bg-black/40">
-                                    <div class="absolute inset-0 flex items-center justify-center">
-                                        <div class="w-full">
-                                            <div class="flex transition-transform duration-300 ease-out"
-                                                :style="`transform: translateX(-${activeMediaIndex * 100}%);`">
-                                                <template x-for="image in post.media" :key="image.id">
-                                                    <div class="w-full shrink-0 px-3 sm:px-6">
-                                                        <div class="flex h-[55vh] sm:h-[70vh] lg:h-full items-center justify-center">
-                                                            <div class="w-full rounded-xl bg-black/30 p-3 sm:p-4">
-                                                                <img :src="`/storage/${image.path}`"
-                                                                    :alt="image.alt_text || 'Post image'"
-                                                                    class="mx-auto max-h-[45vh] sm:max-h-[60vh] lg:max-h-[75vh] max-w-full rounded-lg object-contain" />
-                                                            </div>
-                                                        </div>
+            {{-- Close button during loading --}}
+            <template x-if="isLoading">
+                <button type="button" @click="closeModal()"
+                    class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
+                    aria-label="Close">×</button>
+            </template>
+        </div>
+
+        {{-- ── Scrollable body ── --}}
+        <div class="flex-1 min-h-0 overflow-y-auto" x-ref="scrollBody">
+
+            {{-- Loading state --}}
+            <template x-if="isLoading">
+                <div class="flex flex-col items-center justify-center gap-3 py-16 text-gray-400">
+                    <svg class="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                    </svg>
+                    <span class="text-sm">Loading post…</span>
+                </div>
+            </template>
+
+            {{-- Error state --}}
+            <template x-if="!isLoading && error">
+                <div class="mx-4 mt-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
+                    <span x-text="error"></span>
+                </div>
+            </template>
+
+            {{-- Post content --}}
+            <template x-if="!isLoading && post">
+                <div>
+                    {{-- Community badge --}}
+                    <div class="px-4 pt-4 pb-1">
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span x-text="post.community?.name"></span>
+                        </span>
+                    </div>
+
+                    {{-- Title --}}
+                    <template x-if="post.title">
+                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug" x-text="post.title"></h2>
+                    </template>
+
+                    {{-- Flair tags --}}
+                    <template x-if="post.flairs && post.flairs.length > 0">
+                        <div class="flex flex-wrap gap-1.5 px-4 pt-2">
+                            <template x-for="flair in post.flairs" :key="flair.id">
+                                <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                    :style="`background-color:${flair.color ? flair.color + '20' : '#f3f4f6'};color:${flair.color || '#374151'};border:1px solid ${flair.color || '#e5e7eb'}`">
+                                    <span x-text="flair.name"></span>
+                                </span>
+                            </template>
+                        </div>
+                    </template>
+
+                    {{-- Body --}}
+                    <div class="px-4 pt-3 pb-2">
+                        <div x-ref="postBody"
+                            x-html="post.body_html"
+                            class="prose prose-sm max-w-none text-gray-800 break-words"
+                            :class="isBodyExpanded ? '' : 'line-clamp-5'">
+                        </div>
+                        <button x-show="isBodyOverflowing" type="button"
+                            @click="isBodyExpanded = !isBodyExpanded; $nextTick(() => { if (!isBodyExpanded) refreshBodyOverflow(); })"
+                            class="mt-1 text-sm font-semibold text-red-900 hover:underline">
+                            <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
+                        </button>
+                    </div>
+
+                    {{-- Media grid --}}
+                    <template x-if="post.media && post.media.length > 0">
+                        <div class="mt-2 px-4">
+                            <div class="overflow-hidden rounded-xl"
+                                :class="{
+                                    'grid grid-cols-1': post.media.length === 1,
+                                    'grid grid-cols-2 gap-1': post.media.length === 2,
+                                    'grid grid-cols-2 gap-1': post.media.length >= 3
+                                }">
+
+                                {{-- Single image --}}
+                                <template x-if="post.media.length === 1">
+                                    <img :src="`/storage/${post.media[0].path}`"
+                                        :alt="post.media[0].alt_text || 'Post image'"
+                                        class="w-full max-h-80 object-cover rounded-xl cursor-zoom-in"
+                                        @click="activeMediaIndex = 0; lightboxOpen = true" />
+                                </template>
+
+                                {{-- Multiple images --}}
+                                <template x-if="post.media.length > 1">
+                                    <div :class="`grid gap-1 ${post.media.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`">
+                                        <template x-for="(image, index) in post.media.slice(0, 4)" :key="image.id">
+                                            <div class="relative cursor-zoom-in"
+                                                @click="activeMediaIndex = index; lightboxOpen = true">
+                                                <img :src="`/storage/${image.path}`"
+                                                    :alt="image.alt_text || 'Post image'"
+                                                    class="w-full object-cover rounded-lg"
+                                                    :class="post.media.length === 2 ? 'h-52' : 'h-36'" />
+                                                <template x-if="index === 3 && post.media.length > 4">
+                                                    <div class="absolute inset-0 flex items-center justify-center rounded-lg bg-black/50">
+                                                        <span class="text-xl font-bold text-white" x-text="`+${post.media.length - 4}`"></span>
                                                     </div>
                                                 </template>
                                             </div>
-                                        </div>
+                                        </template>
                                     </div>
-
-                                    <!-- Carousel controls -->
-                                    <template x-if="post.media.length > 1">
-                                        <div>
-                                            <button type="button" @click="prevMedia()"
-                                                class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20"
-                                                aria-label="Previous image">
-                                                ‹
-                                            </button>
-                                            <button type="button" @click="nextMedia()"
-                                                class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 px-3 py-2 text-white hover:bg-white/20"
-                                                aria-label="Next image">
-                                                ›
-                                            </button>
-                                            <div
-                                                class="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs text-white">
-                                                <span x-text="activeMediaIndex + 1"></span>/<span
-                                                    x-text="post.media.length"></span>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
-
-                        <!-- Details (right on large screens, bottom on mobile) -->
-                        <div class="flex h-full min-h-0 flex-col">
-                            <div class="z-10 border-b border-gray-100 bg-white p-4 sm:p-6 lg:p-7">
-                                <div class="space-y-3">
-                                    <div class="flex items-start justify-between gap-4">
-                                        <div class="min-w-0">
-                                            <h3 class="text-xl font-bold text-gray-900 sm:text-2xl">
-                                                <span x-text="post.title"></span>
-                                            </h3>
-                                            <p class="mt-2 text-sm text-gray-600">
-                                                By <span x-text="post.user?.name"></span>
-                                                in <span x-text="post.community?.name"></span>
-                                            </p>
-                                            <p class="mt-1 text-xs text-gray-500">
-                                                <span x-text="post.created_at"></span>
-                                                <span class="hidden lg:inline"> · </span>
-                                                <span
-                                                    class="hidden lg:inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200">
-                                                    <span x-text="post.visibility"></span>
-                                                </span>
-                                            </p>
-                                        </div>
-                                        <span
-                                            class="shrink-0 inline-flex items-center rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-200 lg:hidden">
-                                            <span x-text="post.visibility"></span>
-                                        </span>
-                                    </div>
-
-                                    <!-- Flairs -->
-                                    <template x-if="post.flairs && post.flairs.length > 0">
-                                        <div class="flex flex-wrap gap-2">
-                                            <template x-for="flair in post.flairs" :key="flair.id">
-                                                <span
-                                                    class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
-                                                    <span class="inline-block h-2 w-2 rounded-full"
-                                                        :style="`background-color: ${flair.color || '#9ca3af'}`"></span>
-                                                    <span x-text="flair.name"></span>
-                                                </span>
-                                            </template>
-                                        </div>
-                                    </template>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 lg:p-7">
-                                <div class="space-y-4">
-                                    <!-- Title + description + badges (scrolls with comments) -->
-                                    <div class="space-y-3">
-                                        <!-- Post description (2-line ellipsis + See more) -->
-                                        <div class="space-y-1">
-                                            <div x-ref="postBody"
-                                                x-html="post.body_html"
-                                                class="text-sm text-gray-700"
-                                                :class="isBodyExpanded ? '' : '[display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden'">
-                                            </div>
-
-                                            <button type="button" x-show="isBodyOverflowing"
-                                                @click="isBodyExpanded = !isBodyExpanded; $nextTick(() => { if (!isBodyExpanded) refreshBodyOverflow(); })"
-                                                class="text-sm font-medium text-gray-700 hover:text-gray-900">
-                                                <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
-                                            </button>
-                                        </div>
-
-                                        <!-- Reactions summary (keep existing like + comment badges) -->
-                                        <div class="flex items-center gap-4 text-sm text-gray-600">
-                                            <span class="inline-flex items-center gap-1">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                </svg>
-                                                <span x-text="post.like_count ?? 0"></span>
-                                            </span>
-
-                                            <span class="inline-flex items-center gap-1">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M7 8h10M7 12h6m-5 8l-4-4H4a2 2 0 01-2-2V6a2 2 0 012-2h16a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                                </svg>
-                                                <span x-text="post.comment_count ?? post.comments_count ?? 0"></span>
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div class="border-t border-gray-100 pt-4">
-                                        <x-comments-section />
-                                    </div>
-                                </div>
+                                </template>
                             </div>
                         </div>
+                    </template>
 
+                    {{-- Reaction counts --}}
+                    <div class="mx-4 mt-3 flex items-center justify-between border-y border-gray-100 py-2 text-xs text-gray-500">
+                        <span class="flex items-center gap-1">
+                            <span class="flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-white text-[10px]">♥</span>
+                            <span x-text="(post.like_count ?? 0) + ((post.like_count ?? 0) === 1 ? ' like' : ' likes')"></span>
+                        </span>
+                        <span x-text="(post.comment_count ?? post.comments_count ?? 0) + ((post.comment_count ?? 0) === 1 ? ' comment' : ' comments')"></span>
+                    </div>
+
+                    {{-- Action buttons (Like / Comment) --}}
+                    <div class="mx-4 flex border-b border-gray-100 pb-1">
+                        <button type="button"
+                            @click="$dispatch('post-like-toggle', { postId: post.id })"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            Like
+                        </button>
+                        <button type="button"
+                            @click="window.dispatchEvent(new CustomEvent('focus-comment-input'))"
+                            class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 transition">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z"/>
+                            </svg>
+                            Comment
+                        </button>
+                    </div>
+
+                    {{-- Comments --}}
+                    <div class="px-4 pb-4">
+                        <x-comments-section />
                     </div>
                 </div>
-
-            <!-- Error state -->
-                <div x-show="!isLoading && error"
-                    class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 text-sm">
-                    <span x-text="error"></span>
-                </div>
-            </div>
+            </template>
         </div>
     </div>
+
+    {{-- ── Lightbox (full-screen image viewer) ── --}}
+    <template x-if="lightboxOpen && post?.media?.length">
+        <div class="fixed inset-0 z-[110] flex items-center justify-center bg-black/90"
+            @click.self="lightboxOpen = false"
+            @keydown.escape.window="lightboxOpen = false"
+            @keydown.arrow-left.window="prevMedia()"
+            @keydown.arrow-right.window="nextMedia()">
+
+            <button type="button" @click="lightboxOpen = false"
+                class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white text-xl hover:bg-white/20 transition">×</button>
+
+            <template x-if="post.media.length > 1">
+                <button type="button" @click="prevMedia()"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white text-2xl hover:bg-white/20 transition">‹</button>
+            </template>
+
+            <img :src="`/storage/${post.media[activeMediaIndex].path}`"
+                :alt="post.media[activeMediaIndex].alt_text || 'Post image'"
+                class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl">
+
+            <template x-if="post.media.length > 1">
+                <button type="button" @click="nextMedia()"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white text-2xl hover:bg-white/20 transition">›</button>
+            </template>
+
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-4 py-1 text-xs text-white">
+                <span x-text="activeMediaIndex + 1"></span>/<span x-text="post.media.length"></span>
+            </div>
+        </div>
+    </template>
 </div>
 
 <script>
@@ -189,31 +258,32 @@
             post: null,
             error: null,
             activeMediaIndex: 0,
+            lightboxOpen: false,
             isBodyExpanded: false,
             isBodyOverflowing: false,
-            scrollLockPaddingRight: '',
             scrollLockScrollY: 0,
-            scrollLockPosition: '',
-            scrollLockTop: '',
-            scrollLockLeft: '',
-            scrollLockRight: '',
-            scrollLockWidth: '',
+
+            get authorMeta() {
+                if (!this.post?.user) return '';
+                const batch = this.post.user.batch_year ? `Batch ${this.post.user.batch_year}` : null;
+                const program = this.post.user.program_course
+                    ? (this.post.user.program_course.match(/\(([^)]+)\)$/) || [])[1] || null
+                    : null;
+                return [batch, program].filter(Boolean).join(' · ');
+            },
 
             init() {
-                window.addEventListener('post-like-count-changed', (event) => {
+                window.addEventListener('post-like-count-changed', (e) => {
                     if (!this.isOpen || !this.post) return;
-                    if ((event?.detail?.postId ?? null) !== this.post.id) return;
-                    if (typeof event.detail.count === 'number') {
-                        this.post.like_count = event.detail.count;
-                    }
+                    if ((e?.detail?.postId ?? null) !== this.post.id) return;
+                    if (typeof e.detail.count === 'number') this.post.like_count = e.detail.count;
                 });
-
-                window.addEventListener('post-comment-count-changed', (event) => {
+                window.addEventListener('post-comment-count-changed', (e) => {
                     if (!this.isOpen || !this.post) return;
-                    if ((event?.detail?.postId ?? null) !== this.post.id) return;
-                    if (typeof event.detail.count === 'number') {
-                        this.post.comment_count = event.detail.count;
-                        this.post.comments_count = event.detail.count;
+                    if ((e?.detail?.postId ?? null) !== this.post.id) return;
+                    if (typeof e.detail.count === 'number') {
+                        this.post.comment_count = e.detail.count;
+                        this.post.comments_count = e.detail.count;
                     }
                 });
             },
@@ -221,53 +291,30 @@
             refreshBodyOverflow() {
                 this.isBodyOverflowing = false;
                 if (this.isBodyExpanded) return;
-
                 this.$nextTick(() => {
                     const el = this.$refs?.postBody;
                     if (!el) return;
-                    this.isBodyOverflowing = (el.scrollHeight - el.clientHeight) > 2;
+                    this.isBodyOverflowing = el.scrollHeight > el.clientHeight + 2;
                 });
             },
 
             lockScroll() {
-                const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-                this.scrollLockScrollY = window.scrollY || window.pageYOffset || 0;
-                this.scrollLockPaddingRight = document.body.style.paddingRight || '';
-                this.scrollLockPosition = document.body.style.position || '';
-                this.scrollLockTop = document.body.style.top || '';
-                this.scrollLockLeft = document.body.style.left || '';
-                this.scrollLockRight = document.body.style.right || '';
-                this.scrollLockWidth = document.body.style.width || '';
-                document.documentElement.classList.add('overflow-hidden');
-                document.body.classList.add('overflow-hidden');
+                this.scrollLockScrollY = window.scrollY;
+                document.body.style.overflow = 'hidden';
                 document.body.style.position = 'fixed';
                 document.body.style.top = `-${this.scrollLockScrollY}px`;
                 document.body.style.left = '0';
                 document.body.style.right = '0';
-                document.body.style.width = '100%';
-                if (scrollbarWidth > 0) {
-                    document.body.style.paddingRight = `${scrollbarWidth}px`;
-                }
             },
 
             unlockScroll() {
-                document.documentElement.classList.remove('overflow-hidden');
-                document.body.classList.remove('overflow-hidden');
-                document.body.style.position = this.scrollLockPosition;
-                document.body.style.top = this.scrollLockTop;
-                document.body.style.left = this.scrollLockLeft;
-                document.body.style.right = this.scrollLockRight;
-                document.body.style.width = this.scrollLockWidth;
-                document.body.style.paddingRight = this.scrollLockPaddingRight;
-                this.scrollLockPaddingRight = '';
-                const scrollY = this.scrollLockScrollY;
+                document.body.style.overflow = '';
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.left = '';
+                document.body.style.right = '';
+                window.scrollTo(0, this.scrollLockScrollY);
                 this.scrollLockScrollY = 0;
-                this.scrollLockPosition = '';
-                this.scrollLockTop = '';
-                this.scrollLockLeft = '';
-                this.scrollLockRight = '';
-                this.scrollLockWidth = '';
-                window.scrollTo(0, scrollY);
             },
 
             nextMedia() {
@@ -288,24 +335,23 @@
                 this.error = null;
                 this.post = null;
                 this.activeMediaIndex = 0;
+                this.lightboxOpen = false;
                 this.isBodyExpanded = false;
                 this.isBodyOverflowing = false;
                 this.lockScroll();
 
-                // Fetch post details via the API endpoint
                 fetch(apiUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Failed to load post');
-                        return response.json();
+                    .then(r => {
+                        if (!r.ok) throw new Error('Failed to load post');
+                        return r.json();
                     })
                     .then(data => {
                         this.post = data.post;
                         this.isLoading = false;
-                        this.activeMediaIndex = 0;
-                        this.isBodyExpanded = false;
-                        this.refreshBodyOverflow();
-
-                        // Dispatch event to load comments
+                        this.$nextTick(() => {
+                            this.refreshBodyOverflow();
+                            if (this.$refs.scrollBody) this.$refs.scrollBody.scrollTop = 0;
+                        });
                         window.dispatchEvent(new CustomEvent('post-comments-load', {
                             detail: { postId, commentsUrl }
                         }));
@@ -321,6 +367,7 @@
                 this.post = null;
                 this.error = null;
                 this.isLoading = false;
+                this.lightboxOpen = false;
                 this.activeMediaIndex = 0;
                 this.isBodyExpanded = false;
                 this.isBodyOverflowing = false;
