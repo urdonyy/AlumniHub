@@ -15,11 +15,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(BaselineCommunitySeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Create initial admin and test alumni user
+        $this->call(InitialUsersSeeder::class);
+
+        User::query()->firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                // provide a default password so the row can be created
+                'password' => 'password',
+            ]
+        );
+
+        // Seed posts and flairs after baseline communities and a test user exist
+        $this->call(\Database\Seeders\PostSeeder::class);
     }
 }
