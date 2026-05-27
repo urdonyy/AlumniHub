@@ -45,6 +45,8 @@
                                         <div class="flex flex-wrap items-center gap-2">
                                             @if ($type === 'post_commented')
                                                 <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-200">Comment</span>
+                                            @elseif ($type === 'comment_replied')
+                                                <span class="inline-flex items-center rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-700 ring-1 ring-inset ring-violet-200">Reply</span>
                                             @elseif ($type === 'post_liked')
                                                 <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Like</span>
                                             @endif
