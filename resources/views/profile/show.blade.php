@@ -173,12 +173,12 @@
                                         <i
                                             class="fa-solid fa-pen-to-square text-red-900 text-xs sm:text-sm lg:text-xl"></i>
                                         <p class="text-sm sm:text-lg lg:text-2xl font-semibold text-red-900">
-                                            {{ __('21') }}
+                                            {{ $activityPosts->count() }}
                                         </p>
                                     </div>
                                     <p
                                         class="min-w-0 text-center sm:text-left truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">
-                                        {{ __('Recent Posts') }}
+                                        {{ $activityPosts->count() !== 1 ? __('Posts') : __('Post') }}
                                     </p>
                                 </div>
                             </div>
