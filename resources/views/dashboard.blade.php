@@ -70,8 +70,8 @@
                     ];
                 @endphp
 
-                <div class="grid gap-6 lg:grid-cols-12">
-                    <aside class="space-y-3 lg:col-span-3">
+                <div class="grid gap-6 md:grid-cols-3 lg:grid-cols-12">
+                    <aside class="space-y-3 md:hidden lg:block lg:col-span-3 lg:sticky lg:top-6 lg:self-start">
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Profile') }}</p>
                             <h3 class="mt-2 text-lg font-semibold text-gray-900">{{ auth()->user()->name }}</h3>
@@ -97,7 +97,7 @@
                         </section>
                     </aside>
 
-                    <section class="space-y-3 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
+                    <section class="space-y-3 md:col-span-2 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
                         @php
                             /** @var \Illuminate\Support\Collection<int, \App\Models\Community> $joinedCommunitiesCollection */
                             $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
@@ -517,7 +517,7 @@
                         <x-post-detail-modal />
                     </section>
 
-                    <aside class="space-y-3 lg:col-span-3">
+                    <aside class="space-y-3 md:col-span-1 lg:col-span-3 md:sticky md:top-6 md:self-start">
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <div class="flex items-center justify-between gap-2">
                                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
