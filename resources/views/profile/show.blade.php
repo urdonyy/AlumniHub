@@ -593,9 +593,9 @@
                     });
 
                     window.addEventListener('post-comment-count-changed', (event) => {
-                        const postId = event?.detail?.postId ?? null;
-                        const count = event?.detail?.count;
-                        if (typeof postId !== 'number' || typeof count !== 'number') return;
+                        const postId = Number(event?.detail?.postId);
+                        const count = Number(event?.detail?.count);
+                        if (!Number.isFinite(postId) || !Number.isFinite(count)) return;
                         if (!this.countsByPostId[postId]) this.countsByPostId[postId] = { like_count: 0, comment_count: 0 };
                         this.countsByPostId[postId].comment_count = count;
                     });

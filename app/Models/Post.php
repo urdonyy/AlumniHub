@@ -71,6 +71,16 @@ class Post extends Model
     }
 
     /**
+     * Get every comment on this post, including nested replies.
+     * Used for an accurate comment count (the threaded `comments()`
+     * relationship only counts top-level comments).
+     */
+    public function allComments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
      * Get the likes on this post.
      */
     public function likes(): HasMany

@@ -21,7 +21,7 @@ class FeedService
             ->values();
 
         $query = Post::with(['user', 'community', 'flairs', 'media'])
-            ->withCount('comments')
+            ->withCount('allComments as comments_count')
             ->where('status', 'published')
             ->where(function ($q) use ($user, $connectedUserIds) {
                 $q->where('visibility', 'public')

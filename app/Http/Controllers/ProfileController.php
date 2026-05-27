@@ -46,7 +46,7 @@ class ProfileController extends Controller
 
         $activityPostsQuery = Post::query()
             ->with(['user', 'community', 'flairs', 'media'])
-            ->withCount(['comments', 'likes'])
+            ->withCount(['allComments as comments_count', 'likes'])
             ->where('status', 'published')
             ->where('user_id', $user->id)
             ->where(function ($q) {

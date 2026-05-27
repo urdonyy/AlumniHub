@@ -171,8 +171,11 @@
 
             dispatchCountChanged() {
                 if (!this.postId) return;
+                const postId = Number(this.postId);
+                const count = Number(this.totalComments ?? 0);
+                if (!Number.isFinite(postId) || !Number.isFinite(count)) return;
                 window.dispatchEvent(new CustomEvent('post-comment-count-changed', {
-                    detail: { postId: this.postId, count: this.totalComments }
+                    detail: { postId, count, source: 'comments' }
                 }));
             },
 

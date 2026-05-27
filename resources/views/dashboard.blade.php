@@ -729,10 +729,11 @@
 
                 init() {
                     window.addEventListener('post-comment-count-changed', (event) => {
-                        if ((event?.detail?.postId ?? null) !== this.postId) return;
-                        if (typeof event.detail.count === 'number') {
-                            this.commentCount = event.detail.count;
-                        }
+                        const postId = Number(event?.detail?.postId);
+                        const count = Number(event?.detail?.count);
+                        if (!Number.isFinite(postId) || !Number.isFinite(count)) return;
+                        if (postId !== Number(this.postId)) return;
+                        this.commentCount = count;
                     });
 
                     this.refreshBodyOverflow();

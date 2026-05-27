@@ -367,12 +367,13 @@
                     if (typeof e.detail.count === 'number') this.post.like_count = e.detail.count;
                 });
                 window.addEventListener('post-comment-count-changed', (e) => {
-                    if (!this.isOpen || !this.post) return;
-                    if ((e?.detail?.postId ?? null) !== this.post.id) return;
-                    if (typeof e.detail.count === 'number') {
-                        this.post.comment_count = e.detail.count;
-                        this.post.comments_count = e.detail.count;
-                    }
+                    const postId = Number(e?.detail?.postId);
+                    const count = Number(e?.detail?.count);
+                    if (!Number.isFinite(postId) || !Number.isFinite(count)) return;
+                    if (postId !== Number(this.post?.id)) return;
+                    if (!this.post) this.post = { id: postId };
+                    this.post.comment_count = count;
+                    this.post.comments_count = count;
                 });
             },
 
