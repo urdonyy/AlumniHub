@@ -10,7 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class VerificationAdminController extends Controller
 {
@@ -68,18 +68,19 @@ class VerificationAdminController extends Controller
         return back()->with('status', 'verification-approved');
     }
 
-    public function viewDocument(VerificationDocument $verificationDocument): BinaryFileResponse
+    public function viewDocument(VerificationDocument $verificationDocument): StreamedResponse
     {
-        $disk = Storage::disk('local');
+        abort_unless(Storage::exists($verificationDocument->document_path), 404, 'Document not found.');
 
-        abort_unless($disk->exists($verificationDocument->document_path), 404, 'Document not found.');
+        $filename = basename($verificationDocument->document_path);
+        $mimeType = Storage::mimeType($verificationDocument->document_path) ?: 'application/octet-stream';
 
-        return response()->file(
-            $disk->path($verificationDocument->document_path),
-            [
-                'Content-Disposition' => 'inline; filename="' . basename($verificationDocument->document_path) . '"',
-            ]
-        );
+        return response()->streamDownload(function () use ($verificationDocument) {
+            echo Storage::get($verificationDocument->document_path);
+        }, $filename, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 
     public function reject(Request $request, VerificationDocument $verificationDocument): RedirectResponse

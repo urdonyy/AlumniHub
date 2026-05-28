@@ -81,22 +81,21 @@ class PostService
                 ? "posts/{$post->community_id}/{$post->id}"
                 : "posts/personal/{$post->id}";
 
-            $path = $file->store($storagePath, 'public');
-
-            // Extract file metadata
+            // Extract file metadata before storing
             $fileSize = $file->getSize();
             $fileType = $file->getClientMimeType();
 
-            // Get image dimensions if applicable
+            // Get image dimensions from temp file before upload
             $meta = [];
             if (str_starts_with($fileType, 'image/')) {
-                $imagePath = Storage::disk('public')->path($path);
-                $size = getimagesize($imagePath);
+                $size = getimagesize($file->getRealPath());
                 if ($size) {
                     $meta['width'] = $size[0];
                     $meta['height'] = $size[1];
                 }
             }
+
+            $path = $file->store($storagePath);
 
             // Create media record
             PostMedia::create([

@@ -20,8 +20,7 @@ class VerificationController extends Controller
         $validated = $request->validated();
 
         $documentPath = $validated['document']->store(
-            "verifications/user_{$user->id}",
-            'local'
+            "verifications/user_{$user->id}"
         );
 
         VerificationDocument::create([

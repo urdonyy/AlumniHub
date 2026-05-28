@@ -102,8 +102,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $documentPath = $request->file('document')->store(
-            "verifications/user_{$user->id}",
-            'local'
+            "verifications/user_{$user->id}"
         );
 
         VerificationDocument::create([
