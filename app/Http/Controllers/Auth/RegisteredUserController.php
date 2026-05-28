@@ -82,6 +82,25 @@ class RegisteredUserController extends Controller
         return view('auth.register-complete');
     }
 
+    // ─── Step 3: Discard incomplete account so the user can restart with a new email ─
+
+    public function discard(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! empty($user->first_name) || $user->hasSubmittedVerificationDocument()) {
+            return redirect()->route('dashboard');
+        }
+
+        Auth::logout();
+        $user->delete();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('register')
+            ->with('status', 'previous-registration-discarded');
+    }
+
     // ─── Step 3: Handle complete-registration submission ─────────────────────────
 
     public function storeComplete(Request $request, CommunityAutoJoinService $communityAutoJoinService): RedirectResponse

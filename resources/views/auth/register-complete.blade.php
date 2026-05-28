@@ -138,16 +138,19 @@
         </div>
 
         <div class="flex items-center justify-between mt-6">
-            <form method="POST" action="{{ route('logout') }}" class="inline">
-                @csrf
-                <button type="submit" class="text-sm text-gray-500 underline hover:text-gray-700">
-                    {{ __('Log out') }}
-                </button>
-            </form>
+            <button type="submit" form="discard-registration"
+                class="text-sm text-gray-500 underline hover:text-gray-700 focus:outline-none">
+                {{ __('Use a different email') }}
+            </button>
             <x-primary-button>
                 {{ __('Submit & Continue') }}
             </x-primary-button>
         </div>
+    </form>
+
+    <form id="discard-registration" method="POST" action="{{ route('register.discard') }}"
+        onsubmit="return confirm('Discard this account and start over with a different email? Your current unfinished registration will be deleted.');">
+        @csrf
     </form>
 
     <script>
