@@ -44,10 +44,10 @@
                             {{ __('Home') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('profiles.show', Auth::id())"
-                            :active="request()->routeIs('profiles.show')">
-                            <i class="fa-regular fa-user"></i>
-                            {{ __('Profile') }}
+                        <x-nav-link :href="route('connections.index')"
+                            :active="request()->routeIs('connections.*')">
+                            <i class="fa-solid fa-users"></i>
+                            {{ __('Connections') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('communities.index')" :active="request()->routeIs('communities.*')">

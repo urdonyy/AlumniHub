@@ -93,28 +93,74 @@
                                     </a>
                                 @elseif ($viewer->canSendConnectionRequests())
                                     @if ($connectionState === 'connected')
-                                        <span
-                                            class="inline-flex items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-emerald-700">
-                                            {{ __('Connected') }}
-                                        </span>
-                                    @elseif ($connectionState === 'invite_sent')
-                                        <span
-                                            class="inline-flex items-center justify-center rounded-md border border-amber-200 bg-amber-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-700">
-                                            {{ __('Invited') }}
-                                        </span>
+                                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                            <button type="button" @click="open = !open"
+                                                class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-emerald-700 hover:bg-emerald-100 transition">
+                                                {{ __('Connected') }}
+                                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                                </svg>
+                                            </button>
+                                            <div x-show="open"
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-gray-200 bg-white shadow-lg"
+                                                style="display:none;">
+                                                <form method="POST" action="{{ route('connections.remove', $activeConnection) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium text-red-700 hover:bg-red-50 transition">
+                                                        {{ __('Remove connection') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @elseif ($connectionState === 'invite_sent' && $activeConnection)
+                                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                            <button type="button" @click="open = !open"
+                                                class="inline-flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-amber-700 hover:bg-amber-100 transition">
+                                                {{ __('Invited') }}
+                                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
+                                                </svg>
+                                            </button>
+                                            <div x-show="open"
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute right-0 top-full mt-1 z-20 w-48 rounded-xl border border-gray-200 bg-white shadow-lg"
+                                                style="display:none;">
+                                                <form method="POST" action="{{ route('connections.withdraw', $activeConnection) }}">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                        class="w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium text-red-700 hover:bg-red-50 transition">
+                                                        {{ __('Withdraw invite') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     @elseif ($connectionState === 'invite_received' && $activeConnection)
                                         <div class="flex items-center gap-2">
                                             <form method="POST" action="{{ route('connections.accept', $activeConnection) }}">
                                                 @csrf
                                                 <button type="submit"
-                                                    class="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-white hover:bg-emerald-500">
+                                                    class="inline-flex items-center justify-center rounded-md bg-red-900 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800">
                                                     {{ __('Accept') }}
                                                 </button>
                                             </form>
                                             <form method="POST" action="{{ route('connections.ignore', $activeConnection) }}">
                                                 @csrf
                                                 <button type="submit"
-                                                    class="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-gray-700 hover:bg-gray-50">
+                                                    class="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-1 sm:px-4 sm:py-1.5 text-xs font-semibold tracking-widest text-gray-700 hover:bg-gray-50">
                                                     {{ __('Ignore') }}
                                                 </button>
                                             </form>
@@ -123,7 +169,7 @@
                                         <form method="POST" action="{{ route('connections.invite', $profileUser) }}">
                                             @csrf
                                             <button type="submit"
-                                                class="inline-flex items-center justify-center rounded-md bg-red-900 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold uppercase tracking-widest text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2">
+                                                class="inline-flex items-center justify-center rounded-md bg-red-900 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2">
                                                 {{ __('Connect') }}
                                             </button>
                                         </form>
@@ -156,7 +202,7 @@
                                         <i
                                             class="fa-solid fa-circle-nodes text-red-900 text-xs sm:text-sm lg:text-xl"></i>
                                         <p class="text-sm sm:text-lg lg:text-2xl font-semibold text-red-900">
-                                            {{ __('67') }}
+                                            {{ $connectionCount }}
                                         </p>
                                     </div>
                                     <p

@@ -64,12 +64,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canSendConnectionRequests(): bool
     {
-        return $this->canInteractInCommunities();
+        return $this->isVerified();
     }
 
     public function hasLimitedProfileVisibility(): bool
     {
-        return $this->role !== 'admin' && ! $this->isVerifiedAlumni();
+        return ! $this->isVerified();
     }
 
     public function profileVisibilityLabel(): string

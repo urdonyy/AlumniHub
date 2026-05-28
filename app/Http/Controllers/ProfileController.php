@@ -79,6 +79,8 @@ class ProfileController extends Controller
 
         $activityPosts = $activityPostsQuery->get();
 
+        $connectionCount = $user->connections()->count();
+
         return view('profile.show', [
             'profileUser' => $user,
             'viewer' => $viewer,
@@ -86,6 +88,7 @@ class ProfileController extends Controller
             'connectionState' => $connectionState,
             'activeConnection' => $activeConnection,
             'activityPosts' => $activityPosts,
+            'connectionCount' => $connectionCount,
         ]);
     }
 
