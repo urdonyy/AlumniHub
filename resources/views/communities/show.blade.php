@@ -138,10 +138,21 @@
                             <p class="max-w-md text-sm text-amber-800">
                                 {{ __('Community posts and member profiles are hidden until your alumni status is verified. Complete verification to unlock the full community.') }}
                             </p>
-                            <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
-                                class="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-                                {{ __('Verify now') }}
-                            </a>
+                            @if ($user->hasPendingVerificationDocument())
+                                <div class="relative group mt-1 inline-block">
+                                    <span class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-amber-200 px-4 py-2 text-sm font-semibold text-amber-500">
+                                        {{ __('Pending review') }}
+                                    </span>
+                                    <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white group-hover:block">
+                                        {{ __('Waiting for admin approval') }}
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                    class="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                                    {{ __('Verify now') }}
+                                </a>
+                            @endif
                         </div>
                     </div>
                 @endif

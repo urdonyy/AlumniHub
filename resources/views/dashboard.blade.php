@@ -118,13 +118,27 @@
                                         <p class="mt-1 text-sm text-amber-800">
                                             {{ __('You\'re browsing AlumniHub in read-only mode. Verify your alumni status to share posts, like, comment, and connect with your batchmates.') }}
                                         </p>
-                                        <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
-                                            class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                            </svg>
-                                            {{ __('Verify now') }}
-                                        </a>
+                                        @if (auth()->user()->hasPendingVerificationDocument())
+                                            <div class="relative group mt-3 inline-block">
+                                                <span class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-amber-200 px-4 py-2 text-sm font-semibold text-amber-500">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                    </svg>
+                                                    {{ __('Pending review') }}
+                                                </span>
+                                                <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white group-hover:block">
+                                                    {{ __('Waiting for admin approval') }}
+                                                </div>
+                                            </div>
+                                        @else
+                                            <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                                class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                                </svg>
+                                                {{ __('Verify now') }}
+                                            </a>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -611,8 +625,17 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                         </svg>
                                         <p class="text-xs font-semibold text-gray-700">{{ __('Verify your account to see people you may know.') }}</p>
-                                        <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
-                                            class="text-xs font-semibold text-amber-700 underline hover:text-amber-800">{{ __('Verify now') }}</a>
+                                        @if (auth()->user()->hasPendingVerificationDocument())
+                                            <div class="relative group inline-block">
+                                                <span class="cursor-not-allowed text-xs font-semibold text-amber-400">{{ __('Pending review') }}</span>
+                                                <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white group-hover:block">
+                                                    {{ __('Waiting for admin approval') }}
+                                                </div>
+                                            </div>
+                                        @else
+                                            <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                                class="text-xs font-semibold text-amber-700 underline hover:text-amber-800">{{ __('Verify now') }}</a>
+                                        @endif
                                     </div>
                                 @endunless
                             </div>
@@ -887,10 +910,21 @@
                         class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                         {{ __('Skip for now') }}
                     </button>
-                    <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
-                        class="flex-1 rounded-lg bg-amber-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-amber-700">
-                        {{ __('Verify') }}
-                    </a>
+                    @if (auth()->user()->hasPendingVerificationDocument())
+                        <div class="relative group flex-1">
+                            <span class="block w-full cursor-not-allowed rounded-lg bg-amber-200 px-4 py-2.5 text-center text-sm font-semibold text-amber-500">
+                                {{ __('Pending review') }}
+                            </span>
+                            <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white group-hover:block">
+                                {{ __('Waiting for admin approval') }}
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                            class="flex-1 rounded-lg bg-amber-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-amber-700">
+                            {{ __('Verify') }}
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

@@ -105,8 +105,20 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->account_status) {
             'approved' => 'Verified',
             'rejected' => 'Unverified (Rejected)',
-            default => 'Unverified (Pending Review)',
+            default => $this->hasSubmittedVerificationDocument()
+                ? 'Unverified (Pending Review)'
+                : 'Unverified (Not Submitted)',
         };
+    }
+
+    public function hasSubmittedVerificationDocument(): bool
+    {
+        return $this->verificationDocuments()->exists();
+    }
+
+    public function hasPendingVerificationDocument(): bool
+    {
+        return $this->verificationDocuments()->where('status', 'pending')->exists();
     }
 
     public function accountStatusBadgeClass(): string
