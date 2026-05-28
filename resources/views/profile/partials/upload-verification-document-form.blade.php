@@ -11,14 +11,31 @@
 
     @php
         $currentUser = auth()->user();
-        $hasPending = $currentUser->hasPendingVerificationDocument();
-        $latestRejected = $hasPending ? null : $currentUser->verificationDocuments()
-            ->where('status', 'rejected')
-            ->latest()
-            ->first();
+        $isApproved  = $currentUser->account_status === 'approved';
+        $hasPending  = ! $isApproved && $currentUser->hasPendingVerificationDocument();
+        $isRejected  = ! $isApproved && ! $hasPending && $currentUser->account_status === 'rejected';
+        $latestRejected = $isRejected
+            ? $currentUser->verificationDocuments()->where('status', 'rejected')->latest()->first()
+            : null;
     @endphp
 
-    @if ($hasPending)
+    @if ($isApproved)
+        <div class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-6">
+            <div class="flex items-start gap-3">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-emerald-900">{{ __('Your account is verified') }}</p>
+                    <p class="mt-1 text-sm text-emerald-800">
+                        {{ __('Your alumni status has been confirmed. You have full access to AlumniHub.') }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    @elseif ($hasPending)
         <div class="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-6">
             <div class="flex items-start gap-3">
                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
