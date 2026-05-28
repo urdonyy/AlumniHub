@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+echo "-----> Creating storage symlink..."
+php artisan storage:link
+
+echo "-----> Caching routes and views..."
+php artisan route:cache
+php artisan view:cache
