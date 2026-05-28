@@ -32,7 +32,8 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('register.complete.store') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ route('register.complete.store') }}" enctype="multipart/form-data"
+        x-data="documentUpload()" x-on:submit="onSubmit($event)">
         @csrf
 
         {{-- ── Personal Information ─────────────────────────────────────────────── --}}
@@ -125,11 +126,14 @@
         <div>
             <x-input-label for="document" :value="__('Verification Document')" />
             <input id="document" name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required
+                x-on:change="onPick($event)"
                 class="block mt-1 w-full text-sm text-gray-700
                        file:mr-3 file:rounded-md file:border-0
                        file:bg-red-700 file:px-4 file:py-2
                        file:text-xs file:font-semibold file:uppercase file:tracking-widest file:text-white
                        hover:file:bg-red-800 cursor-pointer" />
+            <p x-show="clientError" x-text="clientError" x-cloak
+                class="mt-1 text-xs font-medium text-red-700"></p>
             <x-input-error :messages="$errors->get('document')" class="mt-1" />
         </div>
 
@@ -145,5 +149,35 @@
             </x-primary-button>
         </div>
     </form>
+
+    <script>
+        function documentUpload() {
+            const MAX_BYTES = 5 * 1024 * 1024;
+            const ALLOWED = ['application/pdf', 'image/jpeg', 'image/png'];
+            return {
+                clientError: '',
+                onPick(event) {
+                    this.clientError = '';
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    if (ALLOWED.length && file.type && !ALLOWED.includes(file.type)) {
+                        this.clientError = 'Unsupported file type. Use PDF, JPG, or PNG.';
+                        event.target.value = '';
+                        return;
+                    }
+                    if (file.size > MAX_BYTES) {
+                        const mb = (file.size / 1024 / 1024).toFixed(1);
+                        this.clientError = `File is ${mb} MB. Please upload a file under 5 MB.`;
+                        event.target.value = '';
+                    }
+                },
+                onSubmit(event) {
+                    if (this.clientError) {
+                        event.preventDefault();
+                    }
+                },
+            };
+        }
+    </script>
 
 </x-auth-layout>

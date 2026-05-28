@@ -86,6 +86,12 @@ class RegisteredUserController extends Controller
 
     public function storeComplete(Request $request, CommunityAutoJoinService $communityAutoJoinService): RedirectResponse
     {
+        if ($this->postBodyExceededLimit($request)) {
+            throw ValidationException::withMessages([
+                'document' => __('The verification document is too large. Please upload a file under 5 MB.'),
+            ]);
+        }
+
         $currentYear = (int) now()->format('Y');
 
         $validated = $request->validate([
@@ -135,5 +141,48 @@ class RegisteredUserController extends Controller
         return redirect()->route('dashboard')
             ->with('status', 'registration-complete')
             ->with('show_setup_prompt', true);
+    }
+
+    /**
+     * Detect a POST that was rejected because the body exceeded post_max_size.
+     * In that case PHP silently drops $_POST/$_FILES while Content-Length still
+     * reflects the original payload, so we surface a friendly validation error
+     * instead of letting the request fall through as "document field required".
+     */
+    private function postBodyExceededLimit(Request $request): bool
+    {
+        if (! $request->isMethod('post')) {
+            return false;
+        }
+
+        $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+        $postMax       = $this->iniBytes((string) ini_get('post_max_size'));
+
+        if ($postMax <= 0 || $contentLength <= 0) {
+            return false;
+        }
+
+        return $contentLength > $postMax
+            && empty($_POST)
+            && empty($_FILES);
+    }
+
+    private function iniBytes(string $value): int
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return 0;
+        }
+
+        $unit   = strtolower(substr($value, -1));
+        $number = (int) $value;
+
+        return match ($unit) {
+            'g'     => $number * 1024 * 1024 * 1024,
+            'm'     => $number * 1024 * 1024,
+            'k'     => $number * 1024,
+            default => $number,
+        };
     }
 }
