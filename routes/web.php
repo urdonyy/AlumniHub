@@ -39,7 +39,7 @@ Route::get('/', function (FeedService $feed) {
 
         $suggestedPeople = User::query()
             ->where('id', '!=', $user->id)
-            ->where('role', 'alumni')
+            ->whereIn('role', ['alumni', 'student'])
             ->orderBy('name')
             ->limit(5)
             ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
@@ -91,7 +91,7 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
 
     $suggestedPeople = User::query()
         ->where('id', '!=', $user->id)
-        ->where('role', 'alumni')
+        ->whereIn('role', ['alumni', 'student'])
         ->orderBy('name')
         ->limit(5)
         ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);

@@ -577,13 +577,15 @@
                             <div class="flex items-center justify-between gap-2">
                                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                     {{ __('Batch Communities') }}</h3>
-                                <a href="{{ route('communities.index') }}" class="text-xs font-semibold text-gray-500 hover:text-gray-700">
-                                    {{ __('See all') }}
-                                </a>
+                                @if ($featuredCommunities->count() > 3)
+                                    <a href="{{ route('communities.index') }}" class="text-xs font-semibold text-gray-500 hover:text-gray-700">
+                                        {{ __('See all') }}
+                                    </a>
+                                @endif
                             </div>
 
                             <div class="mt-4 space-y-3">
-                                @forelse ($featuredCommunities as $community)
+                                @forelse ($featuredCommunities->take(3) as $community)
                                     <a href="{{ route('communities.show', $community) }}"
                                         class="block rounded-lg border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50">
                                         <p class="text-sm font-semibold text-gray-900">{{ $community->name }}</p>
@@ -600,13 +602,20 @@
                         </section>
 
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
-                                {{ __('Suggested People') }}</h3>
+                            <div class="flex items-center justify-between gap-2">
+                                <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
+                                    {{ __('Suggested People') }}</h3>
+                                @if ($suggestedPeople->count() > 3)
+                                    <a href="{{ route('connections.index') }}" class="text-xs font-semibold text-gray-500 hover:text-gray-700">
+                                        {{ __('See all') }}
+                                    </a>
+                                @endif
+                            </div>
                             @php $isVerified = auth()->user()->isVerified(); @endphp
                             <div class="relative mt-4">
                                 <div class="space-y-3 {{ $isVerified ? '' : 'pointer-events-none select-none blur-sm' }}"
                                     @unless($isVerified) aria-hidden="true" @endunless>
-                                    @forelse ($suggestedPeople as $person)
+                                    @forelse ($suggestedPeople->take(3) as $person)
                                         <a href="{{ $isVerified ? route('profiles.show', $person) : '#' }}"
                                             class="block rounded-lg border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50">
                                             <p class="text-sm font-semibold text-gray-900">{{ $person->name }}</p>
