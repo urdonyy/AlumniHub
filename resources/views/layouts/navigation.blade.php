@@ -1,11 +1,11 @@
+@php
+    /** @var \App\Models\User|null $navUser */
+    $navUser = Auth::user();
+    $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
+@endphp
 <nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }} }"
     x-init="setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}'); const d = await r.json(); notifCount = d.count; } catch {} }, 30000)"
     class="bg-red-900/10">
-    @php
-        /** @var \App\Models\User|null $navUser */
-        $navUser = Auth::user();
-        $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
-    @endphp
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between gap-4">

@@ -28,12 +28,12 @@ class CommentPolicy
             return true;
         }
 
-        // Optionally block explicitly rejected accounts
-        if (($user->account_status ?? null) === 'rejected') {
+        // Only verified accounts may comment (blocks pending/rejected users).
+        if (! $user->isVerified()) {
             return false;
         }
 
-        // Public posts can be commented on by any authenticated user
+        // Public posts can be commented on by any verified user
         if ($post->visibility === 'public') {
             return true;
         }

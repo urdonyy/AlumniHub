@@ -33,6 +33,14 @@ class PostLikeController extends Controller
 
         $user = $request->user();
 
+        // Only verified accounts may react to posts.
+        if (! $user->isVerified()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Verify your account to interact with posts.',
+            ], 403);
+        }
+
         // Check if user already liked this post
         $like = Like::where('post_id', $postModel->id)
             ->where('user_id', $user->id)

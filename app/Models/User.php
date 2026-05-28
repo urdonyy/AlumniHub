@@ -32,6 +32,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'alumni' && $this->account_status === 'approved';
     }
 
+    public function isVerified(): bool
+    {
+        return $this->role === 'admin' || $this->account_status === 'approved';
+    }
+
     public function canInteractInCommunities(): bool
     {
         return $this->role === 'admin' || $this->isVerifiedAlumni();

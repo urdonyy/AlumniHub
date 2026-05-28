@@ -115,6 +115,7 @@ class RegisteredUserController extends Controller
         $communityAutoJoinService->attachMatchingCommunities($user);
 
         return redirect()->route('dashboard')
-            ->with('status', 'registration-complete');
+            ->with('status', 'registration-complete')
+            ->with('show_setup_prompt', true);
     }
 }

@@ -105,6 +105,30 @@
                                 ?? ($joinedCommunitiesCollection->firstWhere('system_key', 'general-alumni-hub')->id ?? null);
                         @endphp
 
+                        @if (! auth()->user()->isVerified())
+                            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <h3 class="text-sm font-semibold text-amber-900">{{ __('Verify your account to start posting') }}</h3>
+                                        <p class="mt-1 text-sm text-amber-800">
+                                            {{ __('You\'re browsing AlumniHub in read-only mode. Verify your alumni status to share posts, like, comment, and connect with your batchmates.') }}
+                                        </p>
+                                        <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                            class="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                            {{ __('Verify now') }}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
                         <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
                             x-data="postComposer(@js($flairsByCommunity ?? []), {{ $defaultCommunityId ?? 'null' }})">
                             <button type="button"
@@ -373,6 +397,7 @@
                                 </div>
                             </div>
                         </div>{{-- end composer card --}}
+                        @endif
 
                         @if(isset($posts))
                             @foreach($posts as $post)
@@ -466,22 +491,38 @@
                                     <!-- Post Footer -->
                                     <div class="border-t border-gray-100 px-2 py-1">
                                         <div class="flex">
-                                            <button type="button" @click.stop="toggleLike()"
-                                                :disabled="isLikingLoading"
-                                                :class="{ 'text-red-700': isLiked, 'text-gray-600': !isLiked, 'opacity-60': isLikingLoading }"
-                                                class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition hover:bg-gray-50">
-                                                <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                </svg>
-                                                <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
-                                            </button>
-                                            <button type="button" @click.stop="openPostModal($event)"
-                                                class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
-                                                </svg>
-                                                <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
-                                            </button>
+                                            @if (auth()->user()->isVerified())
+                                                <button type="button" @click.stop="toggleLike()"
+                                                    :disabled="isLikingLoading"
+                                                    :class="{ 'text-red-700': isLiked, 'text-gray-600': !isLiked, 'opacity-60': isLikingLoading }"
+                                                    class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition hover:bg-gray-50">
+                                                    <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                    <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
+                                                </button>
+                                                <button type="button" @click.stop="openPostModal($event)"
+                                                    class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
+                                                    </svg>
+                                                    <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
+                                                </button>
+                                            @else
+                                                {{-- Unverified: read-only counts, no interaction --}}
+                                                <span class="flex flex-1 items-center justify-center gap-2 py-2 text-sm font-medium text-gray-400">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                                    </svg>
+                                                    <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
+                                                </span>
+                                                <span class="flex flex-1 items-center justify-center gap-2 py-2 text-sm font-medium text-gray-400">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
+                                                    </svg>
+                                                    <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
+                                                </span>
+                                            @endif
                                         </div>
                                     </div>
                                 </article>
@@ -547,18 +588,33 @@
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                 {{ __('Suggested People') }}</h3>
-                            <div class="mt-4 space-y-3">
-                                @forelse ($suggestedPeople as $person)
-                                    <a href="{{ route('profiles.show', $person) }}"
-                                        class="block rounded-lg border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50">
-                                        <p class="text-sm font-semibold text-gray-900">{{ $person->name }}</p>
-                                        <p class="text-xs text-gray-600">{{ $person->program_course ?? __('Program pending') }}</p>
-                                    </a>
-                                @empty
-                                    <p class="rounded-lg border border-dashed border-gray-300 px-3 py-3 text-xs text-gray-500">
-                                        {{ __('People suggestions will be populated after connection features are enabled.') }}
-                                    </p>
-                                @endforelse
+                            @php $isVerified = auth()->user()->isVerified(); @endphp
+                            <div class="relative mt-4">
+                                <div class="space-y-3 {{ $isVerified ? '' : 'pointer-events-none select-none blur-sm' }}"
+                                    @unless($isVerified) aria-hidden="true" @endunless>
+                                    @forelse ($suggestedPeople as $person)
+                                        <a href="{{ $isVerified ? route('profiles.show', $person) : '#' }}"
+                                            class="block rounded-lg border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50">
+                                            <p class="text-sm font-semibold text-gray-900">{{ $person->name }}</p>
+                                            <p class="text-xs text-gray-600">{{ $person->program_course ?? __('Program pending') }}</p>
+                                        </a>
+                                    @empty
+                                        <p class="rounded-lg border border-dashed border-gray-300 px-3 py-3 text-xs text-gray-500">
+                                            {{ __('People suggestions will be populated after connection features are enabled.') }}
+                                        </p>
+                                    @endforelse
+                                </div>
+
+                                @unless ($isVerified)
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-lg bg-white/40 px-4 text-center">
+                                        <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                        <p class="text-xs font-semibold text-gray-700">{{ __('Verify your account to see people you may know.') }}</p>
+                                        <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                            class="text-xs font-semibold text-amber-700 underline hover:text-amber-800">{{ __('Verify now') }}</a>
+                                    </div>
+                                @endunless
                             </div>
                         </section>
                     </aside>
@@ -803,6 +859,41 @@
                 window.dispatchEvent(new CustomEvent('post-modal-opened', { detail }));
             });
         </script>
+    @endif
+
+    {{-- "Let's get you started" verification prompt (shown to unverified users after registration / login) --}}
+    @if (session('show_setup_prompt') && ! auth()->user()->isVerified())
+        <div x-data="{ open: true }"
+            x-show="open"
+            x-transition.opacity
+            @keydown.escape.window="open = false"
+            class="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 p-4"
+            style="display: none;">
+            <div @click.away="open = false"
+                class="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                <div class="flex flex-col items-center gap-3 px-6 pt-8 text-center">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">{{ __("Let's get you started") }}</h3>
+                    <p class="text-sm leading-relaxed text-gray-600">
+                        {{ __('Welcome to AlumniHub! Your account is currently unverified, so you can only browse public posts. Verify your alumni status to unlock the full experience — post, like, comment, join community discussions, and connect with your batchmates.') }}
+                    </p>
+                </div>
+                <div class="flex gap-3 px-6 py-6">
+                    <button type="button" @click="open = false"
+                        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                        {{ __('Skip for now') }}
+                    </button>
+                    <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                        class="flex-1 rounded-lg bg-amber-600 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-amber-700">
+                        {{ __('Verify') }}
+                    </a>
+                </div>
+            </div>
+        </div>
     @endif
 </x-app-layout>
 

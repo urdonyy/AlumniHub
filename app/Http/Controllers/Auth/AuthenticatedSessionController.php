@@ -28,7 +28,15 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $redirect = redirect()->intended(route('dashboard', absolute: false));
+
+        // Nudge still-unverified users to complete verification on each login.
+        $user = $request->user();
+        if ($user && ! $user->isVerified()) {
+            $redirect->with('show_setup_prompt', true);
+        }
+
+        return $redirect;
     }
 
     /**

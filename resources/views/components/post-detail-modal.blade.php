@@ -246,8 +246,21 @@
                         <span x-text="(post.comment_count ?? post.comments_count ?? 0) + ((post.comment_count ?? 0) === 1 ? ' comment' : ' comments')"></span>
                     </div>
 
+                    {{-- Unverified notice (read-only) --}}
+                    <template x-if="!canInteract">
+                        <div class="mx-4 my-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                            <svg class="h-4 w-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            <span>
+                                <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}" class="font-semibold underline">Verify your account</a>
+                                to like and comment on posts.
+                            </span>
+                        </div>
+                    </template>
+
                     {{-- Action buttons (Like / Comment) --}}
-                    <div class="mx-4 flex border-b border-gray-100 pb-1">
+                    <div x-show="canInteract" class="mx-4 flex border-b border-gray-100 pb-1">
                         <button type="button"
                             @click="toggleLike()"
                             :disabled="isLikingLoading"
@@ -328,8 +341,10 @@
             isLiked: false,
             isLikingLoading: false,
             likeUrl: null,
+            canInteract: document.querySelector('meta[name="user-verified"]')?.content === '1',
 
             toggleLike() {
+                if (!this.canInteract) return;
                 if (this.isLikingLoading || !this.likeUrl) return;
                 this.isLikingLoading = true;
                 fetch(this.likeUrl, {

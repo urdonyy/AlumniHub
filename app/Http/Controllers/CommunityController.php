@@ -45,6 +45,7 @@ class CommunityController extends Controller
             'community' => $community,
             'isMember' => $user->communities->contains('id', $community->id),
             'canInteract' => $user->canInteractInCommunities(),
+            'isVerified' => $user->isVerified(),
             'user' => $user,
         ]);
     }

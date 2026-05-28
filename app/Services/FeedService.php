@@ -10,6 +10,16 @@ class FeedService
 {
     public function getUserFeed(User $user, int $perPage = 15): LengthAwarePaginator
     {
+        // Unverified users may only browse public posts.
+        if (! $user->isVerified()) {
+            return Post::with(['user', 'community', 'flairs', 'media'])
+                ->withCount('allComments as comments_count')
+                ->where('status', 'published')
+                ->where('visibility', 'public')
+                ->orderByDesc('published_at')
+                ->paginate($perPage);
+        }
+
         $connectedUserIds = $user->connections()
             ->get()
             ->map(function ($connection) use ($user) {

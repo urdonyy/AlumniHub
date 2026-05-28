@@ -23,21 +23,18 @@ class PostPolicy
             return true;
         }
 
+        // Non-public posts require an authenticated, verified account.
+        if (!$user || !$user->isVerified()) {
+            return false;
+        }
+
         // Members-only posts: check if user is a community member
         if ($post->visibility === 'members') {
-            if (!$user) {
-                return false;
-            }
-
             return $this->isCommunityMember($user, $post->community);
         }
 
         // Connections visibility: check if user is connected with the post author or a community member
         if ($post->visibility === 'connections') {
-            if (!$user) {
-                return false;
-            }
-
             return $user->isConnectedWith($post->user) || $this->isCommunityMember($user, $post->community);
         }
 
