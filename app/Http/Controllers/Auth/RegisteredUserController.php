@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -34,16 +35,34 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'email'    => [
+                'required', 'string', 'lowercase', 'email', 'max:255',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $existing = User::where('email', $value)->first();
+
+                    if ($existing && $existing->hasVerifiedEmail()) {
+                        $fail(__('validation.unique', ['attribute' => $attribute]));
+                    }
+                },
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name'           => '',
-            'email'          => $request->string('email')->value(),
-            'password'       => Hash::make($request->string('password')->value()),
-            'account_status' => 'pending',
-        ]);
+        $email = $request->string('email')->value();
+
+        $user = DB::transaction(function () use ($request, $email) {
+            User::where('email', $email)
+                ->whereNull('email_verified_at')
+                ->first()
+                ?->delete();
+
+            return User::create([
+                'name'           => '',
+                'email'          => $email,
+                'password'       => Hash::make($request->string('password')->value()),
+                'account_status' => 'pending',
+            ]);
+        });
 
         event(new Registered($user));
 
