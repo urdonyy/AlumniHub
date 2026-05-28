@@ -4,7 +4,7 @@
     $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
 @endphp
 <nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }} }"
-    x-init="setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}'); const d = await r.json(); notifCount = d.count; } catch {} }, 30000)"
+    x-init="setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); notifCount = d.count; } catch {} }, 30000)"
     class="bg-red-900/10">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
