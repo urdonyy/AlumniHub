@@ -41,6 +41,8 @@ Route::middleware('auth')->group(function () {
         ->name('register.complete');
     Route::post('register/complete', [RegisteredUserController::class, 'storeComplete'])
         ->name('register.complete.store');
+    Route::post('register/discard', [RegisteredUserController::class, 'discard'])
+        ->name('register.discard');
 
     Route::get('verify-email', EmailVerificationPromptController::class)
         ->name('verification.notice');

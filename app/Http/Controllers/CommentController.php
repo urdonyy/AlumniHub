@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use App\Models\Post;
+use App\Notifications\CommentRepliedNotification;
 use App\Notifications\PostCommentedNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
@@ -68,6 +69,15 @@ class CommentController extends Controller
         // Notify the post author (skip notifying self)
         if ((int) $postModel->user_id !== (int) $request->user()->id) {
             $postModel->user->notify(new PostCommentedNotification(
+                post: $postModel,
+                comment: $comment,
+                actor: $request->user(),
+            ));
+        }
+
+        // Notify the parent comment author when their comment receives a reply (skip notifying self)
+        if ($parentComment && (int) $parentComment->user_id !== (int) $request->user()->id) {
+            $parentComment->user->notify(new CommentRepliedNotification(
                 post: $postModel,
                 comment: $comment,
                 actor: $request->user(),

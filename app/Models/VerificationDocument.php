@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $admin_notes
+ * @property string $status
+ * @property string $document_path
+ */
 class VerificationDocument extends Model
 {
     use HasFactory;

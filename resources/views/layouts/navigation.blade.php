@@ -1,9 +1,11 @@
-<nav x-data="{ open: false }" class="bg-red-900/10">
-    @php
-        /** @var \App\Models\User|null $navUser */
-        $navUser = Auth::user();
-        $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
-    @endphp
+@php
+    /** @var \App\Models\User|null $navUser */
+    $navUser = Auth::user();
+    $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
+@endphp
+<nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }} }"
+    x-init="setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); notifCount = d.count; } catch {} }, 30000)"
+    class="bg-red-900/10">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between gap-4">
@@ -42,10 +44,10 @@
                             {{ __('Home') }}
                         </x-nav-link>
 
-                        <x-nav-link :href="route('profiles.show', Auth::id())"
-                            :active="request()->routeIs('profiles.show')">
-                            <i class="fa-regular fa-user"></i>
-                            {{ __('Profile') }}
+                        <x-nav-link :href="route('connections.index')"
+                            :active="request()->routeIs('connections.*')">
+                            <i class="fa-solid fa-users"></i>
+                            {{ __('Connections') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('communities.index')" :active="request()->routeIs('communities.*')">
@@ -61,11 +63,8 @@
                         <x-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
                             <i class="fa-regular fa-bell"></i>
                             {{ __('Notifications') }}
-                            @if ($unreadNotificationsCount > 0)
-                                <span class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
-                                    {{ $unreadNotificationsCount }}
-                                </span>
-                            @endif
+                            <span x-show="notifCount > 0" x-text="notifCount"
+                                class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                         </x-nav-link>
                     @endif
                 </div>
@@ -176,11 +175,8 @@
                 <x-responsive-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
                     <i class="fa-regular fa-bell"></i>
                     {{ __('Notifications') }}
-                    @if ($unreadNotificationsCount > 0)
-                        <span class="ms-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200">
-                            {{ $unreadNotificationsCount }}
-                        </span>
-                    @endif
+                    <span x-show="notifCount > 0" x-text="notifCount"
+                        class="ms-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                 </x-responsive-nav-link>
             @endif
         </div>

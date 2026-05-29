@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\Connection;
 use App\Models\User;
+use App\Notifications\ConnectionAcceptedNotification;
+use App\Notifications\ConnectionDeclinedNotification;
+use App\Notifications\ConnectionInviteNotification;
 use Illuminate\Validation\ValidationException;
 
 class ConnectionService
@@ -33,6 +36,8 @@ class ConnectionService
                 'acted_at' => null,
             ]);
 
+            $recipient->notify(new ConnectionInviteNotification($connection, $sender));
+
             return ['connection' => $connection, 'result' => 'created'];
         }
 
@@ -55,7 +60,10 @@ class ConnectionService
             'acted_at' => null,
         ]);
 
-        return ['connection' => $connection->fresh(), 'result' => 'resent'];
+        $fresh = $connection->fresh();
+        $recipient->notify(new ConnectionInviteNotification($fresh, $sender));
+
+        return ['connection' => $fresh, 'result' => 'resent'];
     }
 
     public function acceptInvite(Connection $connection, User $recipient): Connection
@@ -72,12 +80,20 @@ class ConnectionService
             ]);
         }
 
+        $sender = $connection->sender;
+
         $connection->update([
             'status' => Connection::STATUS_ACCEPTED,
             'acted_at' => now(),
         ]);
 
-        return $connection->fresh();
+        $fresh = $connection->fresh();
+
+        if ($sender) {
+            $sender->notify(new ConnectionAcceptedNotification($fresh, $recipient));
+        }
+
+        return $fresh;
     }
 
     public function ignoreInvite(Connection $connection, User $recipient): Connection
@@ -94,12 +110,54 @@ class ConnectionService
             ]);
         }
 
+        $sender = $connection->sender;
+
         $connection->update([
             'status' => Connection::STATUS_IGNORED,
             'acted_at' => now(),
         ]);
 
-        return $connection->fresh();
+        $fresh = $connection->fresh();
+
+        if ($sender) {
+            $sender->notify(new ConnectionDeclinedNotification($fresh, $recipient));
+        }
+
+        return $fresh;
+    }
+
+    public function withdrawInvite(Connection $connection, User $sender): void
+    {
+        if ($connection->sender_id !== $sender->id) {
+            throw ValidationException::withMessages([
+                'connection' => 'Only the invite sender can withdraw this invite.',
+            ]);
+        }
+
+        if (! $connection->isPending()) {
+            throw ValidationException::withMessages([
+                'connection' => 'Only pending invites can be withdrawn.',
+            ]);
+        }
+
+        $connection->delete();
+    }
+
+    public function removeConnection(Connection $connection, User $actor): void
+    {
+        if ($connection->sender_id !== $actor->id && $connection->recipient_id !== $actor->id) {
+            throw ValidationException::withMessages([
+                'connection' => 'You are not part of this connection.',
+            ]);
+        }
+
+        if ($connection->status !== Connection::STATUS_ACCEPTED) {
+            throw ValidationException::withMessages([
+                'connection' => 'Only accepted connections can be removed.',
+            ]);
+        }
+
+        $connection->delete();
     }
 
     public function pendingReceivedInvites(User $user)
