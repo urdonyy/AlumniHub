@@ -203,10 +203,6 @@ class CommunityPostController extends Controller
             data: $validated
         );
 
-        $redirect = $community
-            ? route('communities.posts.index', $community)
-            : route('dashboard');
-
-        return redirect($redirect)->with('success', 'Post created successfully!');
+        return redirect()->route('dashboard')->with('success', 'Post created successfully!');
     }
 }
