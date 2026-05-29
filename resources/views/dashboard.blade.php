@@ -352,7 +352,7 @@
                                                 Attach Image
                                                 <input type="file" name="attachments[]" id="imageUploadInput" multiple accept="image/*"
                                                     @change="handleImageUpload($event)"
-                                                    class="hidden">
+                                                    class="sr-only">
                                             </label>
                                         </div>
 

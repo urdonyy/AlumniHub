@@ -543,7 +543,7 @@
                                             <img id="banner-preview" src="{{ $profileUser->profileBannerUrl() }}" alt="{{ __('Current banner preview') }}"
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-banner.svg') }}';"
                                                 class="mt-2 h-32 w-full rounded-lg border border-gray-200 object-cover sm:h-40" />
-                                            <input id="banner" name="banner" type="file" accept="image/jpeg,image/png,image/webp"
+                                            <input id="banner" name="banner" type="file" accept="image/*"
                                                 class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer" />
                                             <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 5MB.') }}</p>
                                             <x-input-error class="mt-2" :messages="$errors->get('banner')" />
@@ -554,7 +554,7 @@
                                             <img id="avatar-preview" src="{{ $profileUser->profileAvatarUrl() }}" alt="{{ __('Current avatar preview') }}"
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';"
                                                 class="mt-2 h-28 w-28 rounded-full border border-gray-200 object-cover" />
-                                            <input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp"
+                                            <input id="avatar" name="avatar" type="file" accept="image/*"
                                                 class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer" />
                                             <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 3MB.') }}</p>
                                             <p id="avatar-crop-message" class="mt-2 text-xs text-emerald-700"></p>
