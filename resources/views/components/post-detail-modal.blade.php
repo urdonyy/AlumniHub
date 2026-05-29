@@ -37,7 +37,7 @@
             {{-- Author row --}}
             <template x-if="!isLoading && post">
                 <div class="flex items-start gap-3">
-                    <img :src="post.user?.avatar_path ? `/storage/${post.user.avatar_path}` : '{{ asset('images/default-avatar.svg') }}'"
+                    <img :src="post.user?.avatar_url ?? '{{ asset('images/default-avatar.svg') }}'"
                         :alt="post.user?.name"
                         class="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover"
                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
@@ -103,7 +103,7 @@
                     <template x-if="post.media && post.media.length > 0">
                         <div class="sm:hidden px-4 pt-4">
                             <div class="relative overflow-hidden rounded-xl bg-gray-100">
-                                <img :src="`/storage/${post.media[activeMediaIndex].path}`"
+                                <img :src="post.media[activeMediaIndex].url"
                                     :alt="post.media[activeMediaIndex].alt_text || 'Post image'"
                                     class="w-full aspect-[4/5] object-cover cursor-zoom-in"
                                     @click="lightboxOpen = true" />
@@ -134,7 +134,7 @@
                     <template x-if="post.media && post.media.length > 0">
                         <div class="hidden sm:flex sm:w-1/2 sm:min-h-0 items-center justify-center bg-gray-900 px-4 py-4">
                             <div class="relative w-full flex items-center justify-center min-h-[60vh]">
-                                <img :src="`/storage/${post.media[activeMediaIndex].path}`"
+                                <img :src="post.media[activeMediaIndex].url"
                                     :alt="post.media[activeMediaIndex].alt_text || 'Post image'"
                                     class="max-h-[60vh] max-w-full object-contain rounded-xl cursor-zoom-in"
                                     @click="lightboxOpen = true" />
@@ -168,7 +168,7 @@
                         <template x-if="post.media && post.media.length > 0">
                             <div class="hidden sm:block shrink-0 sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3">
                                 <div class="flex items-start gap-3">
-                                    <img :src="post.user?.avatar_path ? `/storage/${post.user.avatar_path}` : '{{ asset('images/default-avatar.svg') }}'"
+                                    <img :src="post.user?.avatar_url ?? '{{ asset('images/default-avatar.svg') }}'"
                                         :alt="post.user?.name"
                                         class="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover"
                                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
@@ -311,7 +311,7 @@
                     class="absolute left-4 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white text-2xl hover:bg-white/20 transition">‹</button>
             </template>
 
-            <img :src="`/storage/${post.media[activeMediaIndex].path}`"
+            <img :src="post.media[activeMediaIndex].url"
                 :alt="post.media[activeMediaIndex].alt_text || 'Post image'"
                 class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain shadow-2xl">
 

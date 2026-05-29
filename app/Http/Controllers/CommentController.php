@@ -149,7 +149,7 @@ class CommentController extends Controller
                     'name' => $postModel->user->name,
                     'batch_year' => $postModel->user->batch_year,
                     'program_course' => $postModel->user->program_course,
-                    'avatar_path' => $postModel->user->avatar_path,
+                    'avatar_url' => $postModel->user->profileAvatarUrl(),
                 ],
                 'community' => [
                     'id' => $postModel->community->id,
@@ -165,7 +165,7 @@ class CommentController extends Controller
                 'media' => $postModel->media->map(function ($media) {
                     return [
                         'id' => $media->id,
-                        'path' => $media->file_path,
+                        'url' => $media->url,
                         'alt_text' => $media->alt_text,
                     ];
                 })->toArray(),
