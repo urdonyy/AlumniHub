@@ -48,9 +48,9 @@
 
             <div class="grid gap-6 lg:grid-cols-12">
                 {{-- LEFT RAIL (sticky) --}}
-                <aside class="space-y-3 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
+                <aside class="min-w-0 space-y-3 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
                     {{-- Pending Invites Received --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
                         <div class="flex items-center justify-between gap-2">
                             <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                 {{ __('Pending Invites Received') }}
@@ -101,7 +101,7 @@
                     </section>
 
                     {{-- Invites You Sent --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+                    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm"
                         x-data="{ managing: false, selected: [] }">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
@@ -177,7 +177,7 @@
                     </section>
 
                     {{-- Accepted Connections (live badge) --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
                         <div class="flex items-center justify-between gap-2">
                             <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                 {{ __('Accepted Connections') }}
@@ -241,11 +241,11 @@
                 </aside>
 
                 {{-- RIGHT COLUMN: suggested people (verified only) --}}
-                <section class="lg:col-span-7">
+                <section class="min-w-0 lg:col-span-7">
                     @if ($isVerified)
                         <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                             {{-- Sticky search header --}}
-                            <div class="sticky top-0 z-10 rounded-t-2xl border-b border-gray-200 bg-white/95 px-6 py-4 backdrop-blur">
+                            <div class="sticky top-0 z-10 rounded-t-2xl border-b border-gray-200 bg-white/95 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur">
                                 <div class="flex items-center justify-between gap-3">
                                     <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                         {{ __('Suggested People') }}
@@ -264,7 +264,7 @@
                             </div>
 
                             {{-- Scrollable list --}}
-                            <div class="px-6 py-5 space-y-3">
+                            <div class="px-4 py-4 sm:px-6 sm:py-5 space-y-3">
                                 <template x-for="person in visiblePeople" :key="person.id">
                                     <div class="flex flex-col gap-3 rounded-lg border border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                                         <a :href="person.profile_url" class="flex items-center gap-3 min-w-0">
