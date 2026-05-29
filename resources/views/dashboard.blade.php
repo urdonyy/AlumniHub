@@ -490,7 +490,7 @@
                                     <!-- Post Media -->
                                     @if($post->media->count() > 0)
                                         <div class="relative overflow-hidden bg-gray-50 max-h-80">
-                                                <img src="/storage/{{ $post->media->first()->file_path }}"
+                                                <img src="{{ $post->media->first()->url }}"
                                                     alt="Post image"
                                                     class="w-full max-h-80 object-contain">
                                             @if($post->media->count() > 1)

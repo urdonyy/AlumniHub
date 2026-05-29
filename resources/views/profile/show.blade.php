@@ -436,7 +436,7 @@
                                                             <div class="mt-4 grid grid-cols-3 gap-2">
                                                                 @foreach ($post->media->take(3) as $idx => $media)
                                                                     <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 max-h-48">
-                                                                        <img src="/storage/{{ $media->file_path }}" alt="{{ __('Post image') }}"
+                                                                        <img src="{{ $media->url }}" alt="{{ __('Post image') }}"
                                                                             class="h-full w-full object-cover max-h-48" />
                                                                         @if ($idx === 2 && $post->media->count() > 3)
                                                                             <div class="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white">
