@@ -289,9 +289,9 @@
                                         <!-- Community selector (hidden when connections-only) -->
                                         <div x-show="!isConnectionsOnly" class="px-5 pb-3">
                                             <div class="relative">
-                                                <select name="community_selector" x-model="communityId"
+                                                <select name="community_selector" x-model="communityId" aria-placeholder="Select a community"
                                                     class="w-full appearance-none rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-gray-700 shadow-sm focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
-                                                    <option value="">Select a community</option>
+                                                    <option value="" disabled selected hidden>Select a community</option>
                                                     @foreach ($joinedCommunitiesCollection as $joinedCommunity)
                                                         <option value="{{ $joinedCommunity->id }}"
                                                             @selected($defaultCommunityId == $joinedCommunity->id)>
