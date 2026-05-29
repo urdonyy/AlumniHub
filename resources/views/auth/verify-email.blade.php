@@ -57,7 +57,7 @@
             </x-primary-button>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('register.discard') }}">
             @csrf
             <button type="submit"
                 class="w-full text-center text-sm text-gray-500 underline hover:text-gray-700 focus:outline-none">
