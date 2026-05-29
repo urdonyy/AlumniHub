@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Models\CommunityCreationRequest;
 use App\Models\CommunityJoinRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,10 +22,20 @@ class CommunityController extends Controller
 
         $user->loadMissing('communities');
 
+        $activeCreationRequest = CommunityCreationRequest::query()
+            ->where('requestor_id', $user->id)
+            ->whereIn('status', [
+                CommunityCreationRequest::STATUS_PENDING_CO_MODS,
+                CommunityCreationRequest::STATUS_PENDING_ADMIN,
+            ])
+            ->latest()
+            ->first();
+
         return view('communities.index', [
             'communities' => $communities,
             'memberCommunityIds' => $user->communities->modelKeys(),
             'user' => $user,
+            'activeCreationRequest' => $activeCreationRequest,
         ]);
     }
 

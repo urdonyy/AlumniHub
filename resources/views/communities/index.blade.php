@@ -38,15 +38,30 @@
                 @endif
 
                 @if ($user->isVerified() && ! $user->canManageCommunities())
-                    <div class="border-b border-gray-200 bg-emerald-50 px-6 py-4 flex items-center justify-between gap-3">
-                        <p class="text-sm text-emerald-900">
-                            {{ __("Don't see your batch's community? Request one — your two co-moderator picks will be notified, then admins review.") }}
-                        </p>
-                        <a href="{{ route('communities.requests.create') }}"
-                            class="inline-flex items-center rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-emerald-600">
-                            {{ __('Request a community') }}
-                        </a>
-                    </div>
+                    @if ($activeCreationRequest ?? null)
+                        <div class="border-b border-gray-200 bg-amber-50 px-6 py-4 flex items-center justify-between gap-3">
+                            <p class="text-sm text-amber-900">
+                                {{ __('You have a pending community request: ":n" — :s.', [
+                                    'n' => $activeCreationRequest->name,
+                                    's' => str_replace('_', ' ', $activeCreationRequest->status),
+                                ]) }}
+                            </p>
+                            <a href="{{ route('communities.requests.show', $activeCreationRequest) }}"
+                                class="inline-flex items-center rounded-md bg-amber-700 px-4 py-2 text-xs font-semibold tracking-widest text-white transition hover:bg-amber-800">
+                                {{ __('View your request') }}
+                            </a>
+                        </div>
+                    @else
+                        <div class="border-b border-gray-200 bg-emerald-50 px-6 py-4 flex items-center justify-between gap-3">
+                            <p class="text-sm text-emerald-900">
+                                {{ __("Don't see your batch's community? Request one — your two co-moderator picks will be notified, then admins review.") }}
+                            </p>
+                            <a href="{{ route('communities.requests.create') }}"
+                                class="inline-flex items-center rounded-md bg-red-900 px-4 py-2 text-xs font-semibold tracking-widest text-white transition hover:bg-red-800">
+                                {{ __('Request a community') }}
+                            </a>
+                        </div>
+                    @endif
                 @endif
 
                 <div class="divide-y divide-gray-200">

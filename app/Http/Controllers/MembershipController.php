@@ -15,6 +15,10 @@ class MembershipController extends Controller
 
         abort_unless($user->canInteractInCommunities(), 403);
 
+        if ($community->is_system) {
+            return back()->with('status', 'system-community-locked');
+        }
+
         if ($community->isProgramBatch()) {
             if ($community->members()->whereKey($user->id)->exists()) {
                 return back()->with('status', 'already-a-member');
@@ -33,6 +37,10 @@ class MembershipController extends Controller
         $user = $request->user();
 
         abort_unless($user->canInteractInCommunities(), 403);
+
+        if ($community->is_system) {
+            return back()->with('status', 'system-community-locked');
+        }
 
         if ($user->communities()->whereKey($community->id)->exists()) {
             $user->communities()->detach($community->id);

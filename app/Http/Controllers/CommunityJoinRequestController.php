@@ -20,6 +20,7 @@ class CommunityJoinRequestController extends Controller
     {
         abort_unless($request->user()->isVerified(), 403);
         abort_unless($community->isProgramBatch(), 404);
+        abort_if($community->is_system, 403, 'System communities are joined automatically at registration.');
 
         if ($community->members()->whereKey($request->user()->id)->exists()) {
             return back()->with('status', 'already-a-member');

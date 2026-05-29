@@ -32,7 +32,7 @@ class CommunityPostController extends Controller
 
         $user = $request->user();
         $isMember = $community->members()->whereKey($user->id)->exists();
-        $isOutsiderViewingProgramBatch = $community->isProgramBatch() && ! $isMember;
+        $isOutsiderViewingProgramBatch = ! $isMember && ($community->isProgramBatch() || $community->is_system);
 
         $postsQuery = $community->posts()
             ->published()

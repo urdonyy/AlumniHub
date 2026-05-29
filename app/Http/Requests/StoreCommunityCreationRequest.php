@@ -2,17 +2,13 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Community;
 use App\Models\CommunityCreationRequest;
 use App\Models\User;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreCommunityCreationRequest extends FormRequest
 {
-    public const NAME_REGEX = '/^([A-Z]{2,10})\s(\d-\d)\sBatch\s(\d{4})$/';
-
     public function authorize(): bool
     {
         $user = $this->user();
@@ -22,17 +18,7 @@ class StoreCommunityCreationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:' . self::NAME_REGEX,
-                Rule::unique('community_creation_requests', 'name')
-                    ->whereNotIn('status', [
-                        CommunityCreationRequest::STATUS_REJECTED,
-                        CommunityCreationRequest::STATUS_CANCELLED,
-                    ]),
-            ],
+            'year_section' => ['required', 'string', 'regex:/^\d-\d$/'],
             'description' => ['required', 'string', 'min:20', 'max:2000'],
             'purpose' => ['required', 'string', 'min:20', 'max:2000'],
             'co_moderator_ids' => ['required', 'array', 'size:2'],
@@ -43,7 +29,7 @@ class StoreCommunityCreationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.regex' => 'Name must follow the format "PROGRAM Y-S Batch YYYY" (e.g., "DICT 3-3 Batch 2026").',
+            'year_section.regex' => 'Year & Section must follow the format Y-S (e.g., 3-3).',
             'co_moderator_ids.size' => 'You must invite exactly 2 co-moderators.',
         ];
     }
@@ -53,42 +39,53 @@ class StoreCommunityCreationRequest extends FormRequest
         $validator->after(function (Validator $v) {
             /** @var User $user */
             $user = $this->user();
-            $name = (string) $this->input('name', '');
 
-            if (preg_match(self::NAME_REGEX, $name, $matches)) {
-                $program = $matches[1];
-                $yearSection = $matches[2];
-                $batchYear = (int) $matches[3];
-
-                if ($user->program_course !== $program) {
-                    $v->errors()->add('name', 'Program in the name must match your program (' . ($user->program_course ?? 'unset') . ').');
-                }
-
-                if ((int) $user->batch_year !== $batchYear) {
-                    $v->errors()->add('name', 'Batch year in the name must match your batch (' . ($user->batch_year ?? 'unset') . ').');
-                }
-
-                $existingOwn = CommunityCreationRequest::query()
-                    ->where('requestor_id', $user->id)
-                    ->whereIn('status', [
-                        CommunityCreationRequest::STATUS_PENDING_CO_MODS,
-                        CommunityCreationRequest::STATUS_PENDING_ADMIN,
-                        CommunityCreationRequest::STATUS_APPROVED,
-                    ])
-                    ->where('batch_year', $batchYear)
-                    ->where('program_course', $program)
-                    ->exists();
-
-                if ($existingOwn) {
-                    $v->errors()->add('name', 'You already have an active or approved community for this batch/program.');
-                }
-
-                $this->merge([
-                    'program_course' => $program,
-                    'year_section' => $yearSection,
-                    'batch_year' => $batchYear,
-                ]);
+            $programCode = self::extractProgramCode($user->program_course);
+            if (! $programCode) {
+                $v->errors()->add('year_section', 'Your program is missing or has no short code. Update your profile first.');
+                return;
             }
+
+            if (! $user->batch_year) {
+                $v->errors()->add('year_section', 'Your batch year is missing. Update your profile first.');
+                return;
+            }
+
+            $yearSection = (string) $this->input('year_section');
+            $name = sprintf('%s %s Batch %d', $programCode, $yearSection, (int) $user->batch_year);
+
+            $duplicate = CommunityCreationRequest::query()
+                ->where('name', $name)
+                ->whereNotIn('status', [
+                    CommunityCreationRequest::STATUS_REJECTED,
+                    CommunityCreationRequest::STATUS_CANCELLED,
+                ])
+                ->exists();
+
+            if ($duplicate) {
+                $v->errors()->add('year_section', 'A request for "' . $name . '" already exists.');
+            }
+
+            $existingOwn = CommunityCreationRequest::query()
+                ->where('requestor_id', $user->id)
+                ->whereIn('status', [
+                    CommunityCreationRequest::STATUS_PENDING_CO_MODS,
+                    CommunityCreationRequest::STATUS_PENDING_ADMIN,
+                    CommunityCreationRequest::STATUS_APPROVED,
+                ])
+                ->where('batch_year', (int) $user->batch_year)
+                ->where('program_course', $user->program_course)
+                ->exists();
+
+            if ($existingOwn) {
+                $v->errors()->add('year_section', 'You already have an active or approved community for your batch/program.');
+            }
+
+            $this->merge([
+                '_resolved_name' => $name,
+                '_resolved_program_course' => $user->program_course,
+                '_resolved_batch_year' => (int) $user->batch_year,
+            ]);
 
             $coModIds = $this->input('co_moderator_ids', []);
 
@@ -118,12 +115,34 @@ class StoreCommunityCreationRequest extends FormRequest
     {
         $v = $this->validated();
         return [
-            'name' => $v['name'],
+            'name' => (string) $this->input('_resolved_name'),
             'description' => $v['description'],
             'purpose' => $v['purpose'],
-            'batch_year' => (int) $this->input('batch_year'),
-            'program_course' => (string) $this->input('program_course'),
-            'year_section' => (string) $this->input('year_section'),
+            'batch_year' => (int) $this->input('_resolved_batch_year'),
+            'program_course' => (string) $this->input('_resolved_program_course'),
+            'year_section' => (string) $v['year_section'],
         ];
+    }
+
+    /**
+     * Extract a short program code from a program label.
+     * "Diploma in Information Communication Technology (DICT)" -> "DICT"
+     * "BSCS" -> "BSCS"
+     */
+    public static function extractProgramCode(?string $programCourse): ?string
+    {
+        if (! $programCourse) {
+            return null;
+        }
+
+        if (preg_match('/\(([A-Z]{2,10})\)\s*$/', $programCourse, $m)) {
+            return $m[1];
+        }
+
+        if (preg_match('/^[A-Z]{2,10}$/', trim($programCourse))) {
+            return trim($programCourse);
+        }
+
+        return null;
     }
 }

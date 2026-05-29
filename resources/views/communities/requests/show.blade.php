@@ -14,6 +14,12 @@
                 </div>
             @endif
 
+            @if (session('status') === 'community-request-already-active')
+                <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    {{ __('You already have an active community request — see its status below. You can only submit a new request after this one is decided.') }}
+                </div>
+            @endif
+
             @if (session('status') === 'co-moderator-accepted')
                 <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
                     {{ __('You accepted the co-moderator role.') }}
@@ -95,14 +101,11 @@
                                     <div class="flex gap-2">
                                         <form method="POST" action="{{ route('community-invites.accept', $invite) }}">
                                             @csrf
-                                            <x-primary-button>{{ __('Accept') }}</x-primary-button>
+                                            <x-tertiary-button>{{ __('Accept') }}</x-tertiary-button>
                                         </form>
                                         <form method="POST" action="{{ route('community-invites.decline', $invite) }}">
                                             @csrf
-                                            <button type="submit"
-                                                class="inline-flex items-center rounded-md border border-rose-300 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">
-                                                {{ __('Decline') }}
-                                            </button>
+                                            <x-ghost-button>{{ __('Decline') }}</x-ghost-button>
                                         </form>
                                     </div>
                                 @else

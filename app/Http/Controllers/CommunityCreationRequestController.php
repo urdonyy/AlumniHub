@@ -19,11 +19,26 @@ class CommunityCreationRequestController extends Controller
 
     public function __construct(private readonly CommunityCreationRequestService $service) {}
 
-    public function create(Request $request): View
+    public function create(Request $request): View|RedirectResponse
     {
         $this->authorize('create', CommunityCreationRequest::class);
 
         $user = $request->user();
+
+        $activeRequest = CommunityCreationRequest::query()
+            ->where('requestor_id', $user->id)
+            ->whereIn('status', [
+                CommunityCreationRequest::STATUS_PENDING_CO_MODS,
+                CommunityCreationRequest::STATUS_PENDING_ADMIN,
+            ])
+            ->latest()
+            ->first();
+
+        if ($activeRequest) {
+            return redirect()
+                ->route('communities.requests.show', $activeRequest)
+                ->with('status', 'community-request-already-active');
+        }
 
         $connections = Connection::query()
             ->with(['sender', 'recipient'])

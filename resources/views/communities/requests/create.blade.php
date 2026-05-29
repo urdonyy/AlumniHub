@@ -34,30 +34,82 @@
                     </p>
                 </div>
 
-                <form method="POST" action="{{ route('communities.requests.store') }}" class="space-y-6 border-t border-gray-200 px-6 py-6">
+                @php
+                    $programCode = \App\Http\Requests\StoreCommunityCreationRequest::extractProgramCode($user->program_course);
+                @endphp
+
+                @php
+                    $oldYearSection = old('year_section', '');
+                    [$oldYear, $oldSection] = array_pad(explode('-', $oldYearSection, 2), 2, '');
+                @endphp
+
+                <form method="POST" action="{{ route('communities.requests.store') }}"
+                    x-data="{
+                        year: @js($oldYear),
+                        section: @js($oldSection),
+                        get yearSection() { return (this.year && this.section) ? this.year + '-' + this.section : ''; }
+                    }"
+                    class="space-y-6 border-t border-gray-200 px-6 py-6">
                     @csrf
 
-                    <div>
-                        <x-input-label for="name" :value="__('Community name')" />
-                        <x-text-input id="name" name="name" type="text" class="mt-1 block w-full"
-                            :value="old('name')" required placeholder="DICT 3-3 Batch 2026" />
-                        <x-input-error :messages="$errors->get('name')" class="mt-2" />
-                        <p class="mt-1 text-xs text-gray-500">
-                            {{ __('Your program: :p · Your batch: :b', ['p' => $user->program_course ?? '—', 'b' => $user->batch_year ?? '—']) }}
-                        </p>
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <div>
+                            <x-input-label for="program_code" :value="__('Program')" />
+                            <x-text-input id="program_code" type="text" class="mt-1 block w-full bg-gray-50"
+                                :value="$programCode ?? '—'" readonly />
+                            <p class="mt-1 text-xs text-gray-500">{{ $user->program_course ?? __('Set your program in your profile.') }}</p>
+                        </div>
+
+                        <div>
+                            <x-input-label :value="__('Year & Section')" />
+                            <div class="mt-1 flex items-center gap-2">
+                                <x-text-input type="text" inputmode="numeric" maxlength="1"
+                                    class="block w-full text-center" x-model="year"
+                                    required placeholder="Y" pattern="\d" aria-label="{{ __('Year') }}" />
+                                <span class="text-gray-500 select-none">-</span>
+                                <x-text-input type="text" inputmode="numeric" maxlength="1"
+                                    class="block w-full text-center" x-model="section"
+                                    required placeholder="S" pattern="\d" aria-label="{{ __('Section') }}" />
+                            </div>
+                            <input type="hidden" name="year_section" :value="yearSection">
+                            <p class="mt-1 text-xs text-gray-500">{{ __('Format: Y-S (e.g., 3-3)') }}</p>
+                            <x-input-error :messages="$errors->get('year_section')" class="mt-2" />
+                        </div>
+
+                        <div>
+                            <x-input-label for="batch_year_display" :value="__('Batch')" />
+                            <x-text-input id="batch_year_display" type="text" class="mt-1 block w-full bg-gray-50"
+                                :value="$user->batch_year ?? '—'" readonly />
+                            <p class="mt-1 text-xs text-gray-500">{{ __('From your registration.') }}</p>
+                        </div>
                     </div>
+
+                    @if (! $programCode || ! $user->batch_year)
+                        <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                            {{ __('Your program or batch is missing from your profile. Update it before submitting a request.') }}
+                        </div>
+                    @else
+                        <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            {{ __('This will create:') }}
+                            <span class="font-semibold">{{ $programCode }} <span x-text="yearSection || 'Y-S'"></span> Batch {{ $user->batch_year }}</span>
+                        </div>
+                    @endif
 
                     <div>
                         <x-input-label for="description" :value="__('Description')" />
                         <textarea id="description" name="description" rows="3" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('description') }}</textarea>
+                            x-data x-init="$el.style.height='auto'; $el.style.height = $el.scrollHeight + 'px'"
+                            @input="$el.style.height='auto'; $el.style.height = $el.scrollHeight + 'px'"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 resize-none overflow-hidden">{{ old('description') }}</textarea>
                         <x-input-error :messages="$errors->get('description')" class="mt-2" />
                     </div>
 
                     <div>
                         <x-input-label for="purpose" :value="__('Purpose')" />
                         <textarea id="purpose" name="purpose" rows="3" required
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('purpose') }}</textarea>
+                            x-data x-init="$el.style.height='auto'; $el.style.height = $el.scrollHeight + 'px'"
+                            @input="$el.style.height='auto'; $el.style.height = $el.scrollHeight + 'px'"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 resize-none overflow-hidden">{{ old('purpose') }}</textarea>
                         <x-input-error :messages="$errors->get('purpose')" class="mt-2" />
                     </div>
 
@@ -76,7 +128,7 @@
                                 @foreach ($connections as $connection)
                                     <label class="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50">
                                         <input type="checkbox" name="co_moderator_ids[]" value="{{ $connection->id }}"
-                                            class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 cursor-pointer focus:ring-yellow-500"
                                             @checked(in_array($connection->id, old('co_moderator_ids', []), false))>
                                         <span class="text-sm text-gray-800">{{ $connection->name }}</span>
                                     </label>
@@ -89,11 +141,8 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-3">
-                        <a href="{{ route('communities.index') }}"
-                            class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
-                            {{ __('Cancel') }}
-                        </a>
-                        <x-primary-button>{{ __('Submit request') }}</x-primary-button>
+                        <x-ghost-button :href="route('communities.index')">{{ __('Cancel') }}</x-ghost-button>
+                        <x-tertiary-button>{{ __('Submit request') }}</x-tertiary-button>
                     </div>
                 </form>
             </div>

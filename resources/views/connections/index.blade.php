@@ -78,17 +78,11 @@
                                     <div class="flex gap-2 shrink-0">
                                         <form method="POST" action="{{ route('connections.accept', $invite) }}">
                                             @csrf
-                                            <button type="submit"
-                                                class="rounded-md bg-red-900 px-3 py-2 text-xs font-semibold tracking-widest text-white hover:bg-red-800">
-                                                {{ __('Accept') }}
-                                            </button>
+                                            <x-tertiary-button>{{ __('Accept') }}</x-tertiary-button>
                                         </form>
                                         <form method="POST" action="{{ route('connections.ignore', $invite) }}">
                                             @csrf
-                                            <button type="submit"
-                                                class="rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold tracking-widest text-gray-700 hover:bg-gray-50">
-                                                {{ __('Ignore') }}
-                                            </button>
+                                            <x-ghost-button>{{ __('Ignore') }}</x-ghost-button>
                                         </form>
                                     </div>
                                 </div>
@@ -131,7 +125,7 @@
                                         <input type="checkbox"
                                             :value="{{ $invite->id }}"
                                             x-model="selected"
-                                            class="h-4 w-4 rounded border-gray-300 accent-red-900 cursor-pointer">
+                                            class="h-4 w-4 rounded border-gray-300 text-red-900     accent-red-900 cursor-pointer focus:ring-yellow-500">
                                     </div>
                                     {{-- Person info --}}
                                     <a href="{{ route('profiles.show', $invite->recipient) }}"

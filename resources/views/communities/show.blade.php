@@ -94,7 +94,17 @@
                         @endif
 
                         @if ($canInteract)
-                            @if ($isMember)
+                            @if ($community->is_system)
+                                @if ($isMember)
+                                    <div class="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                                        {{ __('You were automatically added to this community at registration. Membership is managed by the system.') }}
+                                    </div>
+                                @else
+                                    <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                                        {{ __('You can view this community and its public posts, but you cannot join other program communities. Your program community was assigned automatically when you registered.') }}
+                                    </div>
+                                @endif
+                            @elseif ($isMember)
                                 <form method="post" action="{{ route('communities.leave', $community) }}">
                                     @csrf
                                     @method('delete')
