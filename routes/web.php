@@ -2,11 +2,16 @@
 
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\Admin\CommunityAdminController;
+use App\Http\Controllers\Admin\CommunityCreationRequestAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CommunityCreationRequestController;
+use App\Http\Controllers\CommunityJoinRequestController;
+use App\Http\Controllers\CommunityModerationController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
+use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\NotificationController;
@@ -150,9 +155,38 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
 
 Route::middleware('auth')->group(function () {
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
+
+    // Community creation requests (verified users)
+    Route::get('/communities/requests/create', [CommunityCreationRequestController::class, 'create'])
+        ->name('communities.requests.create');
+    Route::post('/communities/requests', [CommunityCreationRequestController::class, 'store'])
+        ->name('communities.requests.store');
+    Route::get('/communities/requests/{communityRequest}', [CommunityCreationRequestController::class, 'show'])
+        ->name('communities.requests.show');
+
+    // Co-moderator invite responses
+    Route::post('/community-invites/{invite}/accept', [CoModeratorInviteController::class, 'accept'])
+        ->name('community-invites.accept');
+    Route::post('/community-invites/{invite}/decline', [CoModeratorInviteController::class, 'decline'])
+        ->name('community-invites.decline');
+
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
     Route::post('/communities/{community}/join', [MembershipController::class, 'join'])->name('communities.join');
     Route::delete('/communities/{community}/leave', [MembershipController::class, 'leave'])->name('communities.leave');
+
+    // Program-batch join requests
+    Route::post('/communities/{community}/join-request', [CommunityJoinRequestController::class, 'store'])
+        ->name('communities.join-request.store');
+    Route::post('/communities/{community}/join-requests/{joinRequest}/accept', [CommunityJoinRequestController::class, 'accept'])
+        ->name('communities.join-requests.accept');
+    Route::post('/communities/{community}/join-requests/{joinRequest}/ignore', [CommunityJoinRequestController::class, 'ignore'])
+        ->name('communities.join-requests.ignore');
+
+    // Moderator actions
+    Route::delete('/communities/{community}/members/{member}', [CommunityModerationController::class, 'removeMember'])
+        ->name('communities.members.remove');
+    Route::delete('/communities/{community}/mod/posts/{post}', [CommunityModerationController::class, 'deletePost'])
+        ->name('communities.mod.posts.destroy');
 
     // Posts - read routes
     Route::resource('communities.posts', CommunityPostController::class)
@@ -236,6 +270,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/communities/{community}', [CommunityAdminController::class, 'destroy'])->name('communities.destroy');
 
     Route::resource('flairs', FlairAdminController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
+    Route::get('/community-requests', [CommunityCreationRequestAdminController::class, 'index'])
+        ->name('community-requests.index');
+    Route::get('/community-requests/{communityRequest}', [CommunityCreationRequestAdminController::class, 'show'])
+        ->name('community-requests.show');
+    Route::post('/community-requests/{communityRequest}/approve', [CommunityCreationRequestAdminController::class, 'approve'])
+        ->name('community-requests.approve');
+    Route::post('/community-requests/{communityRequest}/reject', [CommunityCreationRequestAdminController::class, 'reject'])
+        ->name('community-requests.reject');
 
     Route::get('/verifications', [VerificationAdminController::class, 'index'])->name('verifications.index');
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');

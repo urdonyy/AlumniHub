@@ -3,16 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Services\CommunityJoinRequestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class MembershipController extends Controller
 {
-    public function join(Request $request, Community $community): RedirectResponse
+    public function join(Request $request, Community $community, CommunityJoinRequestService $joinRequests): RedirectResponse
     {
         $user = $request->user();
 
         abort_unless($user->canInteractInCommunities(), 403);
+
+        if ($community->isProgramBatch()) {
+            if ($community->members()->whereKey($user->id)->exists()) {
+                return back()->with('status', 'already-a-member');
+            }
+            $joinRequests->request($user, $community);
+            return back()->with('status', 'join-request-submitted');
+        }
 
         $user->communities()->syncWithoutDetaching([$community->id]);
 

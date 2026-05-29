@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Models\CommunityJoinRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -41,11 +42,47 @@ class CommunityController extends Controller
         $user = $request->user();
         $user->loadMissing('communities');
 
+        $isMember = $user->communities->contains('id', $community->id);
+        $isModerator = $community->isModerator($user);
+        $isAdmin = $user->canManageCommunities();
+        $canModerate = $isModerator || $isAdmin;
+
+        $pendingJoinRequest = null;
+        $pendingJoinRequests = collect();
+        $otherProgramBatch = null;
+
+        if ($community->isProgramBatch()) {
+            if (! $isMember) {
+                $pendingJoinRequest = CommunityJoinRequest::query()
+                    ->where('community_id', $community->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', CommunityJoinRequest::STATUS_PENDING)
+                    ->first();
+
+                $otherProgramBatch = $user->programBatchCommunity();
+            }
+
+            if ($canModerate) {
+                $pendingJoinRequests = CommunityJoinRequest::query()
+                    ->with('user')
+                    ->where('community_id', $community->id)
+                    ->where('status', CommunityJoinRequest::STATUS_PENDING)
+                    ->latest()
+                    ->get();
+            }
+        }
+
         return view('communities.show', [
             'community' => $community,
-            'isMember' => $user->communities->contains('id', $community->id),
+            'isMember' => $isMember,
             'canInteract' => $user->canInteractInCommunities(),
             'isVerified' => $user->isVerified(),
+            'isModerator' => $isModerator,
+            'isAdmin' => $isAdmin,
+            'canModerate' => $canModerate,
+            'pendingJoinRequest' => $pendingJoinRequest,
+            'pendingJoinRequests' => $pendingJoinRequests,
+            'otherProgramBatch' => $otherProgramBatch,
             'user' => $user,
         ]);
     }

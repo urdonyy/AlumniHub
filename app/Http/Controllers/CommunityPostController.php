@@ -30,19 +30,34 @@ class CommunityPostController extends Controller
                 ->with('error', 'Verify your account to view posts in this community.');
         }
 
-        $posts = $community->posts()
+        $user = $request->user();
+        $isMember = $community->members()->whereKey($user->id)->exists();
+        $isOutsiderViewingProgramBatch = $community->isProgramBatch() && ! $isMember;
+
+        $postsQuery = $community->posts()
             ->published()
             ->with(['user', 'flairs', 'media'])
             ->orderByDesc('pinned')
-            ->orderByDesc('published_at')
-            ->paginate(15);
+            ->orderByDesc('published_at');
+
+        if ($isOutsiderViewingProgramBatch) {
+            $postsQuery->where('visibility', 'public');
+        }
+
+        $posts = $postsQuery->paginate(15);
 
         $flairs = $community->flairs()
             ->forCommunity($community->id)
             ->orderBy('name')
             ->get();
 
-        return view('communities.posts.index', compact('community', 'posts', 'flairs'));
+        return view('communities.posts.index', compact(
+            'community',
+            'posts',
+            'flairs',
+            'isMember',
+            'isOutsiderViewingProgramBatch',
+        ));
     }
 
     public function show(Community $community, Post $post)

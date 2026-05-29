@@ -59,6 +59,32 @@
                         @endforeach
                     </div>
 
+                    @if (session('status') === 'join-request-submitted')
+                        <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            {{ __('Your join request was submitted. Moderators will be notified.') }}
+                        </div>
+                    @endif
+                    @if (session('status') === 'already-a-member')
+                        <div class="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                            {{ __('You are already a member of this community.') }}
+                        </div>
+                    @endif
+                    @if (session('status') === 'member-removed')
+                        <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                            {{ __('Member removed.') }}
+                        </div>
+                    @endif
+                    @if ($errors->has('member'))
+                        <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                            {{ $errors->first('member') }}
+                        </div>
+                    @endif
+                    @if ($errors->has('join_request'))
+                        <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                            {{ $errors->first('join_request') }}
+                        </div>
+                    @endif
+
                     <div class="flex flex-wrap gap-3 border-t border-gray-200 pt-5">
                         @if ($isVerified)
                             <a href="{{ route('communities.posts.index', $community) }}"
@@ -74,6 +100,22 @@
                                     @method('delete')
                                     <x-primary-button>{{ __('Leave Community') }}</x-primary-button>
                                 </form>
+                            @elseif ($community->isProgramBatch())
+                                @if ($pendingJoinRequest)
+                                    <span class="inline-flex items-center rounded-md bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800">
+                                        {{ __('Join request pending') }}
+                                    </span>
+                                @else
+                                    <form method="post" action="{{ route('communities.join', $community) }}">
+                                        @csrf
+                                        <x-primary-button>{{ __('Request to join') }}</x-primary-button>
+                                    </form>
+                                    @if ($otherProgramBatch)
+                                        <div class="w-full text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                                            {{ __('Heads up: you are already a member of program-batch community ":n". A moderator here will not be able to accept you until you leave it.', ['n' => $otherProgramBatch->name]) }}
+                                        </div>
+                                    @endif
+                                @endif
                             @else
                                 <form method="post" action="{{ route('communities.join', $community) }}">
                                     @csrf
@@ -157,6 +199,88 @@
                     </div>
                 @endif
             </div>
+
+            @if ($canModerate && $community->isProgramBatch())
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="border-b border-gray-200 px-6 py-5">
+                        <h4 class="text-lg font-semibold text-gray-900">{{ __('Pending join requests') }}</h4>
+                        <p class="mt-1 text-sm text-gray-600">{{ __('Decide who joins. If a requestor is already a member of another program-batch community, you must wait for them to leave it before accepting.') }}</p>
+                    </div>
+                    @if ($pendingJoinRequests->isEmpty())
+                        <p class="px-6 py-6 text-center text-sm text-gray-500">{{ __('No pending requests.') }}</p>
+                    @else
+                        <ul class="divide-y divide-gray-200">
+                            @foreach ($pendingJoinRequests as $jr)
+                                @php($otherPb = $jr->user?->programBatchCommunity())
+                                <li class="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">{{ $jr->user->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $jr->created_at->diffForHumans() }}</p>
+                                        @if ($otherPb && $otherPb->id !== $community->id)
+                                            <p class="mt-1 text-xs font-medium text-amber-800">
+                                                {{ __('Already in ":n" — must leave before accepting.', ['n' => $otherPb->name]) }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <form method="POST" action="{{ route('communities.join-requests.accept', [$community, $jr]) }}">
+                                            @csrf
+                                            <button type="submit"
+                                                @disabled($otherPb && $otherPb->id !== $community->id)
+                                                class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                {{ __('Accept') }}
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ route('communities.join-requests.ignore', [$community, $jr]) }}">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex items-center rounded-md border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
+                                                {{ __('Ignore') }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+
+                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <div class="border-b border-gray-200 px-6 py-5">
+                        <h4 class="text-lg font-semibold text-gray-900">{{ __('Manage members') }}</h4>
+                        <p class="mt-1 text-sm text-gray-600">{{ __('Remove a member from this community. Other moderators cannot be removed.') }}</p>
+                    </div>
+                    @if ($community->members->isEmpty())
+                        <p class="px-6 py-6 text-center text-sm text-gray-500">{{ __('No members yet.') }}</p>
+                    @else
+                        <ul class="divide-y divide-gray-200">
+                            @foreach ($community->members as $member)
+                                @if ($member->id === $user->id)
+                                    @continue
+                                @endif
+                                <li class="flex items-center justify-between px-6 py-3">
+                                    <a href="{{ route('profiles.show', $member) }}" class="text-sm font-medium text-gray-900 hover:underline">
+                                        {{ $member->name }}
+                                    </a>
+                                    @if ($community->isModerator($member) && ! $isAdmin)
+                                        <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">{{ __('Moderator') }}</span>
+                                    @else
+                                        <form method="POST" action="{{ route('communities.members.remove', [$community, $member]) }}">
+                                            @csrf
+                                            @method('delete')
+                                            <button type="submit"
+                                                onclick="return confirm('{{ __('Remove this member?') }}')"
+                                                class="inline-flex items-center rounded-md border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
+                                                {{ __('Remove') }}
+                                            </button>
+                                        </form>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
+            @endif
         </div>
     </div>
 </x-app-layout>

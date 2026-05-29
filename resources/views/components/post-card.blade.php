@@ -56,4 +56,20 @@
             @endif
         </div>
     </a>
+
+    @auth
+        @if ($post->user_id !== auth()->id() && ($community->isModerator(auth()->user()) || auth()->user()->canManageCommunities()))
+            <div class="border-t border-gray-100 px-6 py-2 flex justify-end">
+                <form method="POST" action="{{ route('communities.mod.posts.destroy', [$community, $post]) }}">
+                    @csrf
+                    @method('delete')
+                    <button type="submit"
+                        onclick="return confirm('{{ __('Remove this post from the community?') }}')"
+                        class="text-xs font-semibold text-rose-700 hover:text-rose-800 hover:underline">
+                        {{ __('Remove (mod)') }}
+                    </button>
+                </form>
+            </div>
+        @endif
+    @endauth
 </div>

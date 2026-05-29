@@ -25,10 +25,26 @@
                 </div>
 
                 @if ($user->canManageCommunities())
-                    <div class="border-b border-gray-200 bg-indigo-50 px-6 py-4">
+                    <div class="border-b border-gray-200 bg-indigo-50 px-6 py-4 flex flex-wrap gap-2">
                         <a href="{{ route('admin.communities.index') }}"
                             class="inline-flex items-center rounded-md bg-indigo-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-indigo-600">
                             {{ __('Manage Communities') }}
+                        </a>
+                        <a href="{{ route('admin.community-requests.index') }}"
+                            class="inline-flex items-center rounded-md bg-indigo-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-indigo-600">
+                            {{ __('Review Community Requests') }}
+                        </a>
+                    </div>
+                @endif
+
+                @if ($user->isVerified() && ! $user->canManageCommunities())
+                    <div class="border-b border-gray-200 bg-emerald-50 px-6 py-4 flex items-center justify-between gap-3">
+                        <p class="text-sm text-emerald-900">
+                            {{ __("Don't see your batch's community? Request one — your two co-moderator picks will be notified, then admins review.") }}
+                        </p>
+                        <a href="{{ route('communities.requests.create') }}"
+                            class="inline-flex items-center rounded-md bg-emerald-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-emerald-600">
+                            {{ __('Request a community') }}
                         </a>
                     </div>
                 @endif
@@ -39,6 +55,10 @@
                             <div class="space-y-2">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <h4 class="text-base font-semibold text-gray-900">{{ $community->name }}</h4>
+                                    @if ($community->isProgramBatch())
+                                        <span
+                                            class="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-800">{{ __('Cohort') }}</span>
+                                    @endif
                                     @if (in_array($community->id, $memberCommunityIds, true))
                                         <span
                                             class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">{{ __('Joined') }}</span>

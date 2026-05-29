@@ -12,6 +12,7 @@ class CommunityAutoJoinService
     {
         $matchingCommunities = Community::query()
             ->with('rules')
+            ->where('type', '!=', Community::TYPE_PROGRAM_BATCH)
             ->get()
             ->filter(function (Community $community) use ($user): bool {
                 return $community->rules->contains(function ($rule) use ($user): bool {
