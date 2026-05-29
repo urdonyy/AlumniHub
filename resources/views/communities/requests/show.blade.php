@@ -32,6 +32,12 @@
                 </div>
             @endif
 
+            @if (session('status') === 'community-request-cancelled')
+                <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    {{ __('Request terminated. You can submit a new one.') }}
+                </div>
+            @endif
+
             <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                 <div class="border-b border-gray-200 px-6 py-5">
                     <div class="flex items-center justify-between gap-3">
@@ -47,6 +53,7 @@
                                 @case('pending_admin') bg-blue-50 text-blue-800 ring-blue-200 @break
                                 @case('approved') bg-emerald-50 text-emerald-800 ring-emerald-200 @break
                                 @case('rejected') bg-rose-50 text-rose-800 ring-rose-200 @break
+                                @case('cancelled') bg-gray-100 text-gray-700 ring-gray-300 @break
                                 @default bg-gray-50 text-gray-700 ring-gray-200
                             @endswitch">
                             {{ str_replace('_', ' ', ucfirst($communityRequest->status)) }}
@@ -115,7 +122,11 @@
                                             @case('declined') text-rose-700 @break
                                             @default text-amber-700
                                         @endswitch">
-                                        {{ $invite->status }}
+                                        @switch($invite->status)
+                                            @case('accepted') {{ __('Voluntarily Accepted') }} @break
+                                            @case('declined') {{ __('Respectfully Declined') }} @break
+                                            @default {{ $invite->status }}
+                                        @endswitch
                                     </span>
                                 @endif
                             </div>
@@ -140,11 +151,30 @@
                 </div>
             @endif
 
-            <div>
-                <a href="{{ route('communities.index') }}"
-                    class="inline-flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
-                    {{ __('Back to communities') }}
-                </a>
+            @if ($communityRequest->status === 'cancelled')
+                <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    {{ __('This request was cancelled. You can submit a new one from the communities page.') }}
+                </div>
+            @endif
+
+            @php
+                $canCancel = $user->id === $communityRequest->requestor_id
+                    && $communityRequest->status === 'pending_co_mods';
+            @endphp
+
+            <div class="flex items-center justify-between gap-3">
+                <x-ghost-button :href="route('communities.index')">{{ __('Back to communities') }}</x-ghost-button>
+
+                @if ($canCancel)
+                    <form method="POST" action="{{ route('communities.requests.cancel', $communityRequest) }}">
+                        @csrf
+                        <button type="submit"
+                            onclick="return confirm('{{ __('Terminate this request? Co-moderators who already accepted will be notified, and you will be able to submit a new one afterwards.') }}')"
+                            class="rounded-md border border-rose-300 px-3 py-2 text-xs font-semibold tracking-widest text-rose-700 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 transition ease-in-out duration-150">
+                            {{ __('Terminate request') }}
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
     </div>

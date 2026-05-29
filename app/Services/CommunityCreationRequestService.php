@@ -11,6 +11,7 @@ use App\Notifications\CoModeratorAcceptedNotification;
 use App\Notifications\CoModeratorDeclinedNotification;
 use App\Notifications\CoModeratorInviteNotification;
 use App\Notifications\CommunityCreationApprovedNotification;
+use App\Notifications\CommunityCreationCancelledNotification;
 use App\Notifications\CommunityCreationPendingReviewNotification;
 use App\Notifications\CommunityCreationRejectedNotification;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,11 @@ class CommunityCreationRequestService
     public function respondAsCoMod(CommunityCreationRequestModerator $invite, bool $accepted): void
     {
         $request = $invite->request;
+
+        if ($request->status !== CommunityCreationRequest::STATUS_PENDING_CO_MODS) {
+            return;
+        }
+
         $requestor = $request->requestor;
         $responder = $invite->invitedUser;
 
@@ -90,6 +96,31 @@ class CommunityCreationRequestService
                 }
             } else {
                 $requestor->notify(new CoModeratorDeclinedNotification($request, $responder));
+            }
+        });
+    }
+
+    public function cancelByRequestor(CommunityCreationRequest $request): void
+    {
+        if ($request->status !== CommunityCreationRequest::STATUS_PENDING_CO_MODS) {
+            return;
+        }
+
+        $request->loadMissing(['requestor', 'coModeratorInvites.invitedUser']);
+
+        DB::transaction(function () use ($request) {
+            $request->update([
+                'status' => CommunityCreationRequest::STATUS_CANCELLED,
+                'decided_at' => now(),
+            ]);
+
+            foreach ($request->coModeratorInvites as $invite) {
+                if ($invite->status !== CommunityCreationRequestModerator::STATUS_ACCEPTED) {
+                    continue;
+                }
+                $invite->invitedUser?->notify(
+                    new CommunityCreationCancelledNotification($request, $request->requestor)
+                );
             }
         });
     }

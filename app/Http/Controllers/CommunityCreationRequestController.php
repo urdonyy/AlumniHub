@@ -100,4 +100,15 @@ class CommunityCreationRequestController extends Controller
             'user' => $user,
         ]);
     }
+
+    public function cancel(CommunityCreationRequest $communityRequest): RedirectResponse
+    {
+        $this->authorize('cancel', $communityRequest);
+
+        $this->service->cancelByRequestor($communityRequest);
+
+        return redirect()
+            ->route('communities.requests.show', $communityRequest)
+            ->with('status', 'community-request-cancelled');
+    }
 }

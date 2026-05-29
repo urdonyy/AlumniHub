@@ -32,4 +32,10 @@ class CommunityCreationRequestPolicy
     {
         return $invite->invited_user_id === $user->id && $invite->isPending();
     }
+
+    public function cancel(User $user, CommunityCreationRequest $request): bool
+    {
+        return $user->id === $request->requestor_id
+            && $request->status === CommunityCreationRequest::STATUS_PENDING_CO_MODS;
+    }
 }

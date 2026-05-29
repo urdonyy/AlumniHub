@@ -163,6 +163,8 @@ Route::middleware('auth')->group(function () {
         ->name('communities.requests.store');
     Route::get('/communities/requests/{communityRequest}', [CommunityCreationRequestController::class, 'show'])
         ->name('communities.requests.show');
+    Route::post('/communities/requests/{communityRequest}/cancel', [CommunityCreationRequestController::class, 'cancel'])
+        ->name('communities.requests.cancel');
 
     // Co-moderator invite responses
     Route::post('/community-invites/{invite}/accept', [CoModeratorInviteController::class, 'accept'])
