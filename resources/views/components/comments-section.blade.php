@@ -20,22 +20,26 @@
         </div>
     </template>
 
-    <!-- Comment form -->
-    <textarea x-model="newComment.body" placeholder="Add a comment..." rows="3"
-        x-ref="commentInput"
-        @focus-comment-input.window="$el.focus(); $el.scrollIntoView({ behavior: 'smooth', block: 'center' })"
-        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
-    </textarea>
-    <div class="mt-3 flex justify-end gap-2">
-        <button type="button" @click="newComment.body = ''"
-            class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
-            Cancel
-        </button>
-        <button type="button" @click="submitComment()" :disabled="!newComment.body.trim() || isSubmitting"
-            class="rounded-lg bg-red-900 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:bg-gray-300">
-            Post Comment
-        </button>
-    </div>
+    <!-- Comment form (verified users only) -->
+    <template x-if="canComment">
+        <div>
+            <textarea x-model="newComment.body" placeholder="Add a comment..." rows="3"
+                x-ref="commentInput"
+                @focus-comment-input.window="$el.focus(); $el.scrollIntoView({ behavior: 'smooth', block: 'center' })"
+                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
+            </textarea>
+            <div class="mt-3 flex justify-end gap-2">
+                <button type="button" @click="newComment.body = ''"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                    Cancel
+                </button>
+                <button type="button" @click="submitComment()" :disabled="!newComment.body.trim() || isSubmitting"
+                    class="rounded-lg bg-red-900 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:bg-gray-300">
+                    Post Comment
+                </button>
+            </div>
+        </div>
+    </template>
 
     <!-- Comments list -->
     <div class="space-y-4">
@@ -58,10 +62,12 @@
 
                         <!-- Action buttons -->
                         <div class="mt-3 flex gap-3 text-xs">
-                            <button type="button" @click="toggleReplyForm(comment.id)"
-                                class="text-blue-600 hover:text-blue-700">
-                                Reply
-                            </button>
+                            <template x-if="canComment">
+                                <button type="button" @click="toggleReplyForm(comment.id)"
+                                    class="text-blue-600 hover:text-blue-700">
+                                    Reply
+                                </button>
+                            </template>
                             <template x-if="comment.can_delete">
                                 <button type="button" @click="deleteComment(comment.id)"
                                     class="text-red-600 hover:text-red-700">
@@ -157,6 +163,7 @@
             commentsUrl: null,
             error: null,
             successMessage: null,
+            canComment: document.querySelector('meta[name="user-verified"]')?.content === '1',
 
             get totalComments() {
                 return this.countAll(this.comments);
@@ -171,8 +178,11 @@
 
             dispatchCountChanged() {
                 if (!this.postId) return;
+                const postId = Number(this.postId);
+                const count = Number(this.totalComments ?? 0);
+                if (!Number.isFinite(postId) || !Number.isFinite(count)) return;
                 window.dispatchEvent(new CustomEvent('post-comment-count-changed', {
-                    detail: { postId: this.postId, count: this.totalComments }
+                    detail: { postId, count, source: 'comments' }
                 }));
             },
 

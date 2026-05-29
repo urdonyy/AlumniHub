@@ -28,7 +28,22 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Discard a stashed "intended" URL pointing at a JSON-only endpoint
+        // (e.g. /notifications/unread-count caught from a background poll).
+        $intended = $request->session()->get('url.intended');
+        if ($intended && str_contains((string) $intended, '/notifications/unread-count')) {
+            $request->session()->forget('url.intended');
+        }
+
+        $redirect = redirect()->intended(route('dashboard', absolute: false));
+
+        // Nudge still-unverified users to complete verification on each login.
+        $user = $request->user();
+        if ($user && ! $user->isVerified()) {
+            $redirect->with('show_setup_prompt', true);
+        }
+
+        return $redirect;
     }
 
     /**

@@ -13,6 +13,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
 use App\Models\Community;
+use App\Models\Connection;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -37,9 +38,22 @@ Route::get('/', function (FeedService $feed) {
             ->limit(5)
             ->get();
 
+        $excludedIds = Connection::query()
+            ->where(function ($q) use ($user) {
+                $q->where('sender_id', $user->id)->orWhere('recipient_id', $user->id);
+            })
+            ->whereIn('status', [Connection::STATUS_PENDING, Connection::STATUS_ACCEPTED])
+            ->get(['sender_id', 'recipient_id'])
+            ->flatMap(fn ($c) => [$c->sender_id, $c->recipient_id])
+            ->push($user->id)
+            ->unique()
+            ->values()
+            ->all();
+
         $suggestedPeople = User::query()
-            ->where('id', '!=', $user->id)
-            ->where('role', 'alumni')
+            ->whereIn('role', ['alumni', 'student'])
+            ->where('account_status', 'approved')
+            ->whereNotIn('id', $excludedIds)
             ->orderBy('name')
             ->limit(5)
             ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
@@ -89,9 +103,22 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         ->limit(5)
         ->get();
 
+    $excludedIds = Connection::query()
+        ->where(function ($q) use ($user) {
+            $q->where('sender_id', $user->id)->orWhere('recipient_id', $user->id);
+        })
+        ->whereIn('status', [Connection::STATUS_PENDING, Connection::STATUS_ACCEPTED])
+        ->get(['sender_id', 'recipient_id'])
+        ->flatMap(fn ($c) => [$c->sender_id, $c->recipient_id])
+        ->push($user->id)
+        ->unique()
+        ->values()
+        ->all();
+
     $suggestedPeople = User::query()
-        ->where('id', '!=', $user->id)
-        ->where('role', 'alumni')
+        ->whereIn('role', ['alumni', 'student'])
+        ->where('account_status', 'approved')
+        ->whereNotIn('id', $excludedIds)
         ->orderBy('name')
         ->limit(5)
         ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
@@ -187,18 +214,19 @@ Route::middleware('auth')->group(function () {
     ])->name('messages.index');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
 
     Route::get('/connections', [ConnectionController::class, 'index'])->name('connections.index');
+    Route::get('/connections/counts', [ConnectionController::class, 'counts'])->name('connections.counts');
     Route::post('/connections/invite/{user}', [ConnectionController::class, 'invite'])->name('connections.invite');
     Route::post('/connections/{connection}/accept', [ConnectionController::class, 'accept'])->name('connections.accept');
     Route::post('/connections/{connection}/ignore', [ConnectionController::class, 'ignore'])->name('connections.ignore');
+    Route::delete('/connections/{connection}/withdraw', [ConnectionController::class, 'withdraw'])->name('connections.withdraw');
+    Route::delete('/connections/{connection}/remove', [ConnectionController::class, 'remove'])->name('connections.remove');
 
-    Route::view('/saved', 'placeholders.module', [
-        'title' => 'Saved',
-        'description' => 'Saved posts and resources will be available after post features are ready.',
-    ])->name('saved.index');
+    
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

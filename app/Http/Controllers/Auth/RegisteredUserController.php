@@ -10,6 +10,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -34,16 +35,34 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'email'    => [
+                'required', 'string', 'lowercase', 'email', 'max:255',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    $existing = User::where('email', $value)->first();
+
+                    if ($existing && $existing->hasVerifiedEmail()) {
+                        $fail(__('validation.unique', ['attribute' => $attribute]));
+                    }
+                },
+            ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name'           => '',
-            'email'          => $request->string('email')->value(),
-            'password'       => Hash::make($request->string('password')->value()),
-            'account_status' => 'pending',
-        ]);
+        $email = $request->string('email')->value();
+
+        $user = DB::transaction(function () use ($request, $email) {
+            User::where('email', $email)
+                ->whereNull('email_verified_at')
+                ->first()
+                ?->delete();
+
+            return User::create([
+                'name'           => '',
+                'email'          => $email,
+                'password'       => Hash::make($request->string('password')->value()),
+                'account_status' => 'pending',
+            ]);
+        });
 
         event(new Registered($user));
 
@@ -63,10 +82,35 @@ class RegisteredUserController extends Controller
         return view('auth.register-complete');
     }
 
+    // ─── Step 3: Discard incomplete account so the user can restart with a new email ─
+
+    public function discard(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! empty($user->first_name) || $user->hasSubmittedVerificationDocument()) {
+            return redirect()->route('dashboard');
+        }
+
+        Auth::logout();
+        $user->delete();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('register')
+            ->with('status', 'previous-registration-discarded');
+    }
+
     // ─── Step 3: Handle complete-registration submission ─────────────────────────
 
     public function storeComplete(Request $request, CommunityAutoJoinService $communityAutoJoinService): RedirectResponse
     {
+        if ($this->postBodyExceededLimit($request)) {
+            throw ValidationException::withMessages([
+                'document' => __('The verification document is too large. Please upload a file under 5 MB.'),
+            ]);
+        }
+
         $currentYear = (int) now()->format('Y');
 
         $validated = $request->validate([
@@ -102,8 +146,7 @@ class RegisteredUserController extends Controller
         ]);
 
         $documentPath = $request->file('document')->store(
-            "verifications/user_{$user->id}",
-            'local'
+            "verifications/user_{$user->id}"
         );
 
         VerificationDocument::create([
@@ -115,6 +158,50 @@ class RegisteredUserController extends Controller
         $communityAutoJoinService->attachMatchingCommunities($user);
 
         return redirect()->route('dashboard')
-            ->with('status', 'registration-complete');
+            ->with('status', 'registration-complete')
+            ->with('show_setup_prompt', true);
+    }
+
+    /**
+     * Detect a POST that was rejected because the body exceeded post_max_size.
+     * In that case PHP silently drops $_POST/$_FILES while Content-Length still
+     * reflects the original payload, so we surface a friendly validation error
+     * instead of letting the request fall through as "document field required".
+     */
+    private function postBodyExceededLimit(Request $request): bool
+    {
+        if (! $request->isMethod('post')) {
+            return false;
+        }
+
+        $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+        $postMax       = $this->iniBytes((string) ini_get('post_max_size'));
+
+        if ($postMax <= 0 || $contentLength <= 0) {
+            return false;
+        }
+
+        return $contentLength > $postMax
+            && empty($_POST)
+            && empty($_FILES);
+    }
+
+    private function iniBytes(string $value): int
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return 0;
+        }
+
+        $unit   = strtolower(substr($value, -1));
+        $number = (int) $value;
+
+        return match ($unit) {
+            'g'     => $number * 1024 * 1024 * 1024,
+            'm'     => $number * 1024 * 1024,
+            'k'     => $number * 1024,
+            default => $number,
+        };
     }
 }

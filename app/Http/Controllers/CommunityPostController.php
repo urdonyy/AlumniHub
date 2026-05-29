@@ -21,8 +21,15 @@ class CommunityPostController extends Controller
         $this->postService = $postService;
     }
 
-    public function index(Community $community)
+    public function index(Request $request, Community $community)
     {
+        // Unverified users may not browse community posts.
+        if (! $request->user()->isVerified()) {
+            return redirect()
+                ->route('communities.show', $community)
+                ->with('error', 'Verify your account to view posts in this community.');
+        }
+
         $posts = $community->posts()
             ->published()
             ->with(['user', 'flairs', 'media'])

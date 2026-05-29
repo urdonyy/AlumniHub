@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPassword;
 use App\Notifications\VerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Connection;
@@ -27,9 +28,19 @@ class User extends Authenticatable implements MustVerifyEmail
         $this->notify(new VerifyEmail);
     }
 
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPassword($token));
+    }
+
     public function isVerifiedAlumni(): bool
     {
         return $this->role === 'alumni' && $this->account_status === 'approved';
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->role === 'admin' || $this->account_status === 'approved';
     }
 
     public function canInteractInCommunities(): bool
@@ -59,12 +70,12 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canSendConnectionRequests(): bool
     {
-        return $this->canInteractInCommunities();
+        return $this->isVerified();
     }
 
     public function hasLimitedProfileVisibility(): bool
     {
-        return $this->role !== 'admin' && ! $this->isVerifiedAlumni();
+        return ! $this->isVerified();
     }
 
     public function profileVisibilityLabel(): string
@@ -100,8 +111,20 @@ class User extends Authenticatable implements MustVerifyEmail
         return match ($this->account_status) {
             'approved' => 'Verified',
             'rejected' => 'Unverified (Rejected)',
-            default => 'Unverified (Pending Review)',
+            default => $this->hasSubmittedVerificationDocument()
+                ? 'Unverified (Pending Review)'
+                : 'Unverified (Not Submitted)',
         };
+    }
+
+    public function hasSubmittedVerificationDocument(): bool
+    {
+        return $this->verificationDocuments()->exists();
+    }
+
+    public function hasPendingVerificationDocument(): bool
+    {
+        return $this->verificationDocuments()->where('status', 'pending')->exists();
     }
 
     public function accountStatusBadgeClass(): string

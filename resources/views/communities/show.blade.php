@@ -60,10 +60,12 @@
                     </div>
 
                     <div class="flex flex-wrap gap-3 border-t border-gray-200 pt-5">
-                        <a href="{{ route('communities.posts.index', $community) }}"
-                            class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
-                            📝 {{ __('View Posts') }}
-                        </a>
+                        @if ($isVerified)
+                            <a href="{{ route('communities.posts.index', $community) }}"
+                                class="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+                                📝 {{ __('View Posts') }}
+                            </a>
+                        @endif
 
                         @if ($canInteract)
                             @if ($isMember)
@@ -107,22 +109,53 @@
                     </p>
                 </div>
 
-                <div class="border-t border-gray-200 px-6 py-5 text-sm text-gray-600 space-y-3">
-                    <p>{{ __('Member count: :count', ['count' => $community->members_count]) }}</p>
+                @if ($isVerified)
+                    <div class="border-t border-gray-200 px-6 py-5 text-sm text-gray-600 space-y-3">
+                        <p>{{ __('Member count: :count', ['count' => $community->members_count]) }}</p>
 
-                    @if ($community->members->isNotEmpty())
-                        <ul class="grid gap-2 sm:grid-cols-2">
-                            @foreach ($community->members as $member)
-                                <li>
-                                    <a href="{{ route('profiles.show', $member) }}"
-                                        class="inline-flex items-center rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                        {{ $member->name }}
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </div>
+                        @if ($community->members->isNotEmpty())
+                            <ul class="grid gap-2 sm:grid-cols-2">
+                                @foreach ($community->members as $member)
+                                    <li>
+                                        <a href="{{ route('profiles.show', $member) }}"
+                                            class="inline-flex items-center rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                            {{ $member->name }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                @else
+                    <div class="border-t border-gray-200 px-6 py-8">
+                        <div class="flex flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-6 py-8 text-center">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <h5 class="text-sm font-semibold text-amber-900">{{ __('Verify your account to view members and posts') }}</h5>
+                            <p class="max-w-md text-sm text-amber-800">
+                                {{ __('Community posts and member profiles are hidden until your alumni status is verified. Complete verification to unlock the full community.') }}
+                            </p>
+                            @if ($user->hasPendingVerificationDocument())
+                                <div class="relative group mt-1 inline-block">
+                                    <span class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-amber-200 px-4 py-2 text-sm font-semibold text-amber-500">
+                                        {{ __('Pending review') }}
+                                    </span>
+                                    <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white group-hover:block">
+                                        {{ __('Waiting for admin approval') }}
+                                    </div>
+                                </div>
+                            @else
+                                <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                    class="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
+                                    {{ __('Verify now') }}
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

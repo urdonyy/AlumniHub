@@ -46,7 +46,7 @@ class ProfileController extends Controller
 
         $activityPostsQuery = Post::query()
             ->with(['user', 'community', 'flairs', 'media'])
-            ->withCount(['comments', 'likes'])
+            ->withCount(['allComments as comments_count', 'likes'])
             ->where('status', 'published')
             ->where('user_id', $user->id)
             ->where(function ($q) {
@@ -79,6 +79,8 @@ class ProfileController extends Controller
 
         $activityPosts = $activityPostsQuery->get();
 
+        $connectionCount = $user->connections()->count();
+
         return view('profile.show', [
             'profileUser' => $user,
             'viewer' => $viewer,
@@ -86,6 +88,7 @@ class ProfileController extends Controller
             'connectionState' => $connectionState,
             'activeConnection' => $activeConnection,
             'activityPosts' => $activityPosts,
+            'connectionCount' => $connectionCount,
         ]);
     }
 
@@ -127,25 +130,25 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             $oldAvatarPath = $user->avatar_path;
-            $newAvatarPath = $request->file('avatar')->store('avatars/user_' . $user->id, 'public');
+            $newAvatarPath = $request->file('avatar')->store('avatars/user_' . $user->id);
 
             $user->avatar_path = $newAvatarPath;
             $user->avatar_uploaded_at = now();
 
-            if ($oldAvatarPath && Storage::disk('public')->exists($oldAvatarPath)) {
-                Storage::disk('public')->delete($oldAvatarPath);
+            if ($oldAvatarPath && Storage::exists($oldAvatarPath)) {
+                Storage::delete($oldAvatarPath);
             }
         }
 
         if ($request->hasFile('banner')) {
             $oldBannerPath = $user->banner_path;
-            $newBannerPath = $request->file('banner')->store('banners/user_' . $user->id, 'public');
+            $newBannerPath = $request->file('banner')->store('banners/user_' . $user->id);
 
             $user->banner_path = $newBannerPath;
             $user->banner_uploaded_at = now();
 
-            if ($oldBannerPath && Storage::disk('public')->exists($oldBannerPath)) {
-                Storage::disk('public')->delete($oldBannerPath);
+            if ($oldBannerPath && Storage::exists($oldBannerPath)) {
+                Storage::delete($oldBannerPath);
             }
         }
 
@@ -306,12 +309,12 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        if ($user->avatar_path && Storage::disk('public')->exists($user->avatar_path)) {
-            Storage::disk('public')->delete($user->avatar_path);
+        if ($user->avatar_path && Storage::exists($user->avatar_path)) {
+            Storage::delete($user->avatar_path);
         }
 
-        if ($user->banner_path && Storage::disk('public')->exists($user->banner_path)) {
-            Storage::disk('public')->delete($user->banner_path);
+        if ($user->banner_path && Storage::exists($user->banner_path)) {
+            Storage::delete($user->banner_path);
         }
 
         Auth::logout();
