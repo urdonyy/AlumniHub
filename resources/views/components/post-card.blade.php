@@ -19,13 +19,35 @@
 
         <!-- Title -->
         @if ($post->title)
-            <h3 class="mb-2 text-lg font-bold text-gray-900">{{ $post->title }}</h3>
+            <h3 class="mb-2 text-lg font-bold text-gray-900">
+                @if ($post->post_type === 'event')
+                    <span class="mr-1.5 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 align-middle text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">📅 Event</span>
+                @endif
+                {{ $post->title }}
+            </h3>
+        @endif
+
+        <!-- Event details -->
+        @if ($post->post_type === 'event' && $post->event)
+            @php $ev = $post->event; @endphp
+            <div class="mb-3 rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-sm text-gray-700">
+                <p class="font-semibold text-indigo-900">{{ $ev->isOnline() ? 'Online event' : 'In-person event' }}</p>
+                <p>
+                    {{ $ev->starts_at?->format('M j, Y · g:i A') }}
+                    @if ($ev->ends_at) <span class="text-gray-400">–</span> {{ $ev->ends_at->format('M j, Y · g:i A') }} @endif
+                </p>
+                @unless ($ev->isOnline())
+                    <p>📍 {{ $ev->address }}@if ($ev->venue) <span class="text-gray-400">·</span> {{ $ev->venue }}@endif</p>
+                @endunless
+            </div>
         @endif
 
         <!-- Excerpt -->
-        <p class="mb-3 line-clamp-2 text-gray-600 break-words break-normal">
-            {{ strip_tags($post->body_html) }}
-        </p>
+        @if (filled($post->body_html))
+            <p class="mb-3 line-clamp-2 text-gray-600 break-words break-normal">
+                {{ strip_tags($post->body_html) }}
+            </p>
+        @endif
 
         <!-- Flairs -->
         @if ($post->flairs->count() > 0)

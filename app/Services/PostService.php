@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Community;
 use App\Models\Post;
+use App\Models\PostEvent;
 use App\Models\PostMedia;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
@@ -20,13 +21,19 @@ class PostService
             'community_id' => $community?->id,
             'user_id' => $user->id,
             'title' => $data['title'] ?? null,
-            'body_markdown' => $data['body_markdown'],
+            'body_markdown' => $data['body_markdown'] ?? null,
             'status' => $data['status'] ?? 'published',
+            'post_type' => $data['post_type'] ?? 'text',
             'visibility' => $data['visibility'] ?? ($community ? 'members' : 'connections'),
             'published_at' => now(),
         ]);
 
         $post->save();
+
+        // Persist event details for event posts
+        if (($data['post_type'] ?? null) === 'event') {
+            $this->createEvent($post, $data);
+        }
 
         // Attach flairs if provided
         if (!empty($data['flairs'])) {
@@ -39,6 +46,22 @@ class PostService
         }
 
         return $post;
+    }
+
+    /**
+     * Create the related event record for an event post.
+     */
+    protected function createEvent(Post $post, array $data): PostEvent
+    {
+        return PostEvent::create([
+            'post_id' => $post->id,
+            'event_type' => $data['event_type'] ?? 'online',
+            'starts_at' => $data['starts_at'],
+            'ends_at' => $data['ends_at'] ?? null,
+            'external_link' => $data['external_link'] ?? null,
+            'address' => $data['address'] ?? null,
+            'venue' => $data['venue'] ?? null,
+        ]);
     }
 
     /**

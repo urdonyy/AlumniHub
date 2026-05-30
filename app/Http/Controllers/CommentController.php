@@ -131,7 +131,7 @@ class CommentController extends Controller
         $postModel = Post::findOrFail($post);
         $this->authorize('view', $postModel);
 
-        $postModel->load(['user', 'community', 'flairs', 'media']);
+        $postModel->load(['user', 'community', 'flairs', 'media', 'event']);
 
         return response()->json([
             'success' => true,
@@ -141,6 +141,17 @@ class CommentController extends Controller
                 'body_markdown' => $postModel->body_markdown,
                 'body_html' => $postModel->body_html,
                 'visibility' => $postModel->visibility,
+                'post_type' => $postModel->post_type,
+                'event' => $postModel->event ? [
+                    'event_type' => $postModel->event->event_type,
+                    'starts_at' => $postModel->event->starts_at?->toIso8601String(),
+                    'starts_at_human' => $postModel->event->starts_at?->format('M j, Y · g:i A'),
+                    'ends_at' => $postModel->event->ends_at?->toIso8601String(),
+                    'ends_at_human' => $postModel->event->ends_at?->format('M j, Y · g:i A'),
+                    'external_link' => $postModel->event->external_link,
+                    'address' => $postModel->event->address,
+                    'venue' => $postModel->event->venue,
+                ] : null,
                 'like_count' => $postModel->like_count,
                 'comment_count' => $postModel->comment_count,
                 'created_at' => $postModel->created_at->diffForHumans(),

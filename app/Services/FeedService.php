@@ -12,7 +12,7 @@ class FeedService
     {
         // Unverified users may only browse public posts.
         if (! $user->isVerified()) {
-            return Post::with(['user', 'community', 'flairs', 'media'])
+            return Post::with(['user', 'community', 'flairs', 'media', 'event'])
                 ->withCount(['allComments as comments_count', 'likes as likes_count'])
                 ->where('status', 'published')
                 ->where('visibility', 'public')
@@ -30,7 +30,7 @@ class FeedService
             ->unique()
             ->values();
 
-        $query = Post::with(['user', 'community', 'flairs', 'media'])
+        $query = Post::with(['user', 'community', 'flairs', 'media', 'event'])
             ->withCount(['allComments as comments_count', 'likes as likes_count'])
             ->where('status', 'published')
             ->where(function ($q) use ($user, $connectedUserIds) {

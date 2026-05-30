@@ -220,11 +220,45 @@
 
                     {{-- Title --}}
                     <template x-if="post.title">
-                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug" x-text="post.title"></h2>
+                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug">
+                            <template x-if="post.post_type === 'event'">
+                                <span class="mr-1.5 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 align-middle text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">📅 Event</span>
+                            </template>
+                            <span x-text="post.title"></span>
+                        </h2>
+                    </template>
+
+                    {{-- Event details --}}
+                    <template x-if="post.event">
+                        <div class="mx-4 mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3.5 py-3">
+                            <div class="flex items-start gap-3">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-700 ring-1 ring-indigo-100">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0 text-sm">
+                                    <p class="font-semibold text-indigo-900" x-text="post.event.event_type === 'online' ? 'Online event' : 'In-person event'"></p>
+                                    <p class="text-gray-700">
+                                        <span x-text="post.event.starts_at_human"></span>
+                                        <template x-if="post.event.ends_at_human">
+                                            <span><span class="text-gray-400"> – </span><span x-text="post.event.ends_at_human"></span></span>
+                                        </template>
+                                    </p>
+                                    <template x-if="post.event.event_type !== 'online' && post.event.address">
+                                        <p class="mt-0.5 text-gray-700">📍 <span x-text="post.event.address"></span><template x-if="post.event.venue"><span> · <span x-text="post.event.venue"></span></span></template></p>
+                                    </template>
+                                    <template x-if="post.event.external_link">
+                                        <a :href="post.event.external_link" target="_blank" rel="noopener"
+                                            class="mt-0.5 inline-block break-all text-indigo-700 hover:underline" x-text="post.event.external_link"></a>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
                     </template>
 
                     {{-- Body --}}
-                    <div class="px-4 pt-3 pb-2">
+                    <div class="px-4 pt-3 pb-2" x-show="post.body_html">
                         <div x-ref="postBody"
                             x-html="post.body_html"
                             class="prose prose-sm max-w-none text-gray-800 break-words"
