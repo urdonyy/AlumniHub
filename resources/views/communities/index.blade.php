@@ -1,10 +1,12 @@
 <x-app-layout>
     <x-slot name="title">Communities</x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
-            {{ __('Communities') }}
-        </h2>
-        <p class="text-sm text-red-900">{{ __('Discover and join alumni communities') }}</p>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
+                {{ __('Communities') }}
+            </h2>
+            <p class="text-sm text-red-900">{{ __('Discover and join alumni communities') }}</p>
+        </div>
     </x-slot>
 
     <div class="py-12">

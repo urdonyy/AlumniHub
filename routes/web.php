@@ -253,6 +253,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/trash', [NotificationController::class, 'trash'])->name('notifications.trash');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/star-many', [NotificationController::class, 'starMany'])->name('notifications.star-many');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/{notification}/unread', [NotificationController::class, 'markAsUnread'])->name('notifications.unread');
     Route::post('/notifications/{notification}/star', [NotificationController::class, 'toggleStar'])->name('notifications.star');

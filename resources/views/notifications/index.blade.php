@@ -1,19 +1,11 @@
 <x-app-layout>
     <x-slot name="title">Notifications</x-slot>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="font-semibold text-xl text-red-900 leading-tight">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
                 {{ __('Notifications') }}
             </h2>
-
-            <div class="flex items-center gap-3">
-                @if($unreadCount > 0)
-                    <form method="POST" action="{{ route('notifications.read-all') }}">
-                        @csrf
-                        <x-secondary-button type="submit">Mark all as read</x-secondary-button>
-                    </form>
-                @endif
-            </div>
+            <p class="text-sm text-red-900">{{ __('Your activity and updates') }}</p>
         </div>
     </x-slot>
 
@@ -21,9 +13,22 @@
         x-data="{
             managing: false,
             selected: [],
+            allIds: {{ json_encode(collect($notifications->items())->pluck('id')->values()->all()) }},
+            starredIds: {{ json_encode(collect($notifications->items())->whereNotNull('starred_at')->pluck('id')->values()->all()) }},
             baseUrl: '{{ url('/notifications') }}',
             csrf: document.querySelector('meta[name=csrf-token]')?.content,
             async bulkRequest(action) {
+                if (action === 'star') {
+                    // Gmail behavior: only unstar when every selected item is already starred.
+                    const allStarred = this.selected.length > 0 && this.selected.every(id => this.starredIds.includes(id));
+                    await fetch('{{ route('notifications.star-many') }}', {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': this.csrf, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids: this.selected, starred: !allStarred })
+                    });
+                    window.location.reload();
+                    return;
+                }
                 const method = action === 'delete' ? 'DELETE' : 'POST';
                 const suffix = action === 'read' ? '/read' : action === 'unread' ? '/unread' : '';
                 await Promise.all(this.selected.map(id =>
@@ -111,15 +116,26 @@
 
                             </div>
 
-                            {{-- Right: Manage toggle --}}
-                            @if ($notifications->count() > 0)
-                                <button type="button"
-                                    @click="managing = !managing; selected = []"
-                                    class="text-xs font-semibold"
-                                    :class="managing ? 'text-red-900 hover:text-red-800' : 'text-gray-500 hover:text-gray-700'">
-                                    <span x-text="managing ? '{{ __('Cancel') }}' : '{{ __('Manage') }}'"></span>
-                                </button>
-                            @endif
+                            {{-- Right: Select all (manage mode only) + Manage toggle --}}
+                            <div class="flex items-center gap-3">
+                                @if ($notifications->count() > 0)
+                                    <label x-show="managing" class="flex items-center gap-1.5 cursor-pointer" style="display:none">
+                                        <input type="checkbox"
+                                            class="h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 cursor-pointer focus:ring-yellow-500"
+                                            :checked="allIds.length > 0 && selected.length === allIds.length"
+                                            x-effect="$el.indeterminate = selected.length > 0 && selected.length < allIds.length"
+                                            @change="selected = $event.target.checked ? [...allIds] : []">
+                                        <span class="text-xs font-semibold text-gray-500">Select All</span>
+                                    </label>
+
+                                    <button type="button"
+                                        @click="managing = !managing; selected = []"
+                                        class="text-xs font-semibold"
+                                        :class="managing ? 'text-red-900 hover:text-red-800' : 'text-gray-500 hover:text-gray-700'">
+                                        <span x-text="managing ? '{{ __('Cancel') }}' : '{{ __('Manage') }}'"></span>
+                                    </button>
+                                @endif
+                            </div>
                         </div>
 
                         {{-- Manage action bar (top, visible when items selected) --}}
@@ -130,15 +146,36 @@
                             <p class="text-sm text-gray-700">
                                 <span x-text="selected.length"></span> selected
                             </p>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                {{-- Mark as read: open envelope --}}
                                 <button type="button" @click="bulkRequest('read')"
-                                    class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold tracking-widest text-gray-700 hover:bg-gray-100">
-                                    {{ __('Mark as read') }}
+                                    title="{{ __('Mark as read') }}"
+                                    class="flex items-center justify-center h-8 w-8 rounded-full text-gray-600 hover:bg-gray-200 transition">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 9v.906a2.25 2.25 0 0 1-1.183 1.981l-6.478 3.488M2.25 9v.906a2.25 2.25 0 0 0 1.183 1.981l6.478 3.488m8.839 2.51-4.66-2.51m0 0-1.023-.55a2.25 2.25 0 0 0-2.134 0l-1.022.55m0 0-4.661 2.51m16.5 1.615a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V8.844a2.25 2.25 0 0 1 1.183-1.98l7.5-4.04a2.25 2.25 0 0 1 2.134 0l7.5 4.04a2.25 2.25 0 0 1 1.183 1.98V19.5z"/>
+                                    </svg>
                                 </button>
+
+                                {{-- Mark as unread: closed envelope with dot --}}
                                 <button type="button" @click="bulkRequest('unread')"
-                                    class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold tracking-widest text-gray-700 hover:bg-gray-100">
-                                    {{ __('Mark as unread') }}
+                                    title="{{ __('Mark as unread') }}"
+                                    class="relative flex items-center justify-center h-8 w-8 rounded-full text-gray-600 hover:bg-gray-200 transition">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/>
+                                    </svg>
+                                    <span class="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-400 ring-1 ring-white"></span>
                                 </button>
+
+                                {{-- Star --}}
+                                <button type="button" @click="bulkRequest('star')"
+                                    title="{{ __('Star') }}"
+                                    class="flex items-center justify-center h-8 w-8 rounded-full text-gray-600 hover:bg-gray-200 transition">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                </button>
+
+                                {{-- Delete --}}
                                 <button type="button" @click="bulkRequest('delete')"
                                     class="rounded-md bg-red-900 px-3 py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800">
                                     {{ __('Delete') }}
@@ -261,9 +298,8 @@
                                             </div>
                                         </div>
 
-                                        {{-- Right side actions --}}
-                                        <div class="flex flex-col items-end gap-1 shrink-0"
-                                            x-data="{ starred: {{ $notification->starred_at ? 'true' : 'false' }} }">
+                                        {{-- Right side actions (star state lives in parent starredIds) --}}
+                                        <div class="flex flex-col items-end gap-1 shrink-0">
 
                                             {{-- Star toggle --}}
                                             <button type="button"
@@ -271,12 +307,15 @@
                                                     fetch('{{ route('notifications.star', $notification->id) }}', {
                                                         method: 'POST',
                                                         headers: { 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' }
-                                                    }).then(r => r.json()).then(d => starred = d.starred)
+                                                    }).then(r => r.json()).then(d => {
+                                                        if (d.starred) { if (!starredIds.includes('{{ $notification->id }}')) starredIds.push('{{ $notification->id }}'); }
+                                                        else { starredIds = starredIds.filter(x => x !== '{{ $notification->id }}'); }
+                                                    })
                                                 "
                                                 class="flex items-center justify-center h-7 w-7 rounded-full transition hover:bg-gray-100"
-                                                :title="starred ? 'Unstar' : 'Star'">
-                                                <svg class="h-4 w-4 transition" :class="starred ? 'text-red-900' : 'text-gray-300 hover:text-gray-400'" viewBox="0 0 24 24">
-                                                    <path :fill="starred ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
+                                                :title="starredIds.includes('{{ $notification->id }}') ? 'Unstar' : 'Star'">
+                                                <svg class="h-4 w-4 transition" :class="starredIds.includes('{{ $notification->id }}') ? 'text-red-900' : 'text-gray-300 hover:text-gray-400'" viewBox="0 0 24 24">
+                                                    <path :fill="starredIds.includes('{{ $notification->id }}') ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
                                                         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                                 </svg>
                                             </button>

@@ -106,6 +106,24 @@ class NotificationController extends Controller
         return redirect()->back();
     }
 
+    public function starMany(Request $request)
+    {
+        $ids     = (array) $request->input('ids', []);
+        $starred = $request->boolean('starred', true);
+
+        $request->user()
+            ->notifications()
+            ->whereNull('trashed_at')
+            ->whereIn('id', $ids)
+            ->update(['starred_at' => $starred ? now() : null]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'starred' => $starred]);
+        }
+
+        return redirect()->back();
+    }
+
     public function destroy(Request $request, string $notification)
     {
         $dbNotification = $this->findOwned($request, $notification);

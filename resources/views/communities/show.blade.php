@@ -1,9 +1,15 @@
 <x-app-layout>
     <x-slot name="title">{{ $community->name }}</x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ $community->name }}
-        </h2>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('communities.index') }}"
+                class="flex items-center justify-center h-8 w-8 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </a>
+            <h2 class="font-semibold text-xl text-red-900 leading-tight">{{ $community->name }}</h2>
+        </div>
     </x-slot>
 
     <div class="py-12">
