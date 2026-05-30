@@ -1,7 +1,7 @@
 @php
     /** @var \App\Models\User|null $navUser */
     $navUser = Auth::user();
-    $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
+    $unreadNotificationsCount = $navUser?->notifications()->whereNull('read_at')->whereNull('trashed_at')->count() ?? 0;
 @endphp
 <nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }} }"
     x-init="setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); notifCount = d.count; } catch {} }, 30000)"

@@ -250,9 +250,16 @@ Route::middleware('auth')->group(function () {
     ])->name('messages.index');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/trash', [NotificationController::class, 'trash'])->name('notifications.trash');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/{notification}/unread', [NotificationController::class, 'markAsUnread'])->name('notifications.unread');
+    Route::post('/notifications/{notification}/star', [NotificationController::class, 'toggleStar'])->name('notifications.star');
+    Route::post('/notifications/{notification}/restore', [NotificationController::class, 'restore'])->name('notifications.restore');
+    Route::post('/notifications/trash/empty', [NotificationController::class, 'emptyTrash'])->name('notifications.trash.empty');
+    Route::delete('/notifications/{notification}/force', [NotificationController::class, 'forceDestroy'])->name('notifications.force-destroy');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('/connections', [ConnectionController::class, 'index'])->name('connections.index');
     Route::get('/connections/counts', [ConnectionController::class, 'counts'])->name('connections.counts');
