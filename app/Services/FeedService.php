@@ -13,10 +13,10 @@ class FeedService
         // Unverified users may only browse public posts.
         if (! $user->isVerified()) {
             return Post::with(['user', 'community', 'flairs', 'media'])
-                ->withCount('allComments as comments_count')
+                ->withCount(['allComments as comments_count', 'likes as likes_count'])
                 ->where('status', 'published')
                 ->where('visibility', 'public')
-                ->orderByDesc('published_at')
+                ->orderByRaw('(UNIX_TIMESTAMP(published_at) + (likes_count * 3600) + (comments_count * 7200)) DESC')
                 ->paginate($perPage);
         }
 
@@ -31,7 +31,7 @@ class FeedService
             ->values();
 
         $query = Post::with(['user', 'community', 'flairs', 'media'])
-            ->withCount('allComments as comments_count')
+            ->withCount(['allComments as comments_count', 'likes as likes_count'])
             ->where('status', 'published')
             ->where(function ($q) use ($user, $connectedUserIds) {
                 $q->where('visibility', 'public')
@@ -47,7 +47,7 @@ class FeedService
                             });
                     });
             })
-            ->orderByDesc('published_at');
+            ->orderByRaw('(UNIX_TIMESTAMP(published_at) + (likes_count * 3600) + (comments_count * 7200)) DESC');
 
         return $query->paginate($perPage);
     }
