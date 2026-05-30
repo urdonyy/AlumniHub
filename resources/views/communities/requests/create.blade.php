@@ -1,10 +1,13 @@
 <x-app-layout>
     <x-slot name="title">New Community Request</x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Request a New Community') }}
-        </h2>
-        <p class="text-sm text-gray-600">{{ __('Submit a program-batch community for admin review. Two co-moderators from your connections must accept first.') }}</p>
+        <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1.5 text-sm">
+            <a href="{{ route('communities.index') }}" class="font-semibold text-red-900/70 transition hover:text-red-900">{{ __('Communities') }}</a>
+            <svg class="h-4 w-4 shrink-0 text-red-900/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="font-semibold text-red-900">{{ __('Request a New Community') }}</span>
+        </nav>
     </x-slot>
 
     <div class="py-12">
@@ -151,12 +154,47 @@
                         <x-input-error :messages="$errors->get('co_moderator_ids.1')" class="mt-2" />
                     </div>
 
-                    <div class="flex items-center justify-end gap-3">
-                        <x-ghost-button :href="route('communities.index')">{{ __('Cancel') }}</x-ghost-button>
-                        <x-tertiary-button>{{ __('Submit request') }}</x-tertiary-button>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <button type="button" x-data @click="$dispatch('open-modal', 'request-info')"
+                            class="inline-flex items-center gap-1.5 self-start text-sm font-medium text-red-900/70 transition hover:text-red-900">
+                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ __('How does this work?') }}
+                        </button>
+                        <div class="flex items-center justify-end gap-3">
+                            <x-ghost-button :href="route('communities.index')">{{ __('Cancel') }}</x-ghost-button>
+                            <x-tertiary-button>{{ __('Submit request') }}</x-tertiary-button>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <x-modal name="request-info" maxWidth="sm" focusable>
+        <div class="relative flex flex-col items-center p-6 text-center">
+            <button type="button" x-on:click="$dispatch('close')"
+                class="absolute right-3 top-3 rounded-md p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                aria-label="{{ __('Close') }}">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+
+            <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-900">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+
+            <h2 class="mt-3 text-base font-semibold text-gray-900">{{ __('How does this work?') }}</h2>
+
+            <p class="mt-1.5 text-sm leading-6 text-gray-600">
+                {{ __('Submit a program-batch community for admin review. Two co-moderators from your connections must accept first.') }}
+            </p>
+
+            <x-tertiary-button x-on:click="$dispatch('close')" class="mt-5">{{ __('Got it') }}</x-tertiary-button>
+        </div>
+    </x-modal>
 </x-app-layout>

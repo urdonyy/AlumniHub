@@ -1,9 +1,13 @@
 <x-app-layout>
     <x-slot name="title">Community Request</x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Community request') }} · {{ $communityRequest->name }}
-        </h2>
+        <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1.5 text-sm">
+            <a href="{{ route('communities.index') }}" class="font-semibold text-red-900/70 transition hover:text-red-900">{{ __('Communities') }}</a>
+            <svg class="h-4 w-4 shrink-0 text-red-900/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="font-semibold text-red-900">{{ __('Community request') }} · {{ $communityRequest->name }}</span>
+        </nav>
     </x-slot>
 
     <div class="py-12">
@@ -163,9 +167,7 @@
                     && $communityRequest->status === 'pending_co_mods';
             @endphp
 
-            <div class="flex items-center justify-between gap-3">
-                <x-ghost-button :href="route('communities.index')">{{ __('Back to communities') }}</x-ghost-button>
-
+            <div class="flex items-center justify-end gap-3">
                 @if ($canCancel)
                     <form method="POST" action="{{ route('communities.requests.cancel', $communityRequest) }}">
                         @csrf
