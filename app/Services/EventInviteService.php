@@ -43,7 +43,7 @@ class EventInviteService
             }
 
             try {
-                Mail::to($recipient->email)->queue(new EventInviteMail($post, $author, $recipient));
+                Mail::to($recipient->email)->send(new EventInviteMail($post, $author, $recipient));
             } catch (\Throwable $e) {
                 Log::warning('Failed to queue event invite email', [
                     'post_id' => $post->id,
