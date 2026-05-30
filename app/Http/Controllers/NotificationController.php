@@ -22,10 +22,18 @@ class NotificationController extends Controller
         };
 
         $notifications = $query->orderByDesc('created_at')->paginate(20)->withQueryString();
-        $unreadCount   = $user->notifications()->whereNull('trashed_at')->whereNull('read_at')->count();
-        $trashedCount  = $user->notifications()->whereNotNull('trashed_at')->count();
 
-        return view('notifications.index', compact('notifications', 'unreadCount', 'trashedCount', 'filter'));
+        $base         = $user->notifications()->whereNull('trashed_at');
+        $filterCounts = [
+            'all'     => (clone $base)->count(),
+            'read'    => (clone $base)->whereNotNull('read_at')->count(),
+            'unread'  => (clone $base)->whereNull('read_at')->count(),
+            'starred' => (clone $base)->whereNotNull('starred_at')->count(),
+        ];
+        $unreadCount  = $filterCounts['unread'];
+        $trashedCount = $user->notifications()->whereNotNull('trashed_at')->count();
+
+        return view('notifications.index', compact('notifications', 'unreadCount', 'trashedCount', 'filter', 'filterCounts'));
     }
 
     public function trash(Request $request)

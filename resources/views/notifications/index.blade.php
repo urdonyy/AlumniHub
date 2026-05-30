@@ -35,7 +35,7 @@
             }
         }">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+            <div class="bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
 
                     @if ($notifications->count() === 0 && $filter === 'all')
@@ -75,15 +75,20 @@
                                         style="display:none">
                                         @foreach (['all' => 'All', 'read' => 'Read', 'unread' => 'Unread', 'starred' => 'Starred'] as $value => $label)
                                             <a href="{{ route('notifications.index', ['filter' => $value]) }}"
-                                                class="flex items-center gap-2 px-3 py-2 text-sm {{ $filter === $value ? 'font-semibold text-gray-900' : 'text-gray-700 hover:bg-gray-50' }}">
-                                                @if ($filter === $value)
-                                                    <svg class="h-3.5 w-3.5 text-red-900 shrink-0" viewBox="0 0 16 16" fill="currentColor">
-                                                        <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/>
-                                                    </svg>
-                                                @else
-                                                    <span class="h-3.5 w-3.5 shrink-0"></span>
-                                                @endif
-                                                {{ $label }}
+                                                class="flex items-center justify-between gap-3 px-3 py-2 text-sm {{ $filter === $value ? 'font-semibold text-gray-900' : 'text-gray-700 hover:bg-gray-50' }}">
+                                                <div class="flex items-center gap-2">
+                                                    @if ($filter === $value)
+                                                        <svg class="h-3.5 w-3.5 text-red-900 shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                                                            <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/>
+                                                        </svg>
+                                                    @else
+                                                        <span class="h-3.5 w-3.5 shrink-0"></span>
+                                                    @endif
+                                                    {{ $label }}
+                                                </div>
+                                                <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-gray-600">
+                                                    {{ $filterCounts[$value] }}
+                                                </span>
                                             </a>
                                         @endforeach
                                     </div>
@@ -97,7 +102,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>
                                     </svg>
                                     @if ($trashedCount > 0)
-                                        <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-400 text-[9px] font-bold text-white leading-none">
+                                        <span class="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-900 text-[9px] font-bold text-white leading-none">
                                             {{ $trashedCount > 9 ? '9+' : $trashedCount }}
                                         </span>
                                     @endif
@@ -110,7 +115,7 @@
                                 <button type="button"
                                     @click="managing = !managing; selected = []"
                                     class="text-xs font-semibold"
-                                    :class="managing ? 'text-red-700 hover:text-red-900' : 'text-gray-500 hover:text-gray-700'">
+                                    :class="managing ? 'text-red-900 hover:text-red-800' : 'text-gray-500 hover:text-gray-700'">
                                     <span x-text="managing ? '{{ __('Cancel') }}' : '{{ __('Manage') }}'"></span>
                                 </button>
                             @endif
@@ -269,7 +274,7 @@
                                                 "
                                                 class="flex items-center justify-center h-7 w-7 rounded-full transition hover:bg-gray-100"
                                                 :title="starred ? 'Unstar' : 'Star'">
-                                                <svg class="h-4 w-4 transition" :class="starred ? 'text-red-700' : 'text-gray-300 hover:text-gray-400'" viewBox="0 0 24 24">
+                                                <svg class="h-4 w-4 transition" :class="starred ? 'text-red-900' : 'text-gray-300 hover:text-gray-400'" viewBox="0 0 24 24">
                                                     <path :fill="starred ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"
                                                         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                                                 </svg>
