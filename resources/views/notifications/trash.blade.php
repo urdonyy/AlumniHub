@@ -1,15 +1,13 @@
 <x-app-layout>
     <x-slot name="title">Trash</x-slot>
     <x-slot name="header">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('notifications.index') }}"
-                class="flex items-center justify-center h-8 w-8 rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                </svg>
-            </a>
-            <h2 class="font-semibold text-xl text-red-900 leading-tight">Trash</h2>
-        </div>
+        <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1.5 text-sm">
+            <a href="{{ route('notifications.index') }}" class="font-semibold text-red-900/70 transition hover:text-red-900">{{ __('Notifications') }}</a>
+            <svg class="h-4 w-4 shrink-0 text-red-900/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="font-semibold text-red-900">{{ __('Trash') }}</span>
+        </nav>
     </x-slot>
 
     <div class="py-6"

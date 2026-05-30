@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Community;
 use App\Models\CommunityCreationRequest;
 use App\Models\CommunityJoinRequest;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -112,8 +113,23 @@ class CommunityController extends Controller
             }
         }
 
+        // Activity feed: members (and admins) see every post in the community,
+        // everyone else only sees public posts. Newest first.
+        $activityPosts = Post::query()
+            ->with(['user', 'community', 'flairs', 'media'])
+            ->withCount(['allComments as comments_count', 'likes'])
+            ->where('status', 'published')
+            ->where('community_id', $community->id)
+            ->when(! ($isMember || $isAdmin), function ($query) {
+                $query->where('visibility', 'public');
+            })
+            ->orderByDesc('published_at')
+            ->orderByDesc('id')
+            ->get();
+
         return view('communities.show', [
             'community' => $community,
+            'activityPosts' => $activityPosts,
             'isMember' => $isMember,
             'canInteract' => $user->canInteractInCommunities(),
             'isVerified' => $user->isVerified(),
