@@ -125,15 +125,25 @@
                                 {{ __('You have no verified connections yet. Connect with two verified users before submitting a request.') }}
                             </div>
                         @else
-                            <div class="mt-3 grid gap-2 sm:grid-cols-2 max-h-72 overflow-y-auto rounded-md border border-gray-200 p-3">
-                                @foreach ($connections as $connection)
-                                    <label class="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50">
-                                        <input type="checkbox" name="co_moderator_ids[]" value="{{ $connection->id }}"
-                                            class="h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 cursor-pointer focus:ring-yellow-500"
-                                            @checked(in_array($connection->id, old('co_moderator_ids', []), false))>
-                                        <span class="text-sm text-gray-800">{{ $connection->name }}</span>
-                                    </label>
-                                @endforeach
+                            <div x-data="{ selected: @js(array_map('strval', old('co_moderator_ids', []))) }">
+                                <div class="mt-3 grid gap-2 sm:grid-cols-2 max-h-72 overflow-y-auto rounded-md border border-gray-200 p-3">
+                                    @foreach ($connections as $connection)
+                                        <label :class="(!selected.includes('{{ $connection->id }}') && selected.length >= 2)
+                                                        ? 'opacity-50 cursor-not-allowed pointer-events-none'
+                                                        : 'hover:bg-gray-50 cursor-pointer'"
+                                               class="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 transition-opacity">
+                                            <input type="checkbox" name="co_moderator_ids[]" value="{{ $connection->id }}"
+                                                class="h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 focus:ring-yellow-500"
+                                                @change="if ($el.checked && selected.length >= 2) { $el.checked = false; } else if ($el.checked) { selected.push('{{ $connection->id }}'); } else { selected = selected.filter(id => id !== '{{ $connection->id }}'); }"
+                                                :disabled="!selected.includes('{{ $connection->id }}') && selected.length >= 2"
+                                                @checked(in_array($connection->id, old('co_moderator_ids', []), false))>
+                                            <span class="text-sm text-gray-800">{{ $connection->name }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p class="mt-1.5 text-xs" :class="selected.length === 2 ? 'text-emerald-600' : 'text-gray-400'">
+                                    <span x-text="selected.length"></span>/2 selected
+                                </p>
                             </div>
                         @endif
                         <x-input-error :messages="$errors->get('co_moderator_ids')" class="mt-2" />
