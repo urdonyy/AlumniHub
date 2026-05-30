@@ -4,6 +4,7 @@ use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\Admin\CommunityAdminController;
 use App\Http\Controllers\Admin\CommunityCreationRequestAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
+use App\Http\Controllers\Admin\AdminInboxController;
 use App\Http\Controllers\Admin\VerificationAdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityCreationRequestController;
@@ -274,6 +275,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/inbox', [AdminInboxController::class, 'index'])->name('inbox');
+    Route::get('/inbox/counts', [AdminInboxController::class, 'counts'])->name('inbox.counts');
+
     Route::get('/communities', [CommunityAdminController::class, 'index'])->name('communities.index');
     Route::post('/communities', [CommunityAdminController::class, 'store'])->name('communities.store');
     Route::patch('/communities/{community}', [CommunityAdminController::class, 'update'])->name('communities.update');
