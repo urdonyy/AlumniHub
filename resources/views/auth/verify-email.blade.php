@@ -43,6 +43,12 @@
         Click the link in that email to continue.
     </p>
 
+    @if (session('status') == 'verification-link-expired')
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 text-center">
+            That verification link has expired. Please request a new one below.
+        </div>
+    @endif
+
     @if (session('status') == 'verification-link-sent')
         <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 text-center">
             A new verification link has been sent to your email address.

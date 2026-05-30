@@ -44,3 +44,36 @@ test('email is not verified with invalid hash', function () {
 
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });
+
+test('expired verification link redirects to notice with message', function () {
+    $user = User::factory()->unverified()->create();
+
+    $expiredUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->subMinute(),
+        ['id' => $user->id, 'hash' => sha1($user->email)]
+    );
+
+    $response = $this->actingAs($user)->get($expiredUrl);
+
+    $response->assertRedirect(route('verification.notice'));
+    $response->assertSessionHas('status', 'verification-link-expired');
+    expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
+});
+
+test('verification link remains valid within 1 hour', function () {
+    $user = User::factory()->unverified()->create();
+
+    Event::fake();
+
+    $url = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(59),
+        ['id' => $user->id, 'hash' => sha1($user->email)]
+    );
+
+    $response = $this->actingAs($user)->get($url);
+
+    Event::assertDispatched(Verified::class);
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+});
