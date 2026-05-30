@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Dashboard</x-slot>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">

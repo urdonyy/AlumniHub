@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Notifications</x-slot>
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-red-900 leading-tight">

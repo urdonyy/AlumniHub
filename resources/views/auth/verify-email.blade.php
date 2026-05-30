@@ -1,4 +1,5 @@
 <x-auth-layout>
+    <x-slot name="title">Verify Email</x-slot>
 
     <h1 class="text-2xl font-bold text-gray-900 mb-1">Check your inbox</h1>
     <p class="text-sm text-gray-500 mb-6">Step 2 of 3 — verify your email address.</p>

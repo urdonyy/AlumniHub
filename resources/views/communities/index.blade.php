@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Communities</x-slot>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
             {{ __('Communities') }}

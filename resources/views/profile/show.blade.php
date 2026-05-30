@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">{{ $profileUser->name }}</x-slot>
     <div class="bg-cover bg-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0"
         style="background-image: url('{{ asset('images/element.png') }}');">
         <x-slot name="header">

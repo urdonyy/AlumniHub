@@ -1,4 +1,5 @@
 <x-auth-layout>
+    <x-slot name="title">Log in</x-slot>
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <h1 class="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>

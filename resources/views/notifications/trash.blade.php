@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Trash</x-slot>
     <x-slot name="header">
         <div class="flex items-center gap-3">
             <a href="{{ route('notifications.index') }}"
