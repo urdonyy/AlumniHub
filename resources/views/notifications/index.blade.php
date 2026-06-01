@@ -44,10 +44,6 @@
             <div class="bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
 
-                    @if ($notifications->count() === 0 && $filter === 'all')
-                        <p class="text-sm text-gray-600">No notifications yet.</p>
-                    @else
-
                         {{-- Toolbar --}}
                         <div class="mb-3 flex items-center justify-between gap-3">
 
@@ -185,7 +181,11 @@
 
                         @if ($notifications->count() === 0)
                             <p class="rounded-lg border border-dashed border-gray-300 px-3 py-6 text-center text-sm text-gray-500">
-                                No {{ $filter !== 'all' ? $filter : '' }} notifications.
+                                @if ($filter === 'all')
+                                    No notifications yet.
+                                @else
+                                    No {{ $filter }} notifications.
+                                @endif
                             </p>
                         @else
                             <div class="space-y-3">
@@ -334,8 +334,6 @@
                         <div class="mt-6">
                             {{ $notifications->links() }}
                         </div>
-
-                    @endif
                 </div>
             </div>
         </div>
