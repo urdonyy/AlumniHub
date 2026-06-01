@@ -373,11 +373,17 @@
                                                     'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', __('Connections')],
                                                     default       => ['bg-gray-100 text-gray-600 ring-gray-200', __('Members')],
                                                 };
+                                                $profilePostApiUrl = $post->community
+                                                    ? route('communities.posts.api', ['community' => $post->community, 'post' => $post])
+                                                    : route('posts.api', ['post' => $post]);
+                                                $profilePostCommentsUrl = $post->community
+                                                    ? route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post])
+                                                    : route('posts.comments.index', ['post' => $post]);
                                             @endphp
                                             <div class="w-full shrink-0 min-w-0">
                                                 <article
                                                     class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md"
-                                                    @click="openPostModal($event, {{ $post->id }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post]) }}')">
+                                                    @click="openPostModal($event, {{ $post->id }}, '{{ $profilePostApiUrl }}', '{{ $profilePostCommentsUrl }}')">
 
                                                     <!-- Top section -->
                                                     <div class="p-4 pb-3">
