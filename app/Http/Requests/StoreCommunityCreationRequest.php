@@ -18,7 +18,7 @@ class StoreCommunityCreationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'year_section' => ['required', 'string', 'regex:/^\d-\d$/'],
+            'year_section' => ['required', 'string', 'regex:/^[1-3]-\d$/'],
             'description' => ['required', 'string', 'min:20', 'max:2000'],
             'purpose' => ['required', 'string', 'min:20', 'max:2000'],
             'co_moderator_ids' => ['required', 'array', 'size:2'],
@@ -29,7 +29,7 @@ class StoreCommunityCreationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'year_section.regex' => 'Year & Section must follow the format Y-S (e.g., 3-3).',
+            'year_section.regex' => 'Year must be 1–3 and Section must be a digit (e.g., 2-1).',
             'co_moderator_ids.size' => 'You must invite exactly 2 co-moderators.',
         ];
     }
