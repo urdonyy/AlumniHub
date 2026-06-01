@@ -22,19 +22,5 @@ class InitialUsersSeeder extends Seeder
             ]
         );
 
-        User::updateOrCreate(
-            ['email' => 'alumni@example.com'],
-            [
-                'name' => 'Test Alumni',
-                'first_name' => 'Test',
-                'last_name' => 'Alumni',
-                'email' => 'alumni@example.com',
-                'password' => 'password',
-                'role' => 'alumni',
-                'account_status' => 'approved',
-                'batch_year' => 2020,
-                'program_course' => 'Diploma in Computer Engineering Technology (DCET)',
-            ]
-        );
     }
 }
