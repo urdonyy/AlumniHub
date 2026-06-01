@@ -19,6 +19,7 @@ class InitialUsersSeeder extends Seeder
                 'password' => env('ADMIN_INITIAL_PASSWORD', 'password'),
                 'role' => 'admin',
                 'account_status' => 'approved',
+                'email_verified_at' => now(),
             ]
         );
 
