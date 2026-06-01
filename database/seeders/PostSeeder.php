@@ -21,9 +21,11 @@ class PostSeeder extends Seeder
     private function defaultFlairs(): array
     {
         return [
+            // System flair: auto-applied to event-type posts, hidden from the composer picker.
+            ['name' => 'Event', 'slug' => 'event', 'color' => '#4F46E5', 'icon' => '📅', 'is_system' => true],
             ['name' => 'Balik Sinta Stories', 'slug' => 'balik-sinta-stories', 'color' => '#F59E0B', 'icon' => '📖'],
             ['name' => 'Announcement', 'slug' => 'announcement', 'color' => '#6366F1', 'icon' => '📢'],
-            ['name' => 'Event / Webinar', 'slug' => 'event-webinar', 'color' => '#10B981', 'icon' => '🗓️'],
+            ['name' => 'Event / Webinar Stories', 'slug' => 'event-webinar', 'color' => '#10B981', 'icon' => '🗓️'],
             ['name' => 'Advice', 'slug' => 'advice', 'color' => '#EF4444', 'icon' => '💡'],
             ['name' => 'Job Referral', 'slug' => 'job-referral', 'color' => '#0EA5E9', 'icon' => '💼'],
             ['name' => 'Mentorship', 'slug' => 'mentorship', 'color' => '#8B5CF6', 'icon' => '🤝'],
@@ -46,17 +48,17 @@ class PostSeeder extends Seeder
             if (Schema::hasTable('flairs') && Schema::hasColumn('flairs', 'slug')) {
                 Flair::firstOrCreate(
                     ['slug' => $f['slug']],
-                    ['name' => $f['name'], 'color' => $f['color'], 'icon' => $f['icon'], 'is_sticky' => false]
+                    ['name' => $f['name'], 'color' => $f['color'], 'icon' => $f['icon'], 'is_sticky' => false, 'is_system' => $f['is_system'] ?? false]
                 );
             } else {
                 Flair::firstOrCreate(
                     ['name' => $f['name']],
-                    ['color' => $f['color'], 'icon' => $f['icon'], 'is_sticky' => false]
+                    ['color' => $f['color'], 'icon' => $f['icon'], 'is_sticky' => false, 'is_system' => $f['is_system'] ?? false]
                 );
             }
         }
 
-        $flairIds = Flair::global()->pluck('id')->toArray();
+        $flairIds = Flair::global()->selectable()->pluck('id')->toArray();
 
         $communities = Community::all();
         if ($communities->isEmpty()) {
@@ -111,7 +113,7 @@ class PostSeeder extends Seeder
                 ]);
 
                 // attach 1-2 random flairs (community-specific or global)
-                $possible = Flair::forCommunity($community->id)->inRandomOrder()->limit(rand(1, 2))->pluck('id')->toArray();
+                $possible = Flair::forCommunity($community->id)->selectable()->inRandomOrder()->limit(rand(1, 2))->pluck('id')->toArray();
                 if (!empty($possible)) {
                     $post->flairs()->sync($possible);
                 }

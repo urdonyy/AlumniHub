@@ -1,4 +1,4 @@
-<x-app-layout>
+﻿<x-app-layout>
     <x-slot name="title">Dashboard</x-slot>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -17,7 +17,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <div>
-                        <p class="text-sm font-semibold text-amber-800">Registration submitted — pending admin review</p>
+                        <p class="text-sm font-semibold text-amber-800">Registration submitted â€” pending admin review</p>
                         <p class="mt-0.5 text-sm text-amber-700">Your verification document has been received. You'll gain full access once an admin approves your account.</p>
                     </div>
                 </div>
@@ -319,7 +319,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             <div class="text-xs text-blue-800 leading-relaxed">
-                                                <span class="font-semibold">Connections only</span> — Your post will be visible only to people in your connections list. It will not appear in community feeds, public discovery, or to anyone outside your network.
+                                                <span class="font-semibold">Connections only</span> â€” Your post will be visible only to people in your connections list. It will not appear in community feeds, public discovery, or to anyone outside your network.
                                             </div>
                                         </div>
 
@@ -470,7 +470,7 @@
                                                     class="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 focus:ring-red-900">
                                                 <span class="text-xs leading-relaxed text-gray-600">
                                                     <span class="font-semibold text-gray-800">Email auto-invites</span><br>
-                                                    Invite everyone who can see this event — your
+                                                    Invite everyone who can see this event â€” your
                                                     <span x-text="visibility === 'connections' ? 'connections' : 'community members'"></span>
                                                     get an email and an in-app notification.
                                                 </span>
@@ -503,7 +503,7 @@
                                             </label>
                                         </div>
 
-                                        <!-- Flair tags (required, 1–3, hidden when connections-only or event) -->
+                                        <!-- Flair tags (required, 1â€“3, hidden when connections-only or event) -->
                                         <template x-if="filteredFlairs.length > 0 && !isConnectionsOnly && !isEvent">
                                             <div class="px-5 pb-3 pt-3 border-t border-gray-100">
                                                 <div class="flex items-center justify-between mb-2">
@@ -559,181 +559,54 @@
                         </div>{{-- end composer card --}}
                         @endif
 
+                        <div x-data="feedController(@js(($availableFlairs ?? collect())->map(fn($f) => ['id' => $f->id, 'name' => $f->name, 'icon' => $f->icon])->values()), @js($selectedFlairIds ?? []), {{ isset($posts) && $posts->hasMorePages() ? 'true' : 'false' }}, {{ isset($posts) ? $posts->currentPage() : 1 }})"
+                            x-init="initScroll()" class="space-y-3">
+
+                        {{-- Flair feed filter --}}
+                        @if(isset($availableFlairs) && $availableFlairs->isNotEmpty())
+                        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                            <div class="flex items-center justify-between mb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Filter by topic</span>
+                                    <svg x-show="loading" class="h-3.5 w-3.5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24" style="display:none;">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-400" x-show="selected.length > 0" x-text="`${selected.length}/3 active`" style="display:none;"></span>
+                                    <button x-show="selected.length > 0" @click="clearAll()"
+                                        class="text-xs font-medium text-red-900 hover:underline" style="display:none;">Clear</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="flair in visibleFlairs" :key="flair.id">
+                                    <button type="button"
+                                        @click="toggle(flair.id)"
+                                        :disabled="!canSelect(flair.id)"
+                                        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition"
+                                        :class="{
+                                            'border-red-900 bg-red-900 text-white shadow-sm': isSelected(flair.id),
+                                            'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50': !isSelected(flair.id) && canSelect(flair.id),
+                                            'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed': !canSelect(flair.id)
+                                        }">
+                                        <span x-show="flair.icon" x-text="flair.icon" class="leading-none"></span>
+                                        <span x-text="flair.name"></span>
+                                    </button>
+                                </template>
+                                <template x-if="flairs.length > 8">
+                                    <button type="button" @click="expanded = !expanded"
+                                        class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 transition">
+                                        <span x-text="expanded ? 'Show less' : `+${flairs.length - 8} more`"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        @endif
+
+                        <div id="feed-posts-container" class="space-y-3">
                         @if(isset($posts))
-                            @foreach($posts as $post)
-                                @php
-                                    // Connections-only posts (incl. connections-audience events) have no
-                                    // community, so they use the community-less personal-post routes.
-                                    $postApiUrl = $post->community
-                                        ? route('communities.posts.api', ['community' => $post->community, 'post' => $post])
-                                        : route('posts.api', ['post' => $post]);
-                                    $postLikeUrl = $post->community
-                                        ? route('communities.posts.like', ['community' => $post->community, 'post' => $post])
-                                        : route('posts.like', ['post' => $post]);
-                                @endphp
-                                <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
-                                    @click="openPostModal($event)"
-                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300 min-w-0">
-
-                                    <!-- Post Header -->
-                                    <div class="p-4 pb-3">
-                                        <div class="flex items-start justify-between gap-3">
-                                            <div class="flex items-center gap-3">
-                                                <img src="{{ $post->user->profileAvatarUrl() }}"
-                                                    alt="{{ $post->user->name }}"
-                                                    class="h-10 w-10 shrink-0 rounded-full border border-gray-200 object-cover"
-                                                    onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
-                                                <div>
-                                                    <p class="text-sm font-semibold text-gray-900">{{ $post->user->name }}</p>
-                                                    @php
-                                                        $batchLabel = $post->user->batch_year ? 'Batch ' . $post->user->batch_year : null;
-                                                        $programAbbr = null;
-                                                        if ($post->user->program_course && preg_match('/\(([^)]+)\)$/', $post->user->program_course, $m)) {
-                                                            $programAbbr = $m[1];
-                                                        }
-                                                    @endphp
-                                                    <p class="text-xs text-gray-500">
-                                                        @if($batchLabel || $programAbbr)
-                                                            {{ implode(' · ', array_filter([$batchLabel, $programAbbr])) }}
-                                                            <span class="mx-1">·</span>
-                                                        @endif
-                                                        {{ $post->community?->name ?? __('Post') }}
-                                                        @if($post->published_at)
-                                                            · {{ $post->published_at->diffForHumans() }}
-                                                        @endif
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            @php
-                                                $visibilityConfig = match($post->visibility) {
-                                                    'public'      => ['bg-green-50 text-green-700 ring-green-200', 'Public'],
-                                                    'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', 'Connections'],
-                                                    default       => ['bg-gray-100 text-gray-600 ring-gray-200', 'Members'],
-                                                };
-                                            @endphp
-                                            <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
-                                                {{ $visibilityConfig[1] }}
-                                            </span>
-                                        </div>
-
-                                        @if($post->flairs->count() > 0)
-                                            <div class="mt-3 flex flex-wrap gap-1.5">
-                                                @foreach($post->flairs as $flair)
-                                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                                                        style="background-color: {{ $flair->color ? $flair->color . '20' : '#f3f4f6' }}; color: {{ $flair->color ?? '#374151' }}; border: 1px solid {{ $flair->color ?? '#e5e7eb' }};">
-                                                        @if($flair->icon)<span>{{ $flair->icon }}</span>@endif
-                                                        {{ $flair->name }}
-                                                    </span>
-                                                @endforeach
-                                            </div>
-                                        @endif
-
-                                        @if($post->title)
-                                            <h4 class="mt-2 text-base font-semibold text-gray-900">
-                                                @if($post->post_type === 'event')
-                                                    <span class="mr-1.5 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 align-middle text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">📅 Event</span>
-                                                @endif
-                                                {{ $post->title }}
-                                            </h4>
-                                        @endif
-
-                                        @if(filled($post->body_html ?? $post->body_markdown))
-                                            <p class="mt-2 text-sm leading-6 text-gray-700 break-words"
-                                                x-ref="postBody"
-                                                :class="isBodyExpanded ? '' : 'line-clamp-3'">
-                                                {{ strip_tags($post->body_html ?? $post->body_markdown) }}
-                                            </p>
-                                            <button type="button"
-                                                x-show="isBodyOverflowing"
-                                                @click.stop="toggleBody()"
-                                                class="mt-1 text-sm font-semibold text-red-900 hover:underline">
-                                                <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
-                                            </button>
-                                        @endif
-
-                                        @if($post->post_type === 'event' && $post->event)
-                                            @php $ev = $post->event; @endphp
-                                            <div class="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3.5 py-3">
-                                                <div class="flex items-start gap-3">
-                                                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-700 ring-1 ring-indigo-100">
-                                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                                        </svg>
-                                                    </div>
-                                                    <div class="min-w-0 text-sm">
-                                                        <p class="font-semibold text-indigo-900">{{ $ev->isOnline() ? 'Online event' : 'In-person event' }}</p>
-                                                        <p class="text-gray-700">
-                                                            {{ $ev->starts_at?->format('M j, Y · g:i A') }}
-                                                            @if($ev->ends_at) <span class="text-gray-400">–</span> {{ $ev->ends_at->format('M j, Y · g:i A') }} @endif
-                                                        </p>
-                                                        @unless($ev->isOnline())
-                                                            <p class="mt-0.5 text-gray-700">📍 {{ $ev->address }}@if($ev->venue) <span class="text-gray-400">·</span> {{ $ev->venue }}@endif</p>
-                                                        @endunless
-                                                        @if($ev->external_link)
-                                                            <a href="{{ $ev->external_link }}" target="_blank" rel="noopener" @click.stop
-                                                                class="mt-0.5 inline-block break-all text-indigo-700 hover:underline">{{ $ev->external_link }}</a>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <!-- Post Media -->
-                                    @if($post->media->count() > 0)
-                                        <div class="relative overflow-hidden bg-gray-50 max-h-80">
-                                                <img src="{{ $post->media->first()->url }}"
-                                                    alt="Post image"
-                                                    class="w-full max-h-80 object-contain">
-                                            @if($post->media->count() > 1)
-                                                <div class="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white">
-                                                    +{{ $post->media->count() - 1 }} more
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endif
-
-                                    <!-- Post Footer -->
-                                    <div class="border-t border-gray-100 px-2 py-1">
-                                        <div class="flex">
-                                            @if (auth()->user()->isVerified())
-                                                <button type="button" @click.stop="toggleLike()"
-                                                    :disabled="isLikingLoading"
-                                                    :class="{ 'text-red-700': isLiked, 'text-gray-600': !isLiked, 'opacity-60': isLikingLoading }"
-                                                    class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition hover:bg-gray-50">
-                                                    <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                    <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
-                                                </button>
-                                                <button type="button" @click.stop="openPostModal($event)"
-                                                    class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
-                                                    </svg>
-                                                    <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
-                                                </button>
-                                            @else
-                                                {{-- Unverified: read-only counts, no interaction --}}
-                                                <span class="flex flex-1 items-center justify-center gap-2 py-2 text-sm font-medium text-gray-400">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                    <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
-                                                </span>
-                                                <span class="flex flex-1 items-center justify-center gap-2 py-2 text-sm font-medium text-gray-400">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
-                                                    </svg>
-                                                    <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </article>
-                            @endforeach
-
-                            <div class="pt-4">{{ $posts->links() }}</div>
+                            @include('partials.feed-posts', ['posts' => $posts])
                         @else
                             @foreach ($feedCards as $card)
                                 <article class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -759,6 +632,21 @@
                                 </article>
                             @endforeach
                         @endif
+
+                        </div>{{-- end feed-posts-container --}}
+
+                        {{-- Infinite scroll sentinel + states --}}
+                        <div x-ref="sentinel" aria-hidden="true" class="h-px"></div>
+                        <div x-show="loadingMore" class="flex justify-center py-6" style="display:none;">
+                            <svg class="h-6 w-6 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                        </div>
+                        <div x-show="reachedEnd" class="py-6 text-center text-xs text-gray-400" style="display:none;">
+                            You're all caught up
+                        </div>
+                        </div>{{-- end feedController --}}
 
                         <x-post-detail-modal />
                     </section>
@@ -888,7 +776,7 @@
 
                 setPostType(type) {
                     this.postType = type;
-                    // Events cannot be public — fall back to community audience.
+                    // Events cannot be public â€” fall back to community audience.
                     if (type === 'event' && this.visibility === 'public') {
                         this.visibility = 'members';
                     }
@@ -1113,6 +1001,101 @@
                 }
             };
         }
+
+        function feedController(availableFlairs, selectedIds, initialHasMore, initialPage) {
+            return {
+                flairs: availableFlairs,
+                selected: selectedIds,
+                expanded: false,
+                loading: false,       // filter change (replace) in progress
+                loadingMore: false,   // infinite-scroll append in progress
+                page: initialPage,    // last page loaded into the feed
+                hasMore: initialHasMore,
+                observer: null,
+
+                get visibleFlairs() {
+                    return this.expanded ? this.flairs : this.flairs.slice(0, 8);
+                },
+                get reachedEnd() {
+                    return !this.hasMore && !this.loadingMore && !this.loading;
+                },
+                isSelected(id) { return this.selected.includes(id); },
+                canSelect(id) { return this.isSelected(id) || this.selected.length < 3; },
+
+                buildQuery(page) {
+                    const params = new URLSearchParams();
+                    this.selected.forEach(id => params.append('flairs[]', id));
+                    if (page > 1) params.set('page', page);
+                    return params.toString();
+                },
+
+                toggle(id) {
+                    if (this.isSelected(id)) {
+                        this.selected = this.selected.filter(s => s !== id);
+                    } else if (this.selected.length < 3) {
+                        this.selected = [...this.selected, id];
+                    } else {
+                        return;
+                    }
+                    this.applyFilter();
+                },
+                clearAll() {
+                    this.selected = [];
+                    this.applyFilter();
+                },
+
+                // Flair change: reset to page 1 and replace the feed.
+                applyFilter() {
+                    const url = new URL(window.location.href);
+                    url.search = '';
+                    this.selected.forEach(id => url.searchParams.append('flairs[]', id));
+                    history.pushState({}, '', url.toString());
+
+                    this.loading = true;
+                    this.page = 1;
+                    fetch('/feed/posts?' + this.buildQuery(1), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById('feed-posts-container').innerHTML = data.html;
+                            this.hasMore = data.hasMore;
+                            this.loading = false;
+                            this.$nextTick(() => this.fillViewport());
+                        })
+                        .catch(() => { this.loading = false; });
+                },
+
+                // Infinite scroll: fetch the next page and append.
+                loadMore() {
+                    if (this.loadingMore || this.loading || !this.hasMore) return;
+                    this.loadingMore = true;
+                    const next = this.page + 1;
+                    fetch('/feed/posts?' + this.buildQuery(next), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById('feed-posts-container').insertAdjacentHTML('beforeend', data.html);
+                            this.page = next;
+                            this.hasMore = data.hasMore;
+                            this.loadingMore = false;
+                            this.$nextTick(() => this.fillViewport());
+                        })
+                        .catch(() => { this.loadingMore = false; });
+                },
+
+                // Keep loading while the sentinel is still on-screen (short feeds).
+                fillViewport() {
+                    const s = this.$refs.sentinel;
+                    if (!s || !this.hasMore) return;
+                    if (s.getBoundingClientRect().top < window.innerHeight) this.loadMore();
+                },
+
+                initScroll() {
+                    this.observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting) this.loadMore();
+                    }, { rootMargin: '400px' });
+                    this.observer.observe(this.$refs.sentinel);
+                }
+            };
+        }
     </script>
 
     @if (session()->has('openPostModal'))
@@ -1143,7 +1126,7 @@
                     </div>
                     <h3 class="text-lg font-bold text-gray-900">{{ __("Let's get you started") }}</h3>
                     <p class="text-sm leading-relaxed text-gray-600">
-                        {{ __('Welcome to AlumniHub! Your account is currently unverified, so you can only browse public posts. Verify your alumni status to unlock the full experience — post, like, comment, join community discussions, and connect with your batchmates.') }}
+                        {{ __('Welcome to AlumniHub! Your account is currently unverified, so you can only browse public posts. Verify your alumni status to unlock the full experience â€” post, like, comment, join community discussions, and connect with your batchmates.') }}
                     </p>
                 </div>
                 <div class="flex gap-3 px-6 py-6">
@@ -1187,9 +1170,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900">{{ __('While you wait…') }}</h3>
+                    <h3 class="text-lg font-bold text-gray-900">{{ __('While you waitâ€¦') }}</h3>
                     <p class="text-sm leading-relaxed text-gray-600">
-                        {{ __("Your verification document is under review. In the meantime, complete your profile — add your skills, experience, and education so you're ready to connect with your batchmates the moment you're approved.") }}
+                        {{ __("Your verification document is under review. In the meantime, complete your profile â€” add your skills, experience, and education so you're ready to connect with your batchmates the moment you're approved.") }}
                     </p>
                 </div>
                 <div class="flex gap-3 px-6 py-6">

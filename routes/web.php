@@ -36,7 +36,8 @@ Route::get('/', function (FeedService $feed) {
             return redirect()->route('register.complete');
         }
 
-        $posts = $feed->getUserFeed($user, 10);
+        $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) request()->query('flairs', [])))));
+        $posts = $feed->getUserFeed($user, 10, $selectedFlairIds);
 
         $featuredCommunities = Community::query()
             ->withCount('members')
@@ -74,7 +75,9 @@ Route::get('/', function (FeedService $feed) {
             ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
             ->get();
 
+        // Composer picker excludes system flairs (e.g. "Event"); the feed filter keeps them.
         $flairsByCommunity = $availableFlairs
+            ->where('is_system', false)
             ->groupBy(fn($f) => $f->community_id ?? 'global')
             ->map(fn($group) => $group->values()->map(fn($f) => [
                 'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
@@ -82,6 +85,7 @@ Route::get('/', function (FeedService $feed) {
 
         return view('dashboard', [
             'posts' => $posts,
+            'selectedFlairIds' => $selectedFlairIds,
             'featuredCommunities' => $featuredCommunities,
             'suggestedPeople' => $suggestedPeople,
             'joinedCommunities' => $joinedCommunities,
@@ -101,7 +105,8 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         return redirect()->route('register.complete');
     }
 
-    $posts = $feed->getUserFeed($user, 10);
+    $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+    $posts = $feed->getUserFeed($user, 10, $selectedFlairIds);
 
     $featuredCommunities = Community::query()
         ->withCount('members')
@@ -138,7 +143,9 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
         ->get();
 
+    // Composer picker excludes system flairs (e.g. "Event"); the feed filter keeps them.
     $flairsByCommunity = $availableFlairs
+        ->where('is_system', false)
         ->groupBy(fn($f) => $f->community_id ?? 'global')
         ->map(fn($group) => $group->values()->map(fn($f) => [
             'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
@@ -146,6 +153,7 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
 
     return view('dashboard', [
         'posts' => $posts,
+        'selectedFlairIds' => $selectedFlairIds,
         'featuredCommunities' => $featuredCommunities,
         'suggestedPeople' => $suggestedPeople,
         'joinedCommunities' => $joinedCommunities,
@@ -153,6 +161,17 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         'flairsByCommunity' => $flairsByCommunity,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::get('/feed/posts', function (Request $request, FeedService $feed) {
+    $user = $request->user();
+    $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+    $posts = $feed->getUserFeed($user, 10, $selectedFlairIds);
+
+    return response()->json([
+        'html' => view('partials.feed-posts', ['posts' => $posts])->render(),
+        'hasMore' => $posts->hasMorePages(),
+    ]);
+})->middleware('auth')->name('feed.posts');
 
 Route::middleware('auth')->group(function () {
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');

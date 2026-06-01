@@ -84,6 +84,7 @@ class CommunityPostController extends Controller
 
         $flairs = $community->flairs()
             ->forCommunity($community->id)
+            ->selectable()
             ->orderBy('name')
             ->get();
 

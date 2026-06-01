@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Community;
+use App\Models\Flair;
 use App\Models\Post;
 use App\Models\PostEvent;
 use App\Models\PostMedia;
@@ -30,14 +31,25 @@ class PostService
 
         $post->save();
 
-        // Persist event details for event posts
+        // Users may only assign selectable flairs; strip any system flairs
+        // (e.g. "Event") that were submitted directly.
+        $flairIds = Flair::whereIn('id', $data['flairs'] ?? [])
+            ->selectable()
+            ->pluck('id')
+            ->all();
+
+        // Persist event details for event posts. Event-type posts are auto-tagged
+        // with the system "Event" flair so they surface under that topic filter.
         if (($data['post_type'] ?? null) === 'event') {
             $this->createEvent($post, $data);
+
+            if ($eventFlairId = $this->eventFlairId()) {
+                $flairIds[] = $eventFlairId;
+            }
         }
 
-        // Attach flairs if provided
-        if (!empty($data['flairs'])) {
-            $post->flairs()->sync($data['flairs']);
+        if (!empty($flairIds)) {
+            $post->flairs()->sync(array_values(array_unique($flairIds)));
         }
 
         // Handle file uploads
@@ -62,6 +74,17 @@ class PostService
             'address' => $data['address'] ?? null,
             'venue' => $data['venue'] ?? null,
         ]);
+    }
+
+    /**
+     * Resolve the id of the global system "Event" flair, if it exists.
+     */
+    protected function eventFlairId(): ?int
+    {
+        return Flair::query()
+            ->whereNull('community_id')
+            ->where('slug', 'event')
+            ->value('id');
     }
 
     /**

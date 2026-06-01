@@ -8,16 +8,17 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class FeedService
 {
-    public function getUserFeed(User $user, int $perPage = 15): LengthAwarePaginator
+    public function getUserFeed(User $user, int $perPage = 15, array $flairIds = []): LengthAwarePaginator
     {
+        $flairIds = array_values(array_unique(array_map('intval', $flairIds)));
+
         // Unverified users may only browse public posts.
         if (! $user->isVerified()) {
-            return Post::with(['user', 'community', 'flairs', 'media', 'event'])
-                ->withCount(['allComments as comments_count', 'likes as likes_count'])
+            $query = Post::with(['user', 'community', 'flairs', 'media'])
                 ->where('status', 'published')
-                ->where('visibility', 'public')
-                ->orderByRaw('(UNIX_TIMESTAMP(published_at) + (likes_count * 3600) + (comments_count * 7200)) DESC')
-                ->paginate($perPage);
+                ->where('visibility', 'public');
+
+            return $this->withFlairRanking($query, $flairIds)->paginate($perPage);
         }
 
         $connectedUserIds = $user->connections()
@@ -30,8 +31,7 @@ class FeedService
             ->unique()
             ->values();
 
-        $query = Post::with(['user', 'community', 'flairs', 'media', 'event'])
-            ->withCount(['allComments as comments_count', 'likes as likes_count'])
+        $query = Post::with(['user', 'community', 'flairs', 'media'])
             ->where('status', 'published')
             ->where(function ($q) use ($user, $connectedUserIds) {
                 $q->where('visibility', 'public')
@@ -46,9 +46,33 @@ class FeedService
                                     ->orWhere('user_id', $user->id);
                             });
                     });
-            })
-            ->orderByRaw('(UNIX_TIMESTAMP(published_at) + (likes_count * 3600) + (comments_count * 7200)) DESC');
+            });
 
-        return $query->paginate($perPage);
+        return $this->withFlairRanking($query, $flairIds)->paginate($perPage);
+    }
+
+    private function withFlairRanking($query, array $flairIds)
+    {
+        $pulseScore = '(UNIX_TIMESTAMP(published_at) + (likes_count * 3600) + (comments_count * 7200))';
+
+        if (empty($flairIds)) {
+            return $query
+                ->withCount(['allComments as comments_count', 'likes as likes_count'])
+                ->orderByRaw("$pulseScore DESC");
+        }
+
+        // selectRaw must come before withCount so `posts.*` appears before the
+        // count subqueries in the SELECT list — MariaDB rejects `*` mid-column-list.
+        $placeholders = implode(',', array_fill(0, count($flairIds), '?'));
+
+        return $query
+            ->selectRaw(
+                "posts.*, (SELECT COUNT(*) FROM flair_post WHERE flair_post.post_id = posts.id AND flair_post.flair_id IN ($placeholders)) as flair_match_count",
+                $flairIds
+            )
+            ->withCount(['allComments as comments_count', 'likes as likes_count'])
+            ->whereHas('flairs', fn ($q) => $q->whereIn('flairs.id', $flairIds))
+            ->orderByDesc('flair_match_count')
+            ->orderByRaw("$pulseScore DESC");
     }
 }

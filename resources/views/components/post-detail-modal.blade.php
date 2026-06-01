@@ -214,6 +214,7 @@
                             <template x-for="flair in post.flairs" :key="flair.id">
                                 <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
                                     :style="`background-color:${flair.color ? flair.color + '20' : '#f3f4f6'};color:${flair.color || '#374151'};border:1px solid ${flair.color || '#e5e7eb'}`">
+                                    <span x-show="flair.icon" x-text="flair.icon"></span>
                                     <span x-text="flair.name"></span>
                                 </span>
                             </template>
@@ -223,9 +224,6 @@
                     {{-- Title --}}
                     <template x-if="post.title">
                         <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug">
-                            <template x-if="post.post_type === 'event'">
-                                <span class="mr-1.5 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 align-middle text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">📅 Event</span>
-                            </template>
                             <span x-text="post.title"></span>
                         </h2>
                     </template>

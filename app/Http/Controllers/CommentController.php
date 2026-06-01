@@ -172,6 +172,7 @@ class CommentController extends Controller
                         'id' => $flair->id,
                         'name' => $flair->name,
                         'color' => $flair->color,
+                        'icon' => $flair->icon,
                     ];
                 })->toArray(),
                 'media' => $postModel->media->map(function ($media) {
