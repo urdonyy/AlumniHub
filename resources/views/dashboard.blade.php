@@ -1183,9 +1183,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-bold text-gray-900">{{ __('While you waitâ€¦') }}</h3>
-                    <p class="text-sm leading-relaxed text-gray-600">
-                        {{ __("Your verification document is under review. In the meantime, complete your profile â€” add your skills, experience, and education so you're ready to connect with your batchmates the moment you're approved.") }}
+                    <h3 class=”text-lg font-bold text-gray-900”>{{ __('While you wait...') }}</h3>
+                    <p class=”text-sm leading-relaxed text-gray-600”>
+                        {{ __('Your verification document is under review. In the meantime, complete your profile - add your skills, experience, and education so you are ready to connect with your batchmates the moment you get approved.') }}
                     </p>
                 </div>
                 <div class="flex gap-3 px-6 py-6">
