@@ -73,12 +73,7 @@
                         search: '',
                         fuzzy(name) {
                             if (!this.search.trim()) return true;
-                            const s = name.toLowerCase(), p = this.search.toLowerCase().trim();
-                            let pi = 0;
-                            for (let si = 0; si < s.length && pi < p.length; si++) {
-                                if (s[si] === p[pi]) pi++;
-                            }
-                            return pi === p.length;
+                            return name.toLowerCase().includes(this.search.toLowerCase().trim());
                         },
                         get hasResults() {
                             return JSON.parse(this.$el.dataset.names).some(n => this.fuzzy(n));
@@ -172,12 +167,7 @@
                         search: '',
                         fuzzy(name) {
                             if (!this.search.trim()) return true;
-                            const s = name.toLowerCase(), p = this.search.toLowerCase().trim();
-                            let pi = 0;
-                            for (let si = 0; si < s.length && pi < p.length; si++) {
-                                if (s[si] === p[pi]) pi++;
-                            }
-                            return pi === p.length;
+                            return name.toLowerCase().includes(this.search.toLowerCase().trim());
                         },
                         get hasResults() {
                             return JSON.parse(this.$el.dataset.names).some(n => this.fuzzy(n));
