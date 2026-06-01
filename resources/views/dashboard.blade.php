@@ -551,8 +551,11 @@
                                         <!-- Footer -->
                                         <div class="border-t border-gray-100 px-5 py-3 flex items-center justify-end">
                                             <button type="submit"
-                                                class="rounded-lg bg-red-900 px-7 py-2 text-sm font-semibold text-white hover:bg-red-800 transition">
-                                                Post
+                                                :disabled="isSubmitting"
+                                                :class="isSubmitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-red-800'"
+                                                class="rounded-lg bg-red-900 px-7 py-2 text-sm font-semibold text-white transition">
+                                                <span x-show="!isSubmitting">Post</span>
+                                                <span x-show="isSubmitting">Posting…</span>
                                             </button>
                                         </div>
                                     </form>
@@ -748,6 +751,7 @@
                 flairsExpanded: false,
                 flairError: false,
                 eventDateError: false,
+                isSubmitting: false,
 
                 // Post type + shared title/body
                 postType: 'text', // text | media | event
@@ -884,8 +888,9 @@
                 },
 
                 submitPost(form) {
+                    if (this.isSubmitting) return;
+
                     if (this.isEvent) {
-                        // Reject past start dates.
                         const starts = this.startsAtValue ? new Date(this.startsAtValue) : null;
                         if (!starts || starts <= new Date()) {
                             this.eventDateError = true;
@@ -894,14 +899,12 @@
                         this.eventDateError = false;
                     }
 
-                    // Flairs are not required for events. Native HTML validation
-                    // (required/url/date inputs) has already passed by the time
-                    // the submit event fires.
                     if (!this.isEvent && this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {
                         this.flairError = true;
                         return;
                     }
                     this.flairError = false;
+                    this.isSubmitting = true;
                     form.submit();
                 }
             };
