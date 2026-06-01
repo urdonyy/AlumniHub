@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Post extends Model
 {
@@ -18,6 +19,7 @@ class Post extends Model
         'body_markdown',
         'body_html',
         'status',
+        'post_type',
         'visibility',
         'pinned',
         'published_at',
@@ -63,6 +65,14 @@ class Post extends Model
     }
 
     /**
+     * Get the event details for this post (only present when post_type = 'event').
+     */
+    public function event(): HasOne
+    {
+        return $this->hasOne(PostEvent::class);
+    }
+
+    /**
      * Get the comments on this post.
      */
     public function comments(): HasMany
@@ -98,7 +108,9 @@ class Post extends Model
         // Auto-convert markdown to HTML on save
         static::saving(function ($post) {
             if ($post->isDirty('body_markdown')) {
-                $post->body_html = self::markdownToHtml($post->body_markdown);
+                $post->body_html = filled($post->body_markdown)
+                    ? self::markdownToHtml($post->body_markdown)
+                    : null;
             }
 
             // Auto-set published_at if transitioning to published

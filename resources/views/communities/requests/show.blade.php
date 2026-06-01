@@ -1,0 +1,184 @@
+<x-app-layout>
+    <x-slot name="title">Community Request</x-slot>
+    <x-slot name="header">
+        <nav aria-label="Breadcrumb" class="flex flex-wrap items-center gap-1.5 text-sm">
+            <a href="{{ route('communities.index') }}" class="font-semibold text-red-900/70 transition hover:text-red-900">{{ __('Communities') }}</a>
+            <svg class="h-4 w-4 shrink-0 text-red-900/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span class="font-semibold text-red-900">{{ __('Community request') }} · {{ $communityRequest->name }}</span>
+        </nav>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="mx-auto max-w-3xl space-y-6 px-4 sm:px-6 lg:px-8">
+
+            @if (session('status') === 'community-request-submitted')
+                <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    {{ __('Request submitted. Both co-moderators must accept before admin review.') }}
+                </div>
+            @endif
+
+            @if (session('status') === 'community-request-already-active')
+                <div class="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    {{ __('You already have an active community request — see its status below. You can only submit a new request after this one is decided.') }}
+                </div>
+            @endif
+
+            @if (session('status') === 'co-moderator-accepted')
+                <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    {{ __('You accepted the co-moderator role.') }}
+                </div>
+            @endif
+
+            @if (session('status') === 'co-moderator-declined')
+                <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    {{ __('You declined the co-moderator invite.') }}
+                </div>
+            @endif
+
+            @if (session('status') === 'community-request-cancelled')
+                <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    {{ __('Request terminated. You can submit a new one.') }}
+                </div>
+            @endif
+
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="border-b border-gray-200 px-6 py-5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">{{ $communityRequest->name }}</h3>
+                            <p class="mt-1 text-xs text-gray-500">
+                                {{ __('Requested by') }} {{ $communityRequest->requestor->name }} · {{ $communityRequest->created_at->diffForHumans() }}
+                            </p>
+                        </div>
+                        <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset
+                            @switch($communityRequest->status)
+                                @case('pending_co_mods') bg-amber-50 text-amber-800 ring-amber-200 @break
+                                @case('pending_admin') bg-blue-50 text-blue-800 ring-blue-200 @break
+                                @case('approved') bg-emerald-50 text-emerald-800 ring-emerald-200 @break
+                                @case('rejected') bg-rose-50 text-rose-800 ring-rose-200 @break
+                                @case('cancelled') bg-gray-100 text-gray-700 ring-gray-300 @break
+                                @default bg-gray-50 text-gray-700 ring-gray-200
+                            @endswitch">
+                            {{ str_replace('_', ' ', ucfirst($communityRequest->status)) }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="space-y-4 px-6 py-5">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Description') }}</p>
+                        <p class="mt-1 whitespace-pre-line text-sm text-gray-800">{{ $communityRequest->description }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Purpose') }}</p>
+                        <p class="mt-1 whitespace-pre-line text-sm text-gray-800">{{ $communityRequest->purpose }}</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                            {{ __('Program') }}: {{ $communityRequest->program_course }}
+                        </span>
+                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                            {{ __('Year/Section') }}: {{ $communityRequest->year_section }}
+                        </span>
+                        <span class="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
+                            {{ __('Batch') }}: {{ $communityRequest->batch_year }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="border-b border-gray-200 px-6 py-5">
+                    <h4 class="text-base font-semibold text-gray-900">{{ __('Co-moderator invites') }}</h4>
+                </div>
+                <ul class="divide-y divide-gray-200">
+                    @foreach ($communityRequest->coModeratorInvites as $invite)
+                        <li class="flex items-center justify-between px-6 py-4">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">{{ $invite->invitedUser->name }}</p>
+                                <p class="text-xs text-gray-500">
+                                    @if ($invite->status === 'pending')
+                                        {{ __('Awaiting response') }}
+                                    @elseif ($invite->status === 'accepted')
+                                        {{ __('Accepted :time', ['time' => $invite->responded_at?->diffForHumans()]) }}
+                                    @else
+                                        {{ __('Declined :time', ['time' => $invite->responded_at?->diffForHumans()]) }}
+                                    @endif
+                                </p>
+                            </div>
+                            <div>
+                                @if ($myInvite && $myInvite->id === $invite->id && $invite->status === 'pending')
+                                    <div class="flex gap-2">
+                                        <form method="POST" action="{{ route('community-invites.accept', $invite) }}">
+                                            @csrf
+                                            <x-tertiary-button>{{ __('Accept') }}</x-tertiary-button>
+                                        </form>
+                                        <form method="POST" action="{{ route('community-invites.decline', $invite) }}">
+                                            @csrf
+                                            <x-ghost-button>{{ __('Decline') }}</x-ghost-button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <span class="text-xs font-semibold uppercase tracking-wide
+                                        @switch($invite->status)
+                                            @case('accepted') text-emerald-700 @break
+                                            @case('declined') text-rose-700 @break
+                                            @default text-amber-700
+                                        @endswitch">
+                                        @switch($invite->status)
+                                            @case('accepted') {{ __('Voluntarily Accepted') }} @break
+                                            @case('declined') {{ __('Respectfully Declined') }} @break
+                                            @default {{ $invite->status }}
+                                        @endswitch
+                                    </span>
+                                @endif
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+
+            @if ($communityRequest->status === 'approved' && $communityRequest->community)
+                <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    {{ __('This request was approved.') }}
+                    <a href="{{ route('communities.show', $communityRequest->community) }}" class="font-semibold underline">
+                        {{ __('Open community') }}
+                    </a>
+                </div>
+            @endif
+
+            @if ($communityRequest->status === 'rejected' && $communityRequest->admin_note)
+                <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    <p class="font-semibold">{{ __('Rejected by admin') }}</p>
+                    <p class="mt-1">{{ $communityRequest->admin_note }}</p>
+                </div>
+            @endif
+
+            @if ($communityRequest->status === 'cancelled')
+                <div class="rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                    {{ __('This request was cancelled. You can submit a new one from the communities page.') }}
+                </div>
+            @endif
+
+            @php
+                $canCancel = $user->id === $communityRequest->requestor_id
+                    && $communityRequest->status === 'pending_co_mods';
+            @endphp
+
+            <div class="flex items-center justify-end gap-3">
+                @if ($canCancel)
+                    <form method="POST" action="{{ route('communities.requests.cancel', $communityRequest) }}">
+                        @csrf
+                        <button type="submit"
+                            onclick="return confirm('{{ __('Terminate this request? Co-moderators who already accepted will be notified, and you will be able to submit a new one afterwards.') }}')"
+                            class="rounded-md border border-rose-300 px-3 py-2 text-xs font-semibold tracking-widest text-rose-700 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-offset-2 transition ease-in-out duration-150">
+                            {{ __('Terminate request') }}
+                        </button>
+                    </form>
+                @endif
+            </div>
+        </div>
+    </div>
+</x-app-layout>

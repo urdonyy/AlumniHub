@@ -184,6 +184,25 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(Community::class)->withTimestamps();
     }
 
+    public function programBatchCommunity(): ?Community
+    {
+        return $this->communities()
+            ->where('communities.type', Community::TYPE_PROGRAM_BATCH)
+            ->first();
+    }
+
+    public function moderatedCommunities(): BelongsToMany
+    {
+        return $this->belongsToMany(Community::class, 'community_moderators')
+            ->withPivot('role', 'promoted_at')
+            ->withTimestamps();
+    }
+
+    public function isModeratorOf(Community $community): bool
+    {
+        return $community->moderators()->where('user_id', $this->id)->exists();
+    }
+
     public function sentConnections(): HasMany
     {
         return $this->hasMany(Connection::class, 'sender_id');

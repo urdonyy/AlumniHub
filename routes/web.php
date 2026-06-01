@@ -2,11 +2,17 @@
 
 use App\Http\Controllers\CommunityController;
 use App\Http\Controllers\Admin\CommunityAdminController;
+use App\Http\Controllers\Admin\CommunityCreationRequestAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
+use App\Http\Controllers\Admin\AdminInboxController;
 use App\Http\Controllers\Admin\VerificationAdminController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CommunityCreationRequestController;
+use App\Http\Controllers\CommunityJoinRequestController;
+use App\Http\Controllers\CommunityModerationController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
+use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\NotificationController;
@@ -30,7 +36,8 @@ Route::get('/', function (FeedService $feed) {
             return redirect()->route('register.complete');
         }
 
-        $posts = $feed->getUserFeed($user, 10);
+        $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) request()->query('flairs', [])))));
+        $posts = $feed->getUserFeed($user, 10, $selectedFlairIds);
 
         $featuredCommunities = Community::query()
             ->withCount('members')
@@ -68,7 +75,9 @@ Route::get('/', function (FeedService $feed) {
             ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
             ->get();
 
+        // Composer picker excludes system flairs (e.g. "Event"); the feed filter keeps them.
         $flairsByCommunity = $availableFlairs
+            ->where('is_system', false)
             ->groupBy(fn($f) => $f->community_id ?? 'global')
             ->map(fn($group) => $group->values()->map(fn($f) => [
                 'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
@@ -76,6 +85,7 @@ Route::get('/', function (FeedService $feed) {
 
         return view('dashboard', [
             'posts' => $posts,
+            'selectedFlairIds' => $selectedFlairIds,
             'featuredCommunities' => $featuredCommunities,
             'suggestedPeople' => $suggestedPeople,
             'joinedCommunities' => $joinedCommunities,
@@ -95,7 +105,8 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         return redirect()->route('register.complete');
     }
 
-    $posts = $feed->getUserFeed($user, 10);
+    $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+    $posts = $feed->getUserFeed($user, 10, $selectedFlairIds);
 
     $featuredCommunities = Community::query()
         ->withCount('members')
@@ -132,7 +143,9 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
         ->get();
 
+    // Composer picker excludes system flairs (e.g. "Event"); the feed filter keeps them.
     $flairsByCommunity = $availableFlairs
+        ->where('is_system', false)
         ->groupBy(fn($f) => $f->community_id ?? 'global')
         ->map(fn($group) => $group->values()->map(fn($f) => [
             'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
@@ -140,6 +153,7 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
 
     return view('dashboard', [
         'posts' => $posts,
+        'selectedFlairIds' => $selectedFlairIds,
         'featuredCommunities' => $featuredCommunities,
         'suggestedPeople' => $suggestedPeople,
         'joinedCommunities' => $joinedCommunities,
@@ -148,11 +162,53 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/feed/posts', function (Request $request, FeedService $feed) {
+    $user = $request->user();
+    $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+    $posts = $feed->getUserFeed($user, 10, $selectedFlairIds);
+
+    return response()->json([
+        'html' => view('partials.feed-posts', ['posts' => $posts])->render(),
+        'hasMore' => $posts->hasMorePages(),
+    ]);
+})->middleware('auth')->name('feed.posts');
+
 Route::middleware('auth')->group(function () {
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
+
+    // Community creation requests (verified users)
+    Route::get('/communities/requests/create', [CommunityCreationRequestController::class, 'create'])
+        ->name('communities.requests.create');
+    Route::post('/communities/requests', [CommunityCreationRequestController::class, 'store'])
+        ->name('communities.requests.store');
+    Route::get('/communities/requests/{communityRequest}', [CommunityCreationRequestController::class, 'show'])
+        ->name('communities.requests.show');
+    Route::post('/communities/requests/{communityRequest}/cancel', [CommunityCreationRequestController::class, 'cancel'])
+        ->name('communities.requests.cancel');
+
+    // Co-moderator invite responses
+    Route::post('/community-invites/{invite}/accept', [CoModeratorInviteController::class, 'accept'])
+        ->name('community-invites.accept');
+    Route::post('/community-invites/{invite}/decline', [CoModeratorInviteController::class, 'decline'])
+        ->name('community-invites.decline');
+
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
     Route::post('/communities/{community}/join', [MembershipController::class, 'join'])->name('communities.join');
     Route::delete('/communities/{community}/leave', [MembershipController::class, 'leave'])->name('communities.leave');
+
+    // Program-batch join requests
+    Route::post('/communities/{community}/join-request', [CommunityJoinRequestController::class, 'store'])
+        ->name('communities.join-request.store');
+    Route::post('/communities/{community}/join-requests/{joinRequest}/accept', [CommunityJoinRequestController::class, 'accept'])
+        ->name('communities.join-requests.accept');
+    Route::post('/communities/{community}/join-requests/{joinRequest}/ignore', [CommunityJoinRequestController::class, 'ignore'])
+        ->name('communities.join-requests.ignore');
+
+    // Moderator actions
+    Route::delete('/communities/{community}/members/{member}', [CommunityModerationController::class, 'removeMember'])
+        ->name('communities.members.remove');
+    Route::delete('/communities/{community}/mod/posts/{post}', [CommunityModerationController::class, 'deletePost'])
+        ->name('communities.mod.posts.destroy');
 
     // Posts - read routes
     Route::resource('communities.posts', CommunityPostController::class)
@@ -190,12 +246,34 @@ Route::middleware('auth')->group(function () {
             ->name('communities.posts.comments.store');
         Route::delete('/communities/{community}/posts/{post}/comments/{comment}', [CommentController::class, 'destroy'])
             ->name('communities.posts.comments.destroy');
+
+        // Community-less (connections-only) posts: same actions without a community scope.
+        Route::get('/posts/{post}/open', function (Post $post, Request $request) {
+            $request->user()?->can('view', $post) ?: abort(403);
+
+            return redirect()->route('dashboard')->with('openPostModal', [
+                'postId' => $post->id,
+                'apiUrl' => route('posts.api', ['post' => $post->id]),
+                'commentsUrl' => route('posts.comments.index', ['post' => $post->id]),
+            ]);
+        })->name('posts.open');
+        Route::get('/posts/{post}/api', [CommentController::class, 'getPostDetailsForPost'])
+            ->name('posts.api');
+        Route::get('/posts/{post}/comments', [CommentController::class, 'indexForPost'])
+            ->name('posts.comments.index');
+        Route::post('/posts/{post}/comments', [CommentController::class, 'storeForPost'])
+            ->name('posts.comments.store');
+        Route::delete('/posts/{post}/comments/{comment}', [CommentController::class, 'destroyForPost'])
+            ->name('posts.comments.destroy');
     });
 
     // Likes - toggle route
     Route::post('/communities/{community}/posts/{post}/like', [PostLikeController::class, 'toggle'])
         ->middleware('auth')
         ->name('communities.posts.like');
+    Route::post('/posts/{post}/like', [PostLikeController::class, 'toggleForPost'])
+        ->middleware('auth')
+        ->name('posts.like');
     // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
 
     // // Posts - create/edit/delete (requires membership)
@@ -214,9 +292,17 @@ Route::middleware('auth')->group(function () {
     ])->name('messages.index');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/trash', [NotificationController::class, 'trash'])->name('notifications.trash');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::post('/notifications/star-many', [NotificationController::class, 'starMany'])->name('notifications.star-many');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/{notification}/unread', [NotificationController::class, 'markAsUnread'])->name('notifications.unread');
+    Route::post('/notifications/{notification}/star', [NotificationController::class, 'toggleStar'])->name('notifications.star');
+    Route::post('/notifications/{notification}/restore', [NotificationController::class, 'restore'])->name('notifications.restore');
+    Route::post('/notifications/trash/empty', [NotificationController::class, 'emptyTrash'])->name('notifications.trash.empty');
+    Route::delete('/notifications/{notification}/force', [NotificationController::class, 'forceDestroy'])->name('notifications.force-destroy');
+    Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('/connections', [ConnectionController::class, 'index'])->name('connections.index');
     Route::get('/connections/counts', [ConnectionController::class, 'counts'])->name('connections.counts');
@@ -230,12 +316,24 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/inbox', [AdminInboxController::class, 'index'])->name('inbox');
+    Route::get('/inbox/counts', [AdminInboxController::class, 'counts'])->name('inbox.counts');
+
     Route::get('/communities', [CommunityAdminController::class, 'index'])->name('communities.index');
     Route::post('/communities', [CommunityAdminController::class, 'store'])->name('communities.store');
     Route::patch('/communities/{community}', [CommunityAdminController::class, 'update'])->name('communities.update');
     Route::delete('/communities/{community}', [CommunityAdminController::class, 'destroy'])->name('communities.destroy');
 
     Route::resource('flairs', FlairAdminController::class)->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
+    Route::get('/community-requests', [CommunityCreationRequestAdminController::class, 'index'])
+        ->name('community-requests.index');
+    Route::get('/community-requests/{communityRequest}', [CommunityCreationRequestAdminController::class, 'show'])
+        ->name('community-requests.show');
+    Route::post('/community-requests/{communityRequest}/approve', [CommunityCreationRequestAdminController::class, 'approve'])
+        ->name('community-requests.approve');
+    Route::post('/community-requests/{communityRequest}/reject', [CommunityCreationRequestAdminController::class, 'reject'])
+        ->name('community-requests.reject');
 
     Route::get('/verifications', [VerificationAdminController::class, 'index'])->name('verifications.index');
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');

@@ -1,4 +1,5 @@
-<x-app-layout>
+﻿<x-app-layout>
+    <x-slot name="title">Dashboard</x-slot>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
@@ -16,7 +17,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <div>
-                        <p class="text-sm font-semibold text-amber-800">Registration submitted — pending admin review</p>
+                        <p class="text-sm font-semibold text-amber-800">Registration submitted â€” pending admin review</p>
                         <p class="mt-0.5 text-sm text-amber-700">Your verification document has been received. You'll gain full access once an admin approves your account.</p>
                     </div>
                 </div>
@@ -71,7 +72,7 @@
                 @endphp
 
                 <div class="grid gap-6 md:grid-cols-3 lg:grid-cols-12">
-                    <aside class="space-y-3 md:hidden lg:block lg:col-span-3 lg:sticky lg:top-6 lg:self-start">
+                    <aside class="space-y-3 min-w-0 md:hidden lg:block lg:col-span-3 lg:sticky lg:top-6 lg:self-start">
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Profile') }}</p>
                             <h3 class="mt-2 text-lg font-semibold text-gray-900">{{ auth()->user()->name }}</h3>
@@ -96,7 +97,7 @@
                         </section>
                     </aside>
 
-                    <section class="space-y-3 md:col-span-2 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
+                    <section class="space-y-3 min-w-0 md:col-span-2 lg:col-span-6" x-data="feedManager()" @feedManager-openPostModal.window="openPostModal($event, $event.detail.postId, $event.detail.apiUrl, $event.detail.commentsUrl)">
                         @php
                             /** @var \Illuminate\Support\Collection<int, \App\Models\Community> $joinedCommunitiesCollection */
                             $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
@@ -175,6 +176,17 @@
                                         @csrf
                                         <input type="hidden" name="community_id" :value="isConnectionsOnly ? '' : communityId">
                                         <input type="hidden" name="visibility" :value="visibility">
+                                        <input type="hidden" name="post_type" :value="postType">
+                                        <input type="hidden" name="title" :value="titleValue">
+                                        <input type="hidden" name="body_markdown" :value="bodyValue">
+                                        {{-- Event-only fields (ignored by validation for text/media posts) --}}
+                                        <input type="hidden" name="event_type" :value="eventType">
+                                        <input type="hidden" name="starts_at" :value="startsAtValue">
+                                        <input type="hidden" name="ends_at" :value="endsAtValue">
+                                        <input type="hidden" name="external_link" :value="externalLink">
+                                        <input type="hidden" name="address" :value="address">
+                                        <input type="hidden" name="venue" :value="venue">
+                                        <input type="hidden" name="auto_invite" :value="autoInvite ? 1 : 0">
 
                                         <!-- Avatar + Name + Audience (stacked under name) -->
                                         <div class="flex items-start gap-3 px-5 pt-4 pb-3">
@@ -223,8 +235,10 @@
                                                         class="absolute left-0 top-full mt-1 w-72 rounded-xl border border-gray-200 bg-white shadow-lg z-20">
                                                         <div class="p-1.5">
                                                             <p class="px-2 pt-1.5 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">Who can see your post?</p>
+                                                            <p x-show="isEvent" class="px-2 pb-1 text-[11px] text-gray-400">Events can be shared with your connections or a community only.</p>
 
                                                             <button type="button" @click="onVisibilityChange('public')"
+                                                                x-show="!isEvent"
                                                                 class="w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition hover:bg-gray-50"
                                                                 :class="{ 'bg-red-50 hover:bg-red-50': visibility === 'public' }">
                                                                 <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100">
@@ -288,22 +302,15 @@
 
                                         <!-- Community selector (hidden when connections-only) -->
                                         <div x-show="!isConnectionsOnly" class="px-5 pb-3">
-                                            <div class="relative">
-                                                <select name="community_selector" x-model="communityId"
-                                                    class="w-full appearance-none rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-gray-700 shadow-sm focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
-                                                    <option value="">Select a community</option>
-                                                    @foreach ($joinedCommunitiesCollection as $joinedCommunity)
-                                                        <option value="{{ $joinedCommunity->id }}"
-                                                            @selected($defaultCommunityId == $joinedCommunity->id)>
-                                                            {{ $joinedCommunity->name }}</option>
-                                                    @endforeach
-                                                </select>
-                                                <div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
-                                                    <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                                                    </svg>
-                                                </div>
-                                            </div>
+                                            <select name="community_selector" x-model="communityId" aria-placeholder="Select a community"
+                                                class="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-gray-700 shadow-sm focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
+                                                <option value="" disabled selected hidden>Select a community</option>
+                                                @foreach ($joinedCommunitiesCollection as $joinedCommunity)
+                                                    <option value="{{ $joinedCommunity->id }}"
+                                                        @selected($defaultCommunityId == $joinedCommunity->id)>
+                                                        {{ $joinedCommunity->name }}</option>
+                                                @endforeach
+                                            </select>
                                         </div>
 
                                         <!-- Connections-only info banner -->
@@ -312,26 +319,166 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
                                             <div class="text-xs text-blue-800 leading-relaxed">
-                                                <span class="font-semibold">Connections only</span> — Your post will be visible only to people in your connections list. It will not appear in community feeds, public discovery, or to anyone outside your network.
+                                                <span class="font-semibold">Connections only</span> â€” Your post will be visible only to people in your connections list. It will not appear in community feeds, public discovery, or to anyone outside your network.
+                                            </div>
+                                        </div>
+
+                                        <!-- Post type selector (icons only) -->
+                                        <div class="px-5 pb-3">
+                                            <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">Post type</p>
+                                            <div class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 p-1">
+                                                <button type="button" @click="setPostType('text')"
+                                                    title="Text post" aria-label="Text post"
+                                                    class="flex h-9 w-9 items-center justify-center rounded-lg transition"
+                                                    :class="postType === 'text' ? 'bg-red-900 text-white shadow-sm' : 'text-gray-500 hover:bg-white hover:text-gray-700'">
+                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h10"/>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" @click="setPostType('media')"
+                                                    title="Media post" aria-label="Media post"
+                                                    class="flex h-9 w-9 items-center justify-center rounded-lg transition"
+                                                    :class="postType === 'media' ? 'bg-red-900 text-white shadow-sm' : 'text-gray-500 hover:bg-white hover:text-gray-700'">
+                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                    </svg>
+                                                </button>
+                                                <button type="button" @click="setPostType('event')"
+                                                    title="Event post" aria-label="Event post"
+                                                    class="flex h-9 w-9 items-center justify-center rounded-lg transition"
+                                                    :class="postType === 'event' ? 'bg-red-900 text-white shadow-sm' : 'text-gray-500 hover:bg-white hover:text-gray-700'">
+                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
 
                                         <!-- Divider -->
                                         <div class="mx-5 border-t border-gray-100 mb-3"></div>
 
-                                        <!-- Title input -->
-                                        <div class="px-5 pb-2">
-                                            <input type="text" name="title"
+                                        @php $inputClass = 'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900'; @endphp
+
+                                        <!-- Title input (text / media) -->
+                                        <div x-show="!isEvent" class="px-5 pb-2">
+                                            <input type="text" x-model="titleValue"
                                                 class="w-full border-0 border-b border-gray-200 bg-transparent pb-1.5 text-sm font-semibold text-gray-900 placeholder:font-normal placeholder:text-gray-400 focus:border-gray-400 focus:outline-none focus:ring-0"
                                                 placeholder="Add a title (optional)">
                                         </div>
 
-                                        <!-- Body area: textarea + image preview + attach button -->
-                                        <div class="px-5 pb-3 flex-1 flex flex-col gap-2">
-                                            <textarea name="body_markdown" required rows="4"
+                                        <!-- Body area (text / media) -->
+                                        <div x-show="!isEvent" class="px-5 pb-3 flex flex-col gap-2">
+                                            <textarea x-model="bodyValue" :required="!isEvent" rows="4"
                                                 class="w-full border-0 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 resize-none leading-relaxed"
                                                 placeholder="What's on your mind, {{ auth()->user()->name }}?"></textarea>
+                                        </div>
 
+                                        <!-- Event sub-form -->
+                                        <div x-show="isEvent" class="px-5 pb-3 flex flex-col gap-3" style="display:none;">
+                                            <!-- Event type: online / in person -->
+                                            <div>
+                                                <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">Event type</p>
+                                                <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1">
+                                                    <button type="button" @click="eventType = 'online'"
+                                                        class="rounded-md px-4 py-1.5 text-sm font-medium transition flex gap-1.5 items-center"
+                                                        :class="eventType === 'online' ? 'bg-red-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-800'">
+                                                        <i class="fas fa-globe"></i><span>Online</span>
+                                                    </button>
+                                                    <button type="button" @click="eventType = 'in_person'"
+                                                        class="rounded-md px-4 py-1.5 text-sm font-medium transition flex gap-1.5 items-center"
+                                                        :class="eventType === 'in_person' ? 'bg-red-900 text-white shadow-sm' : 'text-gray-600 hover:text-gray-800'">
+                                                        <i class="fas fa-map-marker-alt"></i><span>In person</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- Event name -->
+                                            <div>
+                                                <label class="mb-1 block text-xs font-medium text-gray-600">Event name <span class="text-red-500">*</span></label>
+                                                <input type="text" x-model="titleValue" :required="isEvent"
+                                                    placeholder="e.g. Alumni Homecoming 2026" class="{{ $inputClass }}">
+                                            </div>
+
+                                            <!-- Start date / time -->
+                                            <div class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-medium text-gray-600">Start date <span class="text-red-500">*</span></label>
+                                                    <input type="date" x-model="startDate" :required="isEvent" class="{{ $inputClass }}">
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-medium text-gray-600">Start time <span class="text-red-500">*</span></label>
+                                                    <input type="time" x-model="startTime" :required="isEvent" class="{{ $inputClass }}">
+                                                </div>
+                                            </div>
+
+                                            <!-- Add end date toggle -->
+                                            <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                                <input type="checkbox" x-model="hasEndDate"
+                                                    class="h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 focus:ring-red-900">
+                                                Add end date and time
+                                            </label>
+
+                                            <!-- End date / time -->
+                                            <div x-show="hasEndDate" style="display:none;" class="grid grid-cols-2 gap-3">
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-medium text-gray-600">End date</label>
+                                                    <input type="date" x-model="endDate" :required="isEvent && hasEndDate" class="{{ $inputClass }}">
+                                                </div>
+                                                <div>
+                                                    <label class="mb-1 block text-xs font-medium text-gray-600">End time</label>
+                                                    <input type="time" x-model="endTime" :required="isEvent && hasEndDate" class="{{ $inputClass }}">
+                                                </div>
+                                            </div>
+
+                                            <!-- Address + venue (in person only) -->
+                                            <template x-if="eventType === 'in_person'">
+                                                <div class="flex flex-col gap-3">
+                                                    <div>
+                                                        <label class="mb-1 block text-xs font-medium text-gray-600">Address <span class="text-red-500">*</span></label>
+                                                        <input type="text" x-model="address" :required="isEvent && eventType === 'in_person'"
+                                                            placeholder="e.g. street, city, postal code" class="{{ $inputClass }}">
+                                                    </div>
+                                                    <div>
+                                                        <label class="mb-1 block text-xs font-medium text-gray-600">Venue <span class="text-gray-400 font-normal">(optional)</span></label>
+                                                        <input type="text" x-model="venue"
+                                                            placeholder="e.g. floor / room number" class="{{ $inputClass }}">
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <!-- External event link -->
+                                            <div>
+                                                <label class="mb-1 block text-xs font-medium text-gray-600">
+                                                    External event link
+                                                    <template x-if="eventType === 'online'"><span class="text-red-500">*</span></template>
+                                                    <template x-if="eventType === 'in_person'"><span class="text-gray-400 font-normal">(optional)</span></template>
+                                                </label>
+                                                <input type="url" x-model="externalLink" :required="isEvent && eventType === 'online'"
+                                                    placeholder="https://" class="{{ $inputClass }}">
+                                            </div>
+
+                                            <!-- Description -->
+                                            <div>
+                                                <label class="mb-1 block text-xs font-medium text-gray-600">Description <span class="text-gray-400 font-normal">(optional)</span></label>
+                                                <textarea x-model="bodyValue" rows="3"
+                                                    placeholder="Add details about your event" class="{{ $inputClass }} resize-none"></textarea>
+                                            </div>
+
+                                            <!-- Email auto-invites -->
+                                            <label class="flex items-start gap-2.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer">
+                                                <input type="checkbox" x-model="autoInvite"
+                                                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 focus:ring-red-900">
+                                                <span class="text-xs leading-relaxed text-gray-600">
+                                                    <span class="font-semibold text-gray-800">Email auto-invites</span><br>
+                                                    Invite everyone who can see this event â€” your
+                                                    <span x-text="visibility === 'connections' ? 'connections' : 'community members'"></span>
+                                                    get an email and an in-app notification.
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <!-- Shared image block (media + event) -->
+                                        <div x-show="isMedia || isEvent" style="display:none;" class="px-5 pb-3 flex flex-col gap-2">
                                             <!-- Image preview (Facebook-style) -->
                                             <div id="imagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
                                                 <button type="button" id="removeImageBtn"
@@ -352,12 +499,12 @@
                                                 Attach Image
                                                 <input type="file" name="attachments[]" id="imageUploadInput" multiple accept="image/*"
                                                     @change="handleImageUpload($event)"
-                                                    class="hidden">
+                                                    class="sr-only">
                                             </label>
                                         </div>
 
-                                        <!-- Flair tags (required, 1–3, hidden when connections-only) -->
-                                        <template x-if="filteredFlairs.length > 0 && !isConnectionsOnly">
+                                        <!-- Flair tags (required, 1â€“3, hidden when connections-only or event) -->
+                                        <template x-if="filteredFlairs.length > 0 && !isConnectionsOnly && !isEvent">
                                             <div class="px-5 pb-3 pt-3 border-t border-gray-100">
                                                 <div class="flex items-center justify-between mb-2">
                                                     <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -412,136 +559,54 @@
                         </div>{{-- end composer card --}}
                         @endif
 
+                        <div x-data="feedController(@js(($availableFlairs ?? collect())->map(fn($f) => ['id' => $f->id, 'name' => $f->name, 'icon' => $f->icon])->values()), @js($selectedFlairIds ?? []), {{ isset($posts) && $posts->hasMorePages() ? 'true' : 'false' }}, {{ isset($posts) ? $posts->currentPage() : 1 }})"
+                            x-init="initScroll()" class="space-y-3">
+
+                        {{-- Flair feed filter --}}
+                        @if(isset($availableFlairs) && $availableFlairs->isNotEmpty())
+                        <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                            <div class="flex items-center justify-between mb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">Filter by topic</span>
+                                    <svg x-show="loading" class="h-3.5 w-3.5 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24" style="display:none;">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs text-gray-400" x-show="selected.length > 0" x-text="`${selected.length}/3 active`" style="display:none;"></span>
+                                    <button x-show="selected.length > 0" @click="clearAll()"
+                                        class="text-xs font-medium text-red-900 hover:underline" style="display:none;">Clear</button>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5">
+                                <template x-for="flair in visibleFlairs" :key="flair.id">
+                                    <button type="button"
+                                        @click="toggle(flair.id)"
+                                        :disabled="!canSelect(flair.id)"
+                                        class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition"
+                                        :class="{
+                                            'border-red-900 bg-red-900 text-white shadow-sm': isSelected(flair.id),
+                                            'border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50': !isSelected(flair.id) && canSelect(flair.id),
+                                            'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed': !canSelect(flair.id)
+                                        }">
+                                        <span x-show="flair.icon" x-text="flair.icon" class="leading-none"></span>
+                                        <span x-text="flair.name"></span>
+                                    </button>
+                                </template>
+                                <template x-if="flairs.length > 8">
+                                    <button type="button" @click="expanded = !expanded"
+                                        class="inline-flex items-center gap-1 rounded-full border border-dashed border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 transition">
+                                        <span x-text="expanded ? 'Show less' : `+${flairs.length - 8} more`"></span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        @endif
+
+                        <div id="feed-posts-container" class="space-y-3">
                         @if(isset($posts))
-                            @foreach($posts as $post)
-                                <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.like', ['community' => $post->community, 'post' => $post]) }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
-                                    @click="openPostModal($event)"
-                                    class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300 min-w-0">
-
-                                    <!-- Post Header -->
-                                    <div class="p-4 pb-3">
-                                        <div class="flex items-start justify-between gap-3">
-                                            <div class="flex items-center gap-3">
-                                                <img src="{{ $post->user->profileAvatarUrl() }}"
-                                                    alt="{{ $post->user->name }}"
-                                                    class="h-10 w-10 shrink-0 rounded-full border border-gray-200 object-cover"
-                                                    onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
-                                                <div>
-                                                    <p class="text-sm font-semibold text-gray-900">{{ $post->user->name }}</p>
-                                                    @php
-                                                        $batchLabel = $post->user->batch_year ? 'Batch ' . $post->user->batch_year : null;
-                                                        $programAbbr = null;
-                                                        if ($post->user->program_course && preg_match('/\(([^)]+)\)$/', $post->user->program_course, $m)) {
-                                                            $programAbbr = $m[1];
-                                                        }
-                                                    @endphp
-                                                    <p class="text-xs text-gray-500">
-                                                        @if($batchLabel || $programAbbr)
-                                                            {{ implode(' · ', array_filter([$batchLabel, $programAbbr])) }}
-                                                            <span class="mx-1">·</span>
-                                                        @endif
-                                                        {{ $post->community?->name ?? __('Post') }}
-                                                        @if($post->published_at)
-                                                            · {{ $post->published_at->diffForHumans() }}
-                                                        @endif
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            @php
-                                                $visibilityConfig = match($post->visibility) {
-                                                    'public'      => ['bg-green-50 text-green-700 ring-green-200', 'Public'],
-                                                    'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', 'Connections'],
-                                                    default       => ['bg-gray-100 text-gray-600 ring-gray-200', 'Members'],
-                                                };
-                                            @endphp
-                                            <span class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
-                                                {{ $visibilityConfig[1] }}
-                                            </span>
-                                        </div>
-
-                                        @if($post->flairs->count() > 0)
-                                            <div class="mt-3 flex flex-wrap gap-1.5">
-                                                @foreach($post->flairs as $flair)
-                                                    <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
-                                                        style="background-color: {{ $flair->color ? $flair->color . '20' : '#f3f4f6' }}; color: {{ $flair->color ?? '#374151' }}; border: 1px solid {{ $flair->color ?? '#e5e7eb' }};">
-                                                        @if($flair->icon)<span>{{ $flair->icon }}</span>@endif
-                                                        {{ $flair->name }}
-                                                    </span>
-                                                @endforeach
-                                            </div>
-                                        @endif
-
-                                        @if($post->title)
-                                            <h4 class="mt-2 text-base font-semibold text-gray-900">{{ $post->title }}</h4>
-                                        @endif
-                                        <p class="mt-2 text-sm leading-6 text-gray-700"
-                                            x-ref="postBody"
-                                            :class="isBodyExpanded ? '' : 'line-clamp-3'">
-                                            {{ strip_tags($post->body_html ?? $post->body_markdown) }}
-                                        </p>
-                                        <button type="button"
-                                            x-show="isBodyOverflowing"
-                                            @click.stop="toggleBody()"
-                                            class="mt-1 text-sm font-semibold text-red-900 hover:underline">
-                                            <span x-text="isBodyExpanded ? 'See less' : 'See more'"></span>
-                                        </button>
-                                    </div>
-
-                                    <!-- Post Media -->
-                                    @if($post->media->count() > 0)
-                                        <div class="relative overflow-hidden bg-gray-50 max-h-80">
-                                                <img src="/storage/{{ $post->media->first()->file_path }}"
-                                                    alt="Post image"
-                                                    class="w-full max-h-80 object-contain">
-                                            @if($post->media->count() > 1)
-                                                <div class="absolute bottom-2 right-2 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white">
-                                                    +{{ $post->media->count() - 1 }} more
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endif
-
-                                    <!-- Post Footer -->
-                                    <div class="border-t border-gray-100 px-2 py-1">
-                                        <div class="flex">
-                                            @if (auth()->user()->isVerified())
-                                                <button type="button" @click.stop="toggleLike()"
-                                                    :disabled="isLikingLoading"
-                                                    :class="{ 'text-red-700': isLiked, 'text-gray-600': !isLiked, 'opacity-60': isLikingLoading }"
-                                                    class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition hover:bg-gray-50">
-                                                    <svg class="h-4 w-4" :fill="isLiked ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                    <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
-                                                </button>
-                                                <button type="button" @click.stop="openPostModal($event)"
-                                                    class="flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
-                                                    </svg>
-                                                    <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
-                                                </button>
-                                            @else
-                                                {{-- Unverified: read-only counts, no interaction --}}
-                                                <span class="flex flex-1 items-center justify-center gap-2 py-2 text-sm font-medium text-gray-400">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                                    </svg>
-                                                    <span x-text="likeCount + (likeCount === 1 ? ' Like' : ' Likes')"></span>
-                                                </span>
-                                                <span class="flex flex-1 items-center justify-center gap-2 py-2 text-sm font-medium text-gray-400">
-                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v12a2 2 0 01-2 2l-4 4z" />
-                                                    </svg>
-                                                    <span x-text="commentCount + (commentCount === 1 ? ' Comment' : ' Comments')"></span>
-                                                </span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </article>
-                            @endforeach
-
-                            <div class="pt-4">{{ $posts->links() }}</div>
+                            @include('partials.feed-posts', ['posts' => $posts])
                         @else
                             @foreach ($feedCards as $card)
                                 <article class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -568,10 +633,25 @@
                             @endforeach
                         @endif
 
+                        </div>{{-- end feed-posts-container --}}
+
+                        {{-- Infinite scroll sentinel + states --}}
+                        <div x-ref="sentinel" aria-hidden="true" class="h-px"></div>
+                        <div x-show="loadingMore" class="flex justify-center py-6" style="display:none;">
+                            <svg class="h-6 w-6 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                        </div>
+                        <div x-show="reachedEnd" class="py-6 text-center text-xs text-gray-400" style="display:none;">
+                            You're all caught up
+                        </div>
+                        </div>{{-- end feedController --}}
+
                         <x-post-detail-modal />
                     </section>
 
-                    <aside class="space-y-3 md:col-span-1 lg:col-span-3 md:sticky md:top-6 md:self-start">
+                    <aside class="space-y-3 min-w-0 md:col-span-1 lg:col-span-3 md:sticky md:top-6 md:self-start">
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <div class="flex items-center justify-between gap-2">
                                 <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
@@ -665,6 +745,42 @@
                 selectedFlairs: [],
                 flairsExpanded: false,
                 flairError: false,
+
+                // Post type + shared title/body
+                postType: 'text', // text | media | event
+                titleValue: '',
+                bodyValue: '',
+
+                // Event fields
+                eventType: 'online', // online | in_person
+                startDate: '',
+                startTime: '',
+                hasEndDate: false,
+                endDate: '',
+                endTime: '',
+                externalLink: '',
+                address: '',
+                venue: '',
+                autoInvite: false,
+
+                get isText() { return this.postType === 'text'; },
+                get isMedia() { return this.postType === 'media'; },
+                get isEvent() { return this.postType === 'event'; },
+
+                get startsAtValue() {
+                    return this.startDate && this.startTime ? `${this.startDate} ${this.startTime}` : '';
+                },
+                get endsAtValue() {
+                    return this.hasEndDate && this.endDate && this.endTime ? `${this.endDate} ${this.endTime}` : '';
+                },
+
+                setPostType(type) {
+                    this.postType = type;
+                    // Events cannot be public â€” fall back to community audience.
+                    if (type === 'event' && this.visibility === 'public') {
+                        this.visibility = 'members';
+                    }
+                },
 
                 get isConnectionsOnly() {
                     return this.visibility === 'connections';
@@ -765,7 +881,10 @@
                 },
 
                 submitPost(form) {
-                    if (this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {
+                    // Flairs are not required for events. Native HTML validation
+                    // (required/url/date inputs) has already passed by the time
+                    // the submit event fires.
+                    if (!this.isEvent && this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {
                         this.flairError = true;
                         return;
                     }
@@ -844,6 +963,8 @@
                 openPostModal(event) {
                     // Both article and comment button call this; buttons use @click.stop so
                     // only non-button areas bubble up through the article click handler.
+                    // Community-less posts (connections-only) have no detail API route.
+                    if (!this.apiUrl) return;
                     const commentsUrl = this.apiUrl.replace('/api', '/comments');
                     window.dispatchEvent(new CustomEvent('post-modal-opened', {
                         detail: { postId: this.postId, apiUrl: this.apiUrl, commentsUrl }
@@ -851,7 +972,7 @@
                 },
 
                 toggleLike() {
-                    if (this.isLikingLoading) return;
+                    if (this.isLikingLoading || !this.likeUrl) return;
                     this.isLikingLoading = true;
 
                     fetch(this.likeUrl, {
@@ -880,6 +1001,101 @@
                 }
             };
         }
+
+        function feedController(availableFlairs, selectedIds, initialHasMore, initialPage) {
+            return {
+                flairs: availableFlairs,
+                selected: selectedIds,
+                expanded: false,
+                loading: false,       // filter change (replace) in progress
+                loadingMore: false,   // infinite-scroll append in progress
+                page: initialPage,    // last page loaded into the feed
+                hasMore: initialHasMore,
+                observer: null,
+
+                get visibleFlairs() {
+                    return this.expanded ? this.flairs : this.flairs.slice(0, 8);
+                },
+                get reachedEnd() {
+                    return !this.hasMore && !this.loadingMore && !this.loading;
+                },
+                isSelected(id) { return this.selected.includes(id); },
+                canSelect(id) { return this.isSelected(id) || this.selected.length < 3; },
+
+                buildQuery(page) {
+                    const params = new URLSearchParams();
+                    this.selected.forEach(id => params.append('flairs[]', id));
+                    if (page > 1) params.set('page', page);
+                    return params.toString();
+                },
+
+                toggle(id) {
+                    if (this.isSelected(id)) {
+                        this.selected = this.selected.filter(s => s !== id);
+                    } else if (this.selected.length < 3) {
+                        this.selected = [...this.selected, id];
+                    } else {
+                        return;
+                    }
+                    this.applyFilter();
+                },
+                clearAll() {
+                    this.selected = [];
+                    this.applyFilter();
+                },
+
+                // Flair change: reset to page 1 and replace the feed.
+                applyFilter() {
+                    const url = new URL(window.location.href);
+                    url.search = '';
+                    this.selected.forEach(id => url.searchParams.append('flairs[]', id));
+                    history.pushState({}, '', url.toString());
+
+                    this.loading = true;
+                    this.page = 1;
+                    fetch('/feed/posts?' + this.buildQuery(1), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById('feed-posts-container').innerHTML = data.html;
+                            this.hasMore = data.hasMore;
+                            this.loading = false;
+                            this.$nextTick(() => this.fillViewport());
+                        })
+                        .catch(() => { this.loading = false; });
+                },
+
+                // Infinite scroll: fetch the next page and append.
+                loadMore() {
+                    if (this.loadingMore || this.loading || !this.hasMore) return;
+                    this.loadingMore = true;
+                    const next = this.page + 1;
+                    fetch('/feed/posts?' + this.buildQuery(next), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(r => r.json())
+                        .then(data => {
+                            document.getElementById('feed-posts-container').insertAdjacentHTML('beforeend', data.html);
+                            this.page = next;
+                            this.hasMore = data.hasMore;
+                            this.loadingMore = false;
+                            this.$nextTick(() => this.fillViewport());
+                        })
+                        .catch(() => { this.loadingMore = false; });
+                },
+
+                // Keep loading while the sentinel is still on-screen (short feeds).
+                fillViewport() {
+                    const s = this.$refs.sentinel;
+                    if (!s || !this.hasMore) return;
+                    if (s.getBoundingClientRect().top < window.innerHeight) this.loadMore();
+                },
+
+                initScroll() {
+                    this.observer = new IntersectionObserver((entries) => {
+                        if (entries[0].isIntersecting) this.loadMore();
+                    }, { rootMargin: '400px' });
+                    this.observer.observe(this.$refs.sentinel);
+                }
+            };
+        }
     </script>
 
     @if (session()->has('openPostModal'))
@@ -892,8 +1108,8 @@
         </script>
     @endif
 
-    {{-- "Let's get you started" verification prompt (shown to unverified users after registration / login) --}}
-    @if (session('show_setup_prompt') && ! auth()->user()->isVerified())
+    {{-- "Let's get you started" verification prompt (shown to unverified, non-pending users after registration / login) --}}
+    @if (session('show_setup_prompt') && ! auth()->user()->isVerified() && ! auth()->user()->hasPendingVerificationDocument())
         <div x-data="{ open: true }"
             x-show="open"
             x-transition.opacity
@@ -910,7 +1126,7 @@
                     </div>
                     <h3 class="text-lg font-bold text-gray-900">{{ __("Let's get you started") }}</h3>
                     <p class="text-sm leading-relaxed text-gray-600">
-                        {{ __('Welcome to AlumniHub! Your account is currently unverified, so you can only browse public posts. Verify your alumni status to unlock the full experience — post, like, comment, join community discussions, and connect with your batchmates.') }}
+                        {{ __('Welcome to AlumniHub! Your account is currently unverified, so you can only browse public posts. Verify your alumni status to unlock the full experience â€” post, like, comment, join community discussions, and connect with your batchmates.') }}
                     </p>
                 </div>
                 <div class="flex gap-3 px-6 py-6">
@@ -933,6 +1149,41 @@
                             {{ __('Verify') }}
                         </a>
                     @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- "Complete your profile" prompt (shown to users with a pending verification review) --}}
+    @if (session('show_setup_prompt') && auth()->user()->hasPendingVerificationDocument())
+        <div x-data="{ open: true }"
+            x-show="open"
+            x-transition.opacity
+            @keydown.escape.window="open = false"
+            class="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 p-4"
+            style="display: none;">
+            <div @click.away="open = false"
+                class="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                <div class="flex flex-col items-center gap-3 px-6 pt-8 text-center">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">{{ __('While you waitâ€¦') }}</h3>
+                    <p class="text-sm leading-relaxed text-gray-600">
+                        {{ __("Your verification document is under review. In the meantime, complete your profile â€” add your skills, experience, and education so you're ready to connect with your batchmates the moment you're approved.") }}
+                    </p>
+                </div>
+                <div class="flex gap-3 px-6 py-6">
+                    <button type="button" @click="open = false"
+                        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                        {{ __('Skip for now') }}
+                    </button>
+                    <a href="{{ route('profile.edit', ['section' => 'profile-information']) }}"
+                        class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-800">
+                        {{ __('Set up profile') }}
+                    </a>
                 </div>
             </div>
         </div>

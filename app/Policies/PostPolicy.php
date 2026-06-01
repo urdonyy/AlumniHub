@@ -99,16 +99,26 @@ class PostPolicy
     /**
      * Check if user is a community member.
      */
-    private function isCommunityMember(User $user, Community $community): bool
+    private function isCommunityMember(User $user, ?Community $community = null): bool
     {
+        // Connections-only posts have no community.
+        if (!$community) {
+            return false;
+        }
+
         return $community->members()->where('user_id', $user->id)->exists();
     }
 
     /**
      * Check if user is a moderator or admin of the community.
      */
-    private function isModeratorOrAdmin(User $user, Community $community): bool
+    private function isModeratorOrAdmin(User $user, ?Community $community = null): bool
     {
+        // Connections-only posts have no community.
+        if (!$community) {
+            return false;
+        }
+
         // Check if user is a community moderator
         if ($community->isModerator($user)) {
             return true;

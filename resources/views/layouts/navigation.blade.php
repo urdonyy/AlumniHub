@@ -1,10 +1,19 @@
 @php
     /** @var \App\Models\User|null $navUser */
     $navUser = Auth::user();
-    $unreadNotificationsCount = $navUser?->unreadNotifications()->count() ?? 0;
+    $unreadNotificationsCount = $navUser?->notifications()->whereNull('read_at')->whereNull('trashed_at')->count() ?? 0;
+    $adminPendingCount = ($navUser?->role === 'admin')
+        ? \App\Models\CommunityCreationRequest::where('status', 'pending_admin')->count()
+            + \App\Models\VerificationDocument::where('status', 'pending')->count()
+        : 0;
 @endphp
-<nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }} }"
-    x-init="setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); notifCount = d.count; } catch {} }, 30000)"
+<nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }}, adminPendingCount: {{ $adminPendingCount }} }"
+    x-init="
+        setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); notifCount = d.count; } catch {} }, 30000);
+        @if ($navUser?->role === 'admin')
+        setInterval(async () => { try { const r = await fetch('{{ route('admin.inbox.counts') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); adminPendingCount = d.total; } catch {} }, 30000);
+        @endif
+    "
     class="bg-red-900/10">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,6 +46,13 @@
                             :active="request()->routeIs('admin.verifications.*')">
                             <i class="fa-solid fa-user-check"></i>
                             {{ __('Verification Queue') }}
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('admin.inbox')" :active="request()->routeIs('admin.inbox*')">
+                            <i class="fa-regular fa-bell"></i>
+                            {{ __('Inbox') }}
+                            <span x-show="adminPendingCount > 0" x-text="adminPendingCount"
+                                class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                         </x-nav-link>
                     @else
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
@@ -150,16 +166,23 @@
                     <i class="fa-solid fa-user-check"></i>
                     {{ __('Verification Queue') }}
                 </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('admin.inbox')" :active="request()->routeIs('admin.inbox*')">
+                    <i class="fa-regular fa-bell"></i>
+                    {{ __('Inbox') }}
+                    <span x-show="adminPendingCount > 0" x-text="adminPendingCount"
+                        class="ms-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
+                </x-responsive-nav-link>
             @else
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     <i class="fa-regular fa-house"></i>
                     {{ __('Home') }}
                 </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('profiles.show', Auth::id())"
-                    :active="request()->routeIs('profiles.show')">
-                    <i class="fa-regular fa-user"></i>
-                    {{ __('Profile') }}
+                <x-responsive-nav-link :href="route('connections.index')"
+                    :active="request()->routeIs('connections.*')">
+                    <i class="fa-solid fa-users"></i>
+                    {{ __('Connections') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('communities.index')" :active="request()->routeIs('communities.*')">

@@ -25,7 +25,7 @@ class CommentController extends Controller
     /**
      * Store a newly created comment in storage.
      */
-    public function store(Request $request, $community, $post)
+    public function store(Request $request, $community = null, $post = null)
     {
         // Fetch the post model
         $postModel = Post::findOrFail($post);
@@ -104,7 +104,7 @@ class CommentController extends Controller
     /**
      * Delete a comment.
      */
-    public function destroy($community, $post, $comment)
+    public function destroy($community = null, $post = null, $comment = null)
     {
         $postModel = Post::findOrFail($post);
         $commentModel = Comment::findOrFail($comment);
@@ -126,12 +126,12 @@ class CommentController extends Controller
     /**
      * Get post details with comments (JSON response).
      */
-    public function getPostDetails($community, $post)
+    public function getPostDetails($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
         $this->authorize('view', $postModel);
 
-        $postModel->load(['user', 'community', 'flairs', 'media']);
+        $postModel->load(['user', 'community', 'flairs', 'media', 'event']);
 
         return response()->json([
             'success' => true,
@@ -141,7 +141,19 @@ class CommentController extends Controller
                 'body_markdown' => $postModel->body_markdown,
                 'body_html' => $postModel->body_html,
                 'visibility' => $postModel->visibility,
+                'post_type' => $postModel->post_type,
+                'event' => $postModel->event ? [
+                    'event_type' => $postModel->event->event_type,
+                    'starts_at' => $postModel->event->starts_at?->toIso8601String(),
+                    'starts_at_human' => $postModel->event->starts_at?->format('M j, Y · g:i A'),
+                    'ends_at' => $postModel->event->ends_at?->toIso8601String(),
+                    'ends_at_human' => $postModel->event->ends_at?->format('M j, Y · g:i A'),
+                    'external_link' => $postModel->event->external_link,
+                    'address' => $postModel->event->address,
+                    'venue' => $postModel->event->venue,
+                ] : null,
                 'like_count' => $postModel->like_count,
+                'is_liked' => $postModel->isLikedByAuthUser(),
                 'comment_count' => $postModel->comment_count,
                 'created_at' => $postModel->created_at->diffForHumans(),
                 'user' => [
@@ -149,23 +161,24 @@ class CommentController extends Controller
                     'name' => $postModel->user->name,
                     'batch_year' => $postModel->user->batch_year,
                     'program_course' => $postModel->user->program_course,
-                    'avatar_path' => $postModel->user->avatar_path,
+                    'avatar_url' => $postModel->user->profileAvatarUrl(),
                 ],
-                'community' => [
+                'community' => $postModel->community ? [
                     'id' => $postModel->community->id,
                     'name' => $postModel->community->name,
-                ],
+                ] : null,
                 'flairs' => $postModel->flairs->map(function ($flair) {
                     return [
                         'id' => $flair->id,
                         'name' => $flair->name,
                         'color' => $flair->color,
+                        'icon' => $flair->icon,
                     ];
                 })->toArray(),
                 'media' => $postModel->media->map(function ($media) {
                     return [
                         'id' => $media->id,
-                        'path' => $media->file_path,
+                        'url' => $media->url,
                         'alt_text' => $media->alt_text,
                     ];
                 })->toArray(),
@@ -174,9 +187,36 @@ class CommentController extends Controller
     }
 
     /**
+     * Personal (community-less) post variants.
+     *
+     * Connections-only posts have no community segment in their URL, so route
+     * params bind positionally to a single {post}. These thin wrappers forward
+     * to the shared handlers with a null community.
+     */
+    public function getPostDetailsForPost($post)
+    {
+        return $this->getPostDetails(null, $post);
+    }
+
+    public function indexForPost($post)
+    {
+        return $this->index(null, $post);
+    }
+
+    public function storeForPost(Request $request, $post)
+    {
+        return $this->store($request, null, $post);
+    }
+
+    public function destroyForPost($post, $comment)
+    {
+        return $this->destroy(null, $post, $comment);
+    }
+
+    /**
      * Get comments for a post (JSON response).
      */
-    public function index($community, $post)
+    public function index($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
         $this->authorize('view', $postModel);

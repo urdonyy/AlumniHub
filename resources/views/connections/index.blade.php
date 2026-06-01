@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Connections</x-slot>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
@@ -48,9 +49,9 @@
 
             <div class="grid gap-6 lg:grid-cols-12">
                 {{-- LEFT RAIL (sticky) --}}
-                <aside class="space-y-3 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
+                <aside class="min-w-0 space-y-3 lg:col-span-5 lg:sticky lg:top-6 lg:self-start">
                     {{-- Pending Invites Received --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
                         <div class="flex items-center justify-between gap-2">
                             <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                 {{ __('Pending Invites Received') }}
@@ -78,17 +79,11 @@
                                     <div class="flex gap-2 shrink-0">
                                         <form method="POST" action="{{ route('connections.accept', $invite) }}">
                                             @csrf
-                                            <button type="submit"
-                                                class="rounded-md bg-red-900 px-3 py-2 text-xs font-semibold tracking-widest text-white hover:bg-red-800">
-                                                {{ __('Accept') }}
-                                            </button>
+                                            <x-tertiary-button>{{ __('Accept') }}</x-tertiary-button>
                                         </form>
                                         <form method="POST" action="{{ route('connections.ignore', $invite) }}">
                                             @csrf
-                                            <button type="submit"
-                                                class="rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold tracking-widest text-gray-700 hover:bg-gray-50">
-                                                {{ __('Ignore') }}
-                                            </button>
+                                            <x-ghost-button>{{ __('Ignore') }}</x-ghost-button>
                                         </form>
                                     </div>
                                 </div>
@@ -101,7 +96,7 @@
                     </section>
 
                     {{-- Invites You Sent --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+                    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm"
                         x-data="{ managing: false, selected: [] }">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-2">
@@ -131,7 +126,7 @@
                                         <input type="checkbox"
                                             :value="{{ $invite->id }}"
                                             x-model="selected"
-                                            class="h-4 w-4 rounded border-gray-300 accent-red-900 cursor-pointer">
+                                            class="h-4 w-4 rounded border-gray-300 text-red-900     accent-red-900 cursor-pointer focus:ring-yellow-500">
                                     </div>
                                     {{-- Person info --}}
                                     <a href="{{ route('profiles.show', $invite->recipient) }}"
@@ -177,7 +172,7 @@
                     </section>
 
                     {{-- Accepted Connections (live badge) --}}
-                    <section class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
                         <div class="flex items-center justify-between gap-2">
                             <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                 {{ __('Accepted Connections') }}
@@ -241,11 +236,11 @@
                 </aside>
 
                 {{-- RIGHT COLUMN: suggested people (verified only) --}}
-                <section class="lg:col-span-7">
+                <section class="min-w-0 lg:col-span-7">
                     @if ($isVerified)
                         <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                             {{-- Sticky search header --}}
-                            <div class="sticky top-0 z-10 rounded-t-2xl border-b border-gray-200 bg-white/95 px-6 py-4 backdrop-blur">
+                            <div class="sticky top-0 z-10 rounded-t-2xl border-b border-gray-200 bg-white/95 px-4 py-3 sm:px-6 sm:py-4 backdrop-blur">
                                 <div class="flex items-center justify-between gap-3">
                                     <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
                                         {{ __('Suggested People') }}
@@ -256,15 +251,25 @@
                                     <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z"/>
                                     </svg>
-                                    <input type="search"
+                                    <input type="text"
                                         x-model="query"
                                         placeholder="{{ __('Search by name, program, or batch year…') }}"
-                                        class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-3 py-2.5 text-sm text-gray-800 focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
+                                        class="w-full rounded-lg border border-gray-300 bg-white pl-10 pr-8 py-2.5 text-sm text-gray-800 focus:border-yellow-500 focus:outline-none focus:ring-1 focus:ring-red-50">
+                                    <button
+                                        x-show="query.trim()"
+                                        @click="query = ''"
+                                        type="button"
+                                        aria-label="{{ __('Clear search') }}"
+                                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-red-300 transition hover:text-red-400">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
                                 </div>
                             </div>
 
                             {{-- Scrollable list --}}
-                            <div class="px-6 py-5 space-y-3">
+                            <div class="px-4 py-4 sm:px-6 sm:py-5 space-y-3">
                                 <template x-for="person in visiblePeople" :key="person.id">
                                     <div class="flex flex-col gap-3 rounded-lg border border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                                         <a :href="person.profile_url" class="flex items-center gap-3 min-w-0">

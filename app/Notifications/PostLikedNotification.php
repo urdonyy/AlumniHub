@@ -34,7 +34,9 @@ class PostLikedNotification extends Notification
             'post_id' => $this->post->id,
             'community_id' => $this->post->community_id,
             'post_title' => $this->post->title,
-            'url' => route('communities.posts.open', ['community' => $this->post->community_id, 'post' => $this->post->id]),
+            'url' => $this->post->community_id
+                ? route('communities.posts.open', ['community' => $this->post->community_id, 'post' => $this->post->id])
+                : route('dashboard'),
         ];
     }
 }

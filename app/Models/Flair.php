@@ -15,11 +15,21 @@ class Flair extends Model
         'color',
         'icon',
         'is_sticky',
+        'is_system',
     ];
 
     protected $casts = [
         'is_sticky' => 'boolean',
+        'is_system' => 'boolean',
     ];
+
+    /**
+     * Scope to non-system flairs (those a user may pick in the composer).
+     */
+    public function scopeSelectable($query)
+    {
+        return $query->where('is_system', false);
+    }
 
     /**
      * Get the community this flair belongs to (or null for global).

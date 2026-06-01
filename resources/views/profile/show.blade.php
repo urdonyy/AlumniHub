@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">{{ $profileUser->name }}</x-slot>
     <div class="bg-cover bg-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0"
         style="background-image: url('{{ asset('images/element.png') }}');">
         <x-slot name="header">
@@ -372,11 +373,17 @@
                                                     'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', __('Connections')],
                                                     default       => ['bg-gray-100 text-gray-600 ring-gray-200', __('Members')],
                                                 };
+                                                $profilePostApiUrl = $post->community
+                                                    ? route('communities.posts.api', ['community' => $post->community, 'post' => $post])
+                                                    : route('posts.api', ['post' => $post]);
+                                                $profilePostCommentsUrl = $post->community
+                                                    ? route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post])
+                                                    : route('posts.comments.index', ['post' => $post]);
                                             @endphp
                                             <div class="w-full shrink-0 min-w-0">
                                                 <article
                                                     class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md"
-                                                    @click="openPostModal($event, {{ $post->id }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post]) }}')">
+                                                    @click="openPostModal($event, {{ $post->id }}, '{{ $profilePostApiUrl }}', '{{ $profilePostCommentsUrl }}')">
 
                                                     <!-- Top section -->
                                                     <div class="p-4 pb-3">
@@ -436,7 +443,7 @@
                                                             <div class="mt-4 grid grid-cols-3 gap-2">
                                                                 @foreach ($post->media->take(3) as $idx => $media)
                                                                     <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 max-h-48">
-                                                                        <img src="/storage/{{ $media->file_path }}" alt="{{ __('Post image') }}"
+                                                                        <img src="{{ $media->url }}" alt="{{ __('Post image') }}"
                                                                             class="h-full w-full object-cover max-h-48" />
                                                                         @if ($idx === 2 && $post->media->count() > 3)
                                                                             <div class="absolute inset-0 flex items-center justify-center bg-black/55 text-sm font-semibold text-white">
@@ -543,7 +550,7 @@
                                             <img id="banner-preview" src="{{ $profileUser->profileBannerUrl() }}" alt="{{ __('Current banner preview') }}"
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-banner.svg') }}';"
                                                 class="mt-2 h-32 w-full rounded-lg border border-gray-200 object-cover sm:h-40" />
-                                            <input id="banner" name="banner" type="file" accept="image/jpeg,image/png,image/webp"
+                                            <input id="banner" name="banner" type="file" accept="image/*"
                                                 class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer" />
                                             <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 5MB.') }}</p>
                                             <x-input-error class="mt-2" :messages="$errors->get('banner')" />
@@ -554,7 +561,7 @@
                                             <img id="avatar-preview" src="{{ $profileUser->profileAvatarUrl() }}" alt="{{ __('Current avatar preview') }}"
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';"
                                                 class="mt-2 h-28 w-28 rounded-full border border-gray-200 object-cover" />
-                                            <input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp"
+                                            <input id="avatar" name="avatar" type="file" accept="image/*"
                                                 class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer" />
                                             <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 3MB.') }}</p>
                                             <p id="avatar-crop-message" class="mt-2 text-xs text-emerald-700"></p>

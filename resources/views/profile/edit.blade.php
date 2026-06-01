@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Edit Profile</x-slot>
     @php
         $sections = [
             'account-status' => [

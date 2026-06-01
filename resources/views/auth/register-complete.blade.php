@@ -1,4 +1,5 @@
 <x-auth-layout>
+    <x-slot name="title">Registration Complete</x-slot>
 
     <h1 class="text-2xl font-bold text-gray-900 mb-1">Complete your profile</h1>
     <p class="text-sm text-gray-500 mb-6">Step 3 of 3 — tell us about yourself and verify your identity.</p>

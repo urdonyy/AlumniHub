@@ -5,7 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>{{ config('app.name', 'AlumniHub') }}</title>
+    <title>{{ config('app.name', 'AlumniHub') }} — Reconnect with your alumni community</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/alumnihub-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/alumnihub-logo.png') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">

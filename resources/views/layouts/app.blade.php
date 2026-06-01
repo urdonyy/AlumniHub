@@ -8,7 +8,11 @@
     <meta name="user-verified" content="{{ auth()->check() && auth()->user()->isVerified() ? '1' : '0' }}">
     <meta name="user-pending-doc" content="{{ auth()->check() && auth()->user()->hasPendingVerificationDocument() ? '1' : '0' }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    <title>{{ isset($title) ? $title . ' | ' . config('app.name', 'AlumniHub') : config('app.name', 'AlumniHub') }}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ asset('images/alumnihub-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/alumnihub-logo.png') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
