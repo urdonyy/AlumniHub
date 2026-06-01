@@ -14,6 +14,7 @@
         x-data="{
             managing: false,
             selected: [],
+            allIds: @js($notifications->pluck('id')),
             baseUrl: '{{ url('/notifications') }}',
             csrf: document.querySelector('meta[name=csrf-token]')?.content,
             async bulkRequest(action) {
@@ -54,12 +55,23 @@
                                 </form>
                             </div>
 
-                            <button type="button"
-                                @click="managing = !managing; selected = []"
-                                class="text-xs font-semibold"
-                                :class="managing ? 'text-red-700 hover:text-red-900' : 'text-gray-500 hover:text-gray-700'">
-                                <span x-text="managing ? '{{ __('Cancel') }}' : '{{ __('Manage') }}'"></span>
-                            </button>
+                            <div class="flex items-center gap-3">
+                                <label x-show="managing" class="flex items-center gap-1.5 cursor-pointer" style="display:none">
+                                    <input type="checkbox"
+                                        class="h-4 w-4 rounded border-gray-300 text-red-900 accent-red-900 cursor-pointer focus:ring-yellow-500"
+                                        :checked="allIds.length > 0 && selected.length === allIds.length"
+                                        x-effect="$el.indeterminate = selected.length > 0 && selected.length < allIds.length"
+                                        @change="selected = $event.target.checked ? [...allIds] : []">
+                                    <span class="text-xs font-semibold text-gray-500">Select all</span>
+                                </label>
+
+                                <button type="button"
+                                    @click="managing = !managing; selected = []"
+                                    class="text-xs font-semibold"
+                                    :class="managing ? 'text-red-900 hover:text-red-800' : 'text-gray-500 hover:text-gray-700'">
+                                    <span x-text="managing ? '{{ __('Cancel') }}' : '{{ __('Manage') }}'"></span>
+                                </button>
+                            </div>
                         </div>
 
                         {{-- Manage action bar --}}
@@ -70,12 +82,19 @@
                             <p class="text-sm text-gray-700">
                                 <span x-text="selected.length"></span> selected
                             </p>
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-1">
+                                {{-- Restore --}}
                                 <button type="button" @click="bulkRequest('restore')"
-                                    class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold tracking-widest text-gray-700 hover:bg-gray-100">
-                                    {{ __('Restore') }}
+                                    title="{{ __('Restore') }}"
+                                    class="flex items-center justify-center h-8 w-8 rounded-full text-gray-600 hover:bg-gray-200 transition">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 0 1 0 12h-3"/>
+                                    </svg>
                                 </button>
+
+                                {{-- Delete permanently --}}
                                 <button type="button" @click="bulkRequest('force')"
+                                    title="{{ __('Delete permanently') }}"
                                     class="rounded-md bg-red-900 px-3 py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800">
                                     {{ __('Delete permanently') }}
                                 </button>
