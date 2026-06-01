@@ -222,7 +222,7 @@ class CommunityPostController extends Controller
                 'event_type' => 'required|in:online,in_person',
                 'title' => 'required|string|max:255',
                 'body_markdown' => 'nullable|string|max:5000',
-                'starts_at' => 'required|date',
+                'starts_at' => 'required|date|after:now',
                 'ends_at' => 'nullable|date|after:starts_at',
                 'external_link' => ($isOnline ? 'required' : 'nullable') . '|url|max:1024',
                 'address' => ($isOnline ? 'nullable' : 'required') . '|string|max:255',

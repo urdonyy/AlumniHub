@@ -403,13 +403,15 @@
                                             <div class="grid grid-cols-2 gap-3">
                                                 <div>
                                                     <label class="mb-1 block text-xs font-medium text-gray-600">Start date <span class="text-red-500">*</span></label>
-                                                    <input type="date" x-model="startDate" :required="isEvent" class="{{ $inputClass }}">
+                                                    <input type="date" x-model="startDate" :required="isEvent" @change="eventDateError = false" class="{{ $inputClass }}">
                                                 </div>
                                                 <div>
                                                     <label class="mb-1 block text-xs font-medium text-gray-600">Start time <span class="text-red-500">*</span></label>
-                                                    <input type="time" x-model="startTime" :required="isEvent" class="{{ $inputClass }}">
+                                                    <input type="time" x-model="startTime" :required="isEvent" @change="eventDateError = false" class="{{ $inputClass }}">
                                                 </div>
                                             </div>
+
+                                            <p x-show="eventDateError" class="text-xs font-medium text-red-600">Start date and time must be in the future.</p>
 
                                             <!-- Add end date toggle -->
                                             <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
@@ -745,6 +747,7 @@
                 selectedFlairs: [],
                 flairsExpanded: false,
                 flairError: false,
+                eventDateError: false,
 
                 // Post type + shared title/body
                 postType: 'text', // text | media | event
@@ -881,6 +884,16 @@
                 },
 
                 submitPost(form) {
+                    if (this.isEvent) {
+                        // Reject past start dates.
+                        const starts = this.startsAtValue ? new Date(this.startsAtValue) : null;
+                        if (!starts || starts <= new Date()) {
+                            this.eventDateError = true;
+                            return;
+                        }
+                        this.eventDateError = false;
+                    }
+
                     // Flairs are not required for events. Native HTML validation
                     // (required/url/date inputs) has already passed by the time
                     // the submit event fires.
