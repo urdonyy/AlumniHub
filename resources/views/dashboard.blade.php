@@ -563,13 +563,13 @@
                             @foreach($posts as $post)
                                 @php
                                     // Connections-only posts (incl. connections-audience events) have no
-                                    // community, so the community-scoped routes can't be built for them.
+                                    // community, so they use the community-less personal-post routes.
                                     $postApiUrl = $post->community
                                         ? route('communities.posts.api', ['community' => $post->community, 'post' => $post])
-                                        : '';
+                                        : route('posts.api', ['post' => $post]);
                                     $postLikeUrl = $post->community
                                         ? route('communities.posts.like', ['community' => $post->community, 'post' => $post])
-                                        : '';
+                                        : route('posts.like', ['post' => $post]);
                                 @endphp
                                 <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }})"
                                     @click="openPostModal($event)"
@@ -1125,8 +1125,8 @@
         </script>
     @endif
 
-    {{-- "Let's get you started" verification prompt (shown to unverified users after registration / login) --}}
-    @if (session('show_setup_prompt') && ! auth()->user()->isVerified())
+    {{-- "Let's get you started" verification prompt (shown to unverified, non-pending users after registration / login) --}}
+    @if (session('show_setup_prompt') && ! auth()->user()->isVerified() && ! auth()->user()->hasPendingVerificationDocument())
         <div x-data="{ open: true }"
             x-show="open"
             x-transition.opacity
@@ -1166,6 +1166,41 @@
                             {{ __('Verify') }}
                         </a>
                     @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- "Complete your profile" prompt (shown to users with a pending verification review) --}}
+    @if (session('show_setup_prompt') && auth()->user()->hasPendingVerificationDocument())
+        <div x-data="{ open: true }"
+            x-show="open"
+            x-transition.opacity
+            @keydown.escape.window="open = false"
+            class="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 p-4"
+            style="display: none;">
+            <div @click.away="open = false"
+                class="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                <div class="flex flex-col items-center gap-3 px-6 pt-8 text-center">
+                    <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">{{ __('While you wait…') }}</h3>
+                    <p class="text-sm leading-relaxed text-gray-600">
+                        {{ __("Your verification document is under review. In the meantime, complete your profile — add your skills, experience, and education so you're ready to connect with your batchmates the moment you're approved.") }}
+                    </p>
+                </div>
+                <div class="flex gap-3 px-6 py-6">
+                    <button type="button" @click="open = false"
+                        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                        {{ __('Skip for now') }}
+                    </button>
+                    <a href="{{ route('profile.edit', ['section' => 'profile-information']) }}"
+                        class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-800">
+                        {{ __('Set up profile') }}
+                    </a>
                 </div>
             </div>
         </div>

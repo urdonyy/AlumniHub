@@ -227,12 +227,34 @@ Route::middleware('auth')->group(function () {
             ->name('communities.posts.comments.store');
         Route::delete('/communities/{community}/posts/{post}/comments/{comment}', [CommentController::class, 'destroy'])
             ->name('communities.posts.comments.destroy');
+
+        // Community-less (connections-only) posts: same actions without a community scope.
+        Route::get('/posts/{post}/open', function (Post $post, Request $request) {
+            $request->user()?->can('view', $post) ?: abort(403);
+
+            return redirect()->route('dashboard')->with('openPostModal', [
+                'postId' => $post->id,
+                'apiUrl' => route('posts.api', ['post' => $post->id]),
+                'commentsUrl' => route('posts.comments.index', ['post' => $post->id]),
+            ]);
+        })->name('posts.open');
+        Route::get('/posts/{post}/api', [CommentController::class, 'getPostDetailsForPost'])
+            ->name('posts.api');
+        Route::get('/posts/{post}/comments', [CommentController::class, 'indexForPost'])
+            ->name('posts.comments.index');
+        Route::post('/posts/{post}/comments', [CommentController::class, 'storeForPost'])
+            ->name('posts.comments.store');
+        Route::delete('/posts/{post}/comments/{comment}', [CommentController::class, 'destroyForPost'])
+            ->name('posts.comments.destroy');
     });
 
     // Likes - toggle route
     Route::post('/communities/{community}/posts/{post}/like', [PostLikeController::class, 'toggle'])
         ->middleware('auth')
         ->name('communities.posts.like');
+    Route::post('/posts/{post}/like', [PostLikeController::class, 'toggleForPost'])
+        ->middleware('auth')
+        ->name('posts.like');
     // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
 
     // // Posts - create/edit/delete (requires membership)

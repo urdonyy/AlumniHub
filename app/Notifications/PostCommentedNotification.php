@@ -38,7 +38,9 @@ class PostCommentedNotification extends Notification
             'post_title' => $this->post->title,
             'comment_id' => $this->comment->id,
             'comment_preview' => mb_substr((string) $this->comment->body, 0, 140),
-            'url' => route('communities.posts.open', ['community' => $this->post->community_id, 'post' => $this->post->id]),
+            'url' => $this->post->community_id
+                ? route('communities.posts.open', ['community' => $this->post->community_id, 'post' => $this->post->id])
+                : route('dashboard'),
         ];
     }
 }

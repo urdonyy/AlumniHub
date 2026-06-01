@@ -24,7 +24,19 @@ class PostLikeController extends Controller
     /**
      * Toggle a like on a post.
      */
-    public function toggle(Request $request, $community, $post)
+    /**
+     * Toggle a like on a community-less (connections-only) post. Route param
+     * binds positionally to a single {post}, so forward with a null community.
+     */
+    public function toggleForPost(Request $request, $post)
+    {
+        return $this->toggle($request, null, $post);
+    }
+
+    /**
+     * Toggle a like on a post.
+     */
+    public function toggle(Request $request, $community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
 

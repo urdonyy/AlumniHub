@@ -25,7 +25,7 @@ class CommentController extends Controller
     /**
      * Store a newly created comment in storage.
      */
-    public function store(Request $request, $community, $post)
+    public function store(Request $request, $community = null, $post = null)
     {
         // Fetch the post model
         $postModel = Post::findOrFail($post);
@@ -104,7 +104,7 @@ class CommentController extends Controller
     /**
      * Delete a comment.
      */
-    public function destroy($community, $post, $comment)
+    public function destroy($community = null, $post = null, $comment = null)
     {
         $postModel = Post::findOrFail($post);
         $commentModel = Comment::findOrFail($comment);
@@ -126,7 +126,7 @@ class CommentController extends Controller
     /**
      * Get post details with comments (JSON response).
      */
-    public function getPostDetails($community, $post)
+    public function getPostDetails($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
         $this->authorize('view', $postModel);
@@ -153,6 +153,7 @@ class CommentController extends Controller
                     'venue' => $postModel->event->venue,
                 ] : null,
                 'like_count' => $postModel->like_count,
+                'is_liked' => $postModel->isLikedByAuthUser(),
                 'comment_count' => $postModel->comment_count,
                 'created_at' => $postModel->created_at->diffForHumans(),
                 'user' => [
@@ -162,10 +163,10 @@ class CommentController extends Controller
                     'program_course' => $postModel->user->program_course,
                     'avatar_url' => $postModel->user->profileAvatarUrl(),
                 ],
-                'community' => [
+                'community' => $postModel->community ? [
                     'id' => $postModel->community->id,
                     'name' => $postModel->community->name,
-                ],
+                ] : null,
                 'flairs' => $postModel->flairs->map(function ($flair) {
                     return [
                         'id' => $flair->id,
@@ -185,9 +186,36 @@ class CommentController extends Controller
     }
 
     /**
+     * Personal (community-less) post variants.
+     *
+     * Connections-only posts have no community segment in their URL, so route
+     * params bind positionally to a single {post}. These thin wrappers forward
+     * to the shared handlers with a null community.
+     */
+    public function getPostDetailsForPost($post)
+    {
+        return $this->getPostDetails(null, $post);
+    }
+
+    public function indexForPost($post)
+    {
+        return $this->index(null, $post);
+    }
+
+    public function storeForPost(Request $request, $post)
+    {
+        return $this->store($request, null, $post);
+    }
+
+    public function destroyForPost($post, $comment)
+    {
+        return $this->destroy(null, $post, $comment);
+    }
+
+    /**
      * Get comments for a post (JSON response).
      */
-    public function index($community, $post)
+    public function index($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
         $this->authorize('view', $postModel);

@@ -194,11 +194,13 @@
                                         $data           = $notification->data ?? [];
                                         $message        = $data['message'] ?? $notification->type;
                                         $url            = $data['url'] ?? null;
-                                        if (!empty($data['community_id']) && !empty($data['post_id'])) {
-                                            $url = route('communities.posts.open', [
-                                                'community' => $data['community_id'],
-                                                'post'      => $data['post_id'],
-                                            ]);
+                                        if (!empty($data['post_id'])) {
+                                            $url = !empty($data['community_id'])
+                                                ? route('communities.posts.open', [
+                                                    'community' => $data['community_id'],
+                                                    'post'      => $data['post_id'],
+                                                ])
+                                                : route('posts.open', ['post' => $data['post_id']]);
                                         }
                                         $type           = $data['type'] ?? null;
                                         $postTitle      = $data['post_title'] ?? null;
