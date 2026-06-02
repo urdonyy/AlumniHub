@@ -63,8 +63,8 @@ class ProfileUpdateRequest extends FormRequest
             ],
             'educations.*.start_date' => ['nullable', 'date'],
             'educations.*.end_date' => ['nullable', 'date', 'after_or_equal:educations.*.start_date'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:3072'],
-            'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
         ];
     }
 }

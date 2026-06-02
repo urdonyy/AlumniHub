@@ -6,8 +6,10 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Connection;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\ImageOptimizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
@@ -17,6 +19,26 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    public function __construct(private readonly ImageOptimizer $imageOptimizer) {}
+
+    /**
+     * Resize + compress an uploaded image, then store it. Falls back to storing
+     * the original for formats the optimizer skips (e.g. GIF).
+     */
+    private function storeOptimizedImage(UploadedFile $file, string $directory, int $maxDimension): string
+    {
+        $optimized = $this->imageOptimizer->optimize($file, $maxDimension);
+
+        if ($optimized) {
+            $path = $directory . '/' . Str::random(40) . '.' . $optimized['extension'];
+            Storage::put($path, $optimized['contents'], ['CacheControl' => ImageOptimizer::CACHE_CONTROL]);
+
+            return $path;
+        }
+
+        return $file->store($directory, ['CacheControl' => ImageOptimizer::CACHE_CONTROL]);
+    }
+
     public function show(Request $request, User $user): View
     {
         $viewer = $request->user();
@@ -131,7 +153,7 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             $oldAvatarPath = $user->avatar_path;
-            $newAvatarPath = $request->file('avatar')->store('avatars/user_' . $user->id);
+            $newAvatarPath = $this->storeOptimizedImage($request->file('avatar'), 'avatars/user_' . $user->id, 512);
 
             $user->avatar_path = $newAvatarPath;
             $user->avatar_uploaded_at = now();
@@ -143,7 +165,7 @@ class ProfileController extends Controller
 
         if ($request->hasFile('banner')) {
             $oldBannerPath = $user->banner_path;
-            $newBannerPath = $request->file('banner')->store('banners/user_' . $user->id);
+            $newBannerPath = $this->storeOptimizedImage($request->file('banner'), 'banners/user_' . $user->id, 1600);
 
             $user->banner_path = $newBannerPath;
             $user->banner_uploaded_at = now();

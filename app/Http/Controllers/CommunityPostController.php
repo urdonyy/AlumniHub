@@ -108,7 +108,7 @@ class CommunityPostController extends Controller
                 }),
             ],
             'attachments' => 'sometimes|array',
-            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:5120',
+            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:20480',
         ]);
 
         $this->postService->createPost(
@@ -160,7 +160,7 @@ class CommunityPostController extends Controller
                 }),
             ],
             'attachments' => 'sometimes|array',
-            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:5120',
+            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:20480',
         ]);
 
         $this->postService->updatePost($post, $validated);
@@ -211,7 +211,7 @@ class CommunityPostController extends Controller
                 }),
             ],
             'attachments' => 'sometimes|array',
-            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:5120',
+            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:20480',
         ];
 
         if ($isEvent) {

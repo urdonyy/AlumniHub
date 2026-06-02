@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
@@ -118,6 +119,19 @@ class Post extends Model
             // Auto-set published_at if transitioning to published
             if ($post->isDirty('status') && $post->status === 'published' && is_null($post->published_at)) {
                 $post->published_at = now();
+            }
+        });
+
+        // On PERMANENT deletion, remove the post's media files from storage so
+        // they don't orphan and waste the storage quota. This only fires on a
+        // real delete() (force-delete / hard-delete) — trashing uses an update
+        // to `trashed_at`, so a trashed post keeps its files until purged.
+        static::deleting(function ($post) {
+            foreach ($post->media as $media) {
+                if ($media->file_path) {
+                    Storage::delete($media->file_path);
+                }
+                $media->delete();
             }
         });
     }

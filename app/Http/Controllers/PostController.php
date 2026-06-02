@@ -63,7 +63,7 @@ class PostController extends Controller
                 }),
             ],
             'attachments'   => 'sometimes|array',
-            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:5120',
+            'attachments.*' => 'image|mimes:jpeg,png,gif,jpg|max:20480',
             'removed_media' => 'sometimes|array',
             'removed_media.*' => 'integer',
         ];
