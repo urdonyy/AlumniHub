@@ -16,15 +16,19 @@ class EventInviteService
     /**
      * Auto-invite the audience of an event post.
      *
-     * Sends an immediate web (nav-bell) notification and queues a best-effort
-     * email to every member of the post's audience. The audience is the set of
+     * Sends an immediate web (nav-bell) notification and a best-effort email to
+     * every member of the post's audience. The audience is the set of
      * people who can see the post: the author's connections (connections-only
      * events) or the community's members (community events). Public events do
      * not support auto-invite.
      */
     public function dispatch(Post $post, User $author): void
     {
-        $recipients = $this->resolveAudience($post, $author);
+        // Only verified accounts may view the post (others get a 403), so don't
+        // notify or email unverified users about events they can't open.
+        $recipients = $this->resolveAudience($post, $author)
+            ->filter(fn (User $recipient) => $recipient->isVerified())
+            ->values();
 
         if ($recipients->isEmpty()) {
             $this->markInvited($post);
@@ -35,8 +39,8 @@ class EventInviteService
         // whether a queue worker is running.
         Notification::send($recipients, new EventInviteNotification($post, $author));
 
-        // Email — queued and best-effort; a single failure must not break the
-        // post-creation flow.
+        // Email — sent synchronously and best-effort; a single failure must not
+        // break the post-creation flow.
         foreach ($recipients as $recipient) {
             if (empty($recipient->email)) {
                 continue;
@@ -45,7 +49,7 @@ class EventInviteService
             try {
                 Mail::to($recipient->email)->send(new EventInviteMail($post, $author, $recipient));
             } catch (\Throwable $e) {
-                Log::warning('Failed to queue event invite email', [
+                Log::warning('Failed to send event invite email', [
                     'post_id' => $post->id,
                     'recipient_id' => $recipient->id,
                     'error' => $e->getMessage(),
