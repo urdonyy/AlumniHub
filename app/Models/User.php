@@ -244,6 +244,21 @@ class User extends Authenticatable implements MustVerifyEmail
             ->exists();
     }
 
+    /**
+     * Count of unread direct messages addressed to this user (sent by others).
+     */
+    public function unreadMessagesCount(): int
+    {
+        return Message::query()
+            ->whereNull('read_at')
+            ->where('sender_id', '!=', $this->id)
+            ->whereHas('conversation', function ($query) {
+                $query->where('user_low_id', $this->id)
+                    ->orWhere('user_high_id', $this->id);
+            })
+            ->count();
+    }
+
     public function profileExperiences(): HasMany
     {
         return $this->hasMany(ProfileExperience::class)

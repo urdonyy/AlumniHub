@@ -2,14 +2,21 @@
     /** @var \App\Models\User|null $navUser */
     $navUser = Auth::user();
     $unreadNotificationsCount = $navUser?->notifications()->whereNull('read_at')->whereNull('trashed_at')->count() ?? 0;
+    $unreadMessagesCount = $navUser?->unreadMessagesCount() ?? 0;
     $adminPendingCount = ($navUser?->role === 'admin')
         ? \App\Models\CommunityCreationRequest::where('status', 'pending_admin')->count()
             + \App\Models\VerificationDocument::where('status', 'pending')->count()
         : 0;
 @endphp
-<nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }}, adminPendingCount: {{ $adminPendingCount }} }"
+<nav x-data="{ open: false, notifCount: {{ $unreadNotificationsCount }}, msgCount: {{ $unreadMessagesCount }}, adminPendingCount: {{ $adminPendingCount }} }"
     x-init="
         setInterval(async () => { try { const r = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); notifCount = d.count; } catch {} }, 30000);
+        @if ($navUser?->role !== 'admin')
+        const refreshMsgCount = async () => { try { const r = await fetch('{{ route('messages.unread-count') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); msgCount = d.count; } catch {} };
+        setInterval(refreshMsgCount, 30000);
+        window.addEventListener('message-count-refresh', refreshMsgCount);
+        if (window.Echo) { window.Echo.private('user.{{ $navUser?->id }}').listen('.MessageSent', () => refreshMsgCount()); }
+        @endif
         @if ($navUser?->role === 'admin')
         setInterval(async () => { try { const r = await fetch('{{ route('admin.inbox.counts') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); adminPendingCount = d.total; } catch {} }, 30000);
         @endif
@@ -74,6 +81,8 @@
                         <x-nav-link :href="route('messages.index')" :active="request()->routeIs('messages.*')">
                             <i class="fa-regular fa-message"></i>
                             {{ __('Messages') }}
+                            <span x-show="msgCount > 0" x-text="msgCount"
+                                class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                         </x-nav-link>
 
                         <x-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
@@ -193,6 +202,8 @@
                 <x-responsive-nav-link :href="route('messages.index')" :active="request()->routeIs('messages.*')">
                     <i class="fa-regular fa-message"></i>
                     {{ __('Messages') }}
+                    <span x-show="msgCount > 0" x-text="msgCount"
+                        class="ms-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">

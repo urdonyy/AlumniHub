@@ -14,6 +14,7 @@ use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\PostTrashController;
@@ -302,10 +303,13 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/verification', [VerificationController::class, 'store'])->name('verification.store');
 
-    Route::view('/messages', 'placeholders.module', [
-        'title' => 'Messages',
-        'description' => 'Direct messaging will be available after the messaging backend is implemented.',
-    ])->name('messages.index');
+    // Direct messaging (1-on-1, accepted connections only). The unread-count and
+    // index routes are declared before the numeric {user} route to avoid collision.
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/unread-count', [MessageController::class, 'unreadCount'])->name('messages.unread-count');
+    Route::get('/messages/{user}', [MessageController::class, 'show'])->whereNumber('user')->name('messages.show');
+    Route::post('/messages/{user}', [MessageController::class, 'store'])->whereNumber('user')->name('messages.store');
+    Route::post('/messages/{user}/read', [MessageController::class, 'markRead'])->whereNumber('user')->name('messages.read');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/trash', [NotificationController::class, 'trash'])->name('notifications.trash');
