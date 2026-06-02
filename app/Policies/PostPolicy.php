@@ -51,31 +51,52 @@ class PostPolicy
     }
 
     /**
-     * Determine if the user can update the post.
+     * Determine if the user can update the post (edit via composer).
      */
     public function update(User $user, Post $post): bool
     {
-        // Post author can update their own post
+        return $user->id === $post->user_id;
+    }
+
+    /**
+     * Determine if the user can trash (soft-delete) the post.
+     * Authors trash their own; moderators/admins can also trash community posts.
+     */
+    public function trash(User $user, Post $post): bool
+    {
         if ($user->id === $post->user_id) {
             return true;
         }
 
-        // Community moderators or admins can update any post in their community
         return $this->isModeratorOrAdmin($user, $post->community);
     }
 
     /**
-     * Determine if the user can delete the post.
+     * Determine if the user can delete the post (hard delete via mod action).
      */
     public function delete(User $user, Post $post): bool
     {
-        // Post author can delete their own post
         if ($user->id === $post->user_id) {
             return true;
         }
 
-        // Community moderators or admins can delete any post in their community
         return $this->isModeratorOrAdmin($user, $post->community);
+    }
+
+    /**
+     * Determine if the user can restore a trashed post.
+     */
+    public function restore(User $user, Post $post): bool
+    {
+        return $user->id === $post->user_id;
+    }
+
+    /**
+     * Determine if the user can permanently delete a trashed post.
+     */
+    public function forceDelete(User $user, Post $post): bool
+    {
+        return $user->id === $post->user_id;
     }
 
     /**

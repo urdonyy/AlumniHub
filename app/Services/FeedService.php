@@ -16,6 +16,7 @@ class FeedService
         if (! $user->isVerified()) {
             $query = Post::with(['user', 'community', 'flairs', 'media'])
                 ->where('status', 'published')
+                ->whereNull('trashed_at')
                 ->where('visibility', 'public');
 
             return $this->withFlairRanking($query, $flairIds)->paginate($perPage);
@@ -33,6 +34,7 @@ class FeedService
 
         $query = Post::with(['user', 'community', 'flairs', 'media'])
             ->where('status', 'published')
+            ->whereNull('trashed_at')
             ->where(function ($q) use ($user, $connectedUserIds) {
                 $q->where('visibility', 'public')
                     ->orWhere(function ($q2) use ($user) {

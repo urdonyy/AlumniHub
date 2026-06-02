@@ -113,6 +113,14 @@ class PostService
     }
 
     /**
+     * Publicly append new file attachments to an existing post (used when editing).
+     */
+    public function addAttachments(Post $post, User $user, array $files): void
+    {
+        $this->handleAttachments($post, $user, $files);
+    }
+
+    /**
      * Handle file attachments for a post.
      */
     protected function handleAttachments(Post $post, User $user, array $files): void

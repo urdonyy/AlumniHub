@@ -23,11 +23,13 @@ class Post extends Model
         'visibility',
         'pinned',
         'published_at',
+        'trashed_at',
     ];
 
     protected $casts = [
         'pinned' => 'boolean',
         'published_at' => 'datetime',
+        'trashed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -142,7 +144,17 @@ class Post extends Model
      */
     public function scopePublished($query)
     {
-        return $query->where('status', 'published');
+        return $query->where('status', 'published')->whereNull('trashed_at');
+    }
+
+    public function scopeTrashed($query)
+    {
+        return $query->whereNotNull('trashed_at');
+    }
+
+    public function isTrashed(): bool
+    {
+        return $this->trashed_at !== null;
     }
 
     /**

@@ -119,6 +119,7 @@ class CommunityController extends Controller
             ->with(['user', 'community', 'flairs', 'media'])
             ->withCount(['allComments as comments_count', 'likes'])
             ->where('status', 'published')
+            ->whereNull('trashed_at')
             ->where('community_id', $community->id)
             ->when(! ($isMember || $isAdmin), function ($query) {
                 $query->where('visibility', 'public');

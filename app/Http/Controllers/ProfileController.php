@@ -48,6 +48,7 @@ class ProfileController extends Controller
             ->with(['user', 'community', 'flairs', 'media'])
             ->withCount(['allComments as comments_count', 'likes'])
             ->where('status', 'published')
+            ->whereNull('trashed_at')
             ->where('user_id', $user->id)
             ->where(function ($q) {
                 $q->whereNull('body_markdown')

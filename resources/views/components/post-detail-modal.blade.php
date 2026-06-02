@@ -496,6 +496,19 @@
                         this.post = data.post;
                         this.isLiked = data.post.is_liked ?? false;
                         this.isLoading = false;
+                        // Broadcast the freshly-loaded state so feed cards that were
+                        // rendered before an edit update to the true values.
+                        window.dispatchEvent(new CustomEvent('post-like-count-changed', {
+                            detail: { postId: data.post.id, count: data.post.like_count ?? 0, liked: this.isLiked }
+                        }));
+                        window.dispatchEvent(new CustomEvent('post-updated', {
+                            detail: {
+                                postId: data.post.id,
+                                visibility: data.post.visibility,
+                                title: data.post.title ?? '',
+                                body: (data.post.body_html ?? '').replace(/<[^>]*>/g, '').trim(),
+                            }
+                        }));
                         this.$nextTick(() => {
                             this.refreshBodyOverflow();
                             const scrollEl = this.$refs?.rightScrollBody || this.$refs?.scrollBody;

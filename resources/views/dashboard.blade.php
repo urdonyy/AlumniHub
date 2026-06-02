@@ -153,16 +153,16 @@
 
                             <div x-show="open"
                                 x-transition.opacity
-                                @keydown.escape.window="open = false"
+                                @keydown.escape.window="closeAndReset()"
                                 class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
                                 style="display: none;">
-                                <div @click.away="open = false"
+                                <div @click.away="closeAndReset()"
                                     class="w-full max-w-xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl flex flex-col max-h-[90vh]">
 
                                     <!-- Modal header -->
                                     <div class="flex items-center justify-between border-b border-gray-100 px-5 py-3.5">
-                                        <h3 class="text-sm font-semibold text-gray-900">Create post</h3>
-                                        <button type="button" @click="open = false"
+                                        <h3 class="text-sm font-semibold text-gray-900" x-text="editMode ? 'Edit post' : 'Create post'"></h3>
+                                        <button type="button" @click="closeAndReset()"
                                             class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -170,10 +170,11 @@
                                         </button>
                                     </div>
 
-                                    <form method="post" action="{{ route('posts.quick-store') }}"
+                                    <form method="post" :action="editMode ? editUrl : '{{ route('posts.quick-store') }}'"
                                         enctype="multipart/form-data" class="flex flex-col overflow-y-auto flex-1"
                                         @submit.prevent="submitPost($el)">
                                         @csrf
+                                        <input type="hidden" name="_method" :value="editMode ? 'PATCH' : 'POST'">
                                         <input type="hidden" name="community_id" :value="isConnectionsOnly ? '' : communityId">
                                         <input type="hidden" name="visibility" :value="visibility">
                                         <input type="hidden" name="post_type" :value="postType">
@@ -323,8 +324,8 @@
                                             </div>
                                         </div>
 
-                                        <!-- Post type selector (icons only) -->
-                                        <div class="px-5 pb-3">
+                                        <!-- Post type selector (icons only, hidden in edit mode) -->
+                                        <div class="px-5 pb-3" x-show="!editMode">
                                             <p class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400">Post type</p>
                                             <div class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-gray-50 p-1">
                                                 <button type="button" @click="setPostType('text')"
@@ -368,7 +369,7 @@
 
                                         <!-- Body area (text / media) -->
                                         <div x-show="!isEvent" class="px-5 pb-3 flex flex-col gap-2">
-                                            <textarea x-model="bodyValue" :required="!isEvent" rows="4"
+                                            <textarea x-model="bodyValue" :required="!isEvent" :rows="isMedia ? 2 : 4"
                                                 class="w-full border-0 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0 resize-none leading-relaxed"
                                                 placeholder="What's on your mind, {{ auth()->user()->name }}?"></textarea>
                                         </div>
@@ -481,6 +482,31 @@
 
                                         <!-- Shared image block (media + event) -->
                                         <div x-show="isMedia || isEvent" style="display:none;" class="px-5 pb-3 flex flex-col gap-2">
+                                            <!-- Existing media (edit mode) with per-image remove -->
+                                            <template x-if="editMode && visibleExistingMedia.length > 0">
+                                                <div>
+                                                    <p class="mb-1.5 text-xs font-medium text-gray-500">Current images</p>
+                                                    <div :class="visibleExistingMedia.length === 1 ? '' : 'grid grid-cols-2 gap-2'">
+                                                        <template x-for="m in visibleExistingMedia" :key="m.id">
+                                                            <div class="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                                                                <img :src="m.url" alt=""
+                                                                    :class="visibleExistingMedia.length === 1 ? 'w-full max-h-72 object-contain' : 'w-full h-40 object-cover'">
+                                                                <button type="button" @click="removedMediaIds.push(m.id)"
+                                                                    class="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/75 transition"
+                                                                    aria-label="Remove image">
+                                                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template x-for="id in removedMediaIds" :key="id">
+                                                <input type="hidden" name="removed_media[]" :value="id">
+                                            </template>
+
                                             <!-- Image preview (Facebook-style) -->
                                             <div id="imagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
                                                 <button type="button" id="removeImageBtn"
@@ -554,8 +580,8 @@
                                                 :disabled="isSubmitting"
                                                 :class="isSubmitting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-red-800'"
                                                 class="rounded-lg bg-red-900 px-7 py-2 text-sm font-semibold text-white transition">
-                                                <span x-show="!isSubmitting">Post</span>
-                                                <span x-show="isSubmitting">Posting…</span>
+                                                <span x-show="!isSubmitting" x-text="editMode ? 'Save changes' : 'Post'"></span>
+                                                <span x-show="isSubmitting" x-text="editMode ? 'Saving…' : 'Posting…'"></span>
                                             </button>
                                         </div>
                                     </form>
@@ -743,6 +769,8 @@
         function postComposer(flairsByCommunity, defaultCommunityId) {
             return {
                 open: false,
+                editMode: false,
+                editUrl: null,
                 communityId: defaultCommunityId ? String(defaultCommunityId) : '',
                 flairsByCommunity,
                 visibility: 'members',
@@ -752,6 +780,10 @@
                 flairError: false,
                 eventDateError: false,
                 isSubmitting: false,
+
+                // Edit mode: existing post media + ids the user removed
+                existingMedia: [],
+                removedMediaIds: [],
 
                 // Post type + shared title/body
                 postType: 'text', // text | media | event
@@ -773,6 +805,7 @@
                 get isText() { return this.postType === 'text'; },
                 get isMedia() { return this.postType === 'media'; },
                 get isEvent() { return this.postType === 'event'; },
+                get visibleExistingMedia() { return this.existingMedia.filter(m => !this.removedMediaIds.includes(m.id)); },
 
                 get startsAtValue() {
                     return this.startDate && this.startTime ? `${this.startDate} ${this.startTime}` : '';
@@ -783,10 +816,63 @@
 
                 setPostType(type) {
                     this.postType = type;
-                    // Events cannot be public â€” fall back to community audience.
                     if (type === 'event' && this.visibility === 'public') {
                         this.visibility = 'members';
                     }
+                },
+
+                init() {
+                    window.addEventListener('open-edit-composer', (e) => {
+                        const d = e.detail;
+                        this.editMode    = true;
+                        this.editUrl     = d.editUrl;
+                        this.postType    = d.postType ?? 'text';
+                        this.titleValue  = d.title ?? '';
+                        this.bodyValue   = d.body ?? '';
+                        this.visibility  = d.visibility ?? 'members';
+                        this.communityId = d.communityId ? String(d.communityId) : '';
+                        this.selectedFlairs  = Array.isArray(d.flairs) ? d.flairs.map(Number) : [];
+                        this.existingMedia   = Array.isArray(d.media) ? d.media : [];
+                        this.removedMediaIds = [];
+                        this.resetImageUpload();
+
+                        if (d.event) {
+                            this.eventType  = d.event.event_type ?? 'online';
+                            const sa        = d.event.starts_at ? d.event.starts_at.split('T') : ['', ''];
+                            const ea        = d.event.ends_at   ? d.event.ends_at.split('T')   : ['', ''];
+                            this.startDate  = sa[0] ?? '';
+                            this.startTime  = sa[1] ?? '';
+                            this.hasEndDate = !!d.event.ends_at;
+                            this.endDate    = ea[0] ?? '';
+                            this.endTime    = ea[1] ?? '';
+                            this.externalLink = d.event.external_link ?? '';
+                            this.address    = d.event.address ?? '';
+                            this.venue      = d.event.venue   ?? '';
+                        }
+
+                        this.open = true;
+                    });
+                },
+
+                closeAndReset() {
+                    this.open            = false;
+                    this.editMode        = false;
+                    this.editUrl         = null;
+                    this.existingMedia   = [];
+                    this.removedMediaIds = [];
+                    this.selectedFlairs  = [];
+                    this.resetImageUpload();
+                },
+
+                resetImageUpload() {
+                    const input = document.getElementById('imageUploadInput');
+                    const container = document.getElementById('imagePreviewContainer');
+                    const single = document.getElementById('singleImagePreview');
+                    const grid = document.getElementById('multiImageGrid');
+                    if (input) input.value = '';
+                    if (container) container.classList.add('hidden');
+                    if (single) { single.src = ''; single.classList.add('hidden'); }
+                    if (grid) { grid.innerHTML = ''; grid.className = 'hidden gap-0.5'; }
                 },
 
                 get isConnectionsOnly() {
@@ -899,7 +985,8 @@
                         this.eventDateError = false;
                     }
 
-                    if (!this.isEvent && this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {
+                    // Flairs aren't edited via the composer, so skip the requirement in edit mode.
+                    if (!this.editMode && !this.isEvent && this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {
                         this.flairError = true;
                         return;
                     }
@@ -937,7 +1024,7 @@
             };
         }
 
-        function postCard(postId, initialLikeCount, initialCommentCount, apiUrl, likeUrl, isInitiallyLiked = false) {
+        function postCard(postId, initialLikeCount, initialCommentCount, apiUrl, likeUrl, isInitiallyLiked = false, meta = {}) {
             return {
                 postId,
                 likeCount: initialLikeCount,
@@ -949,13 +1036,46 @@
                 isBodyExpanded: false,
                 isBodyOverflowing: false,
 
+                // Editable fields kept in sync with the detail modal (post-updated event).
+                visibility: meta.visibility ?? 'members',
+                title: meta.title ?? '',
+                bodyText: meta.body ?? '',
+
+                get visibilityLabel() {
+                    return { public: 'Public', connections: 'Connections', members: 'Members' }[this.visibility] || 'Members';
+                },
+                get visibilityClass() {
+                    return {
+                        public: 'bg-green-50 text-green-700 ring-green-200',
+                        connections: 'bg-blue-50 text-blue-700 ring-blue-200',
+                        members: 'bg-gray-100 text-gray-600 ring-gray-200',
+                    }[this.visibility] || 'bg-gray-100 text-gray-600 ring-gray-200';
+                },
+
                 init() {
+                    window.addEventListener('post-updated', (event) => {
+                        if (Number(event?.detail?.postId) !== Number(this.postId)) return;
+                        const d = event.detail;
+                        if (d.visibility) this.visibility = d.visibility;
+                        if ('title' in d) this.title = d.title ?? '';
+                        if ('body' in d) { this.bodyText = d.body ?? ''; this.refreshBodyOverflow(); }
+                    });
+
                     window.addEventListener('post-comment-count-changed', (event) => {
                         const postId = Number(event?.detail?.postId);
                         const count = Number(event?.detail?.count);
                         if (!Number.isFinite(postId) || !Number.isFinite(count)) return;
                         if (postId !== Number(this.postId)) return;
                         this.commentCount = count;
+                    });
+
+                    // Keep the feed card's like state in sync with the detail modal
+                    // (both when liking inside it and when it loads the true count).
+                    window.addEventListener('post-like-count-changed', (event) => {
+                        if (Number(event?.detail?.postId) !== Number(this.postId)) return;
+                        const count = Number(event?.detail?.count);
+                        if (Number.isFinite(count)) this.likeCount = count;
+                        if (typeof event?.detail?.liked === 'boolean') this.isLiked = event.detail.liked;
                     });
 
                     this.refreshBodyOverflow();

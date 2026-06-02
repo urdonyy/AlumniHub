@@ -14,7 +14,9 @@ use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostTrashController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
@@ -274,6 +276,20 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/like', [PostLikeController::class, 'toggleForPost'])
         ->middleware('auth')
         ->name('posts.like');
+
+    // Post management: edit, trash, restore, permanent delete
+    Route::middleware('auth')->group(function () {
+        Route::patch('/posts/{post}', [PostController::class, 'update'])
+            ->name('posts.update');
+        Route::delete('/posts/{post}/trash', [PostTrashController::class, 'destroy'])
+            ->name('posts.trash');
+        Route::post('/posts/{post}/restore', [PostTrashController::class, 'restore'])
+            ->name('posts.restore');
+        Route::delete('/posts/{post}/force', [PostTrashController::class, 'forceDelete'])
+            ->name('posts.force-delete');
+        Route::get('/profile/trash', [PostTrashController::class, 'index'])
+            ->name('profile.post-trash');
+    });
     // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
 
     // // Posts - create/edit/delete (requires membership)

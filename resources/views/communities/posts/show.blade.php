@@ -64,12 +64,7 @@
 
                     <!-- Title -->
                     @if ($post->title)
-                        <h1 class="text-3xl font-bold text-gray-900">
-                            @if ($post->post_type === 'event')
-                                <span class="mr-1.5 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 align-middle text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">📅 Event</span>
-                            @endif
-                            {{ $post->title }}
-                        </h1>
+                        <h1 class="text-3xl font-bold text-gray-900">{{ $post->title }}</h1>
                     @endif
                 </div>
             </div>
