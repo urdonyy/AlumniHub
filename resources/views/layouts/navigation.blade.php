@@ -21,7 +21,7 @@
         setInterval(async () => { try { const r = await fetch('{{ route('admin.inbox.counts') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } }); if (!r.ok) return; const d = await r.json(); adminPendingCount = d.total; } catch {} }, 30000);
         @endif
     "
-    class="bg-red-900/10">
+    class="sticky top-0 z-40 bg-gradient-to-r from-white via-amber-50 to-red-900/10 backdrop-blur-md shadow-sm">
     <!-- Primary Navigation Menu -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 justify-between gap-4">
@@ -39,57 +39,63 @@
                 <div class="hidden lg:-my-px lg:ms-10 lg:flex lg:space-x-8">
                     @if (Auth::user()?->role === 'admin')
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            <i class="fa-regular fa-house"></i>
+                            <i class="fa-regular fa-house text-lg"></i>
                             {{ __('Admin Home') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.communities.index')"
                             :active="request()->routeIs('admin.communities.*')">
-                            <i class="fa-solid fa-group-arrows-rotate"></i>
+                            <i class="fa-solid fa-group-arrows-rotate text-lg"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.verifications.index')"
                             :active="request()->routeIs('admin.verifications.*')">
-                            <i class="fa-solid fa-user-check"></i>
+                            <i class="fa-solid fa-user-check text-lg"></i>
                             {{ __('Verification Queue') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.inbox')" :active="request()->routeIs('admin.inbox*')">
-                            <i class="fa-regular fa-bell"></i>
+                            <span class="relative">
+                                <i class="fa-regular fa-bell text-lg"></i>
+                                <span x-show="adminPendingCount > 0" x-text="adminPendingCount" x-cloak
+                                    class="absolute -top-0.5 -end-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-100 px-1 text-[10px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
+                            </span>
                             {{ __('Inbox') }}
-                            <span x-show="adminPendingCount > 0" x-text="adminPendingCount"
-                                class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                         </x-nav-link>
                     @else
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            <i class="fa-regular fa-house"></i>
+                            <i class="fa-regular fa-house text-lg"></i>
                             {{ __('Home') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('connections.index')"
                             :active="request()->routeIs('connections.*')">
-                            <i class="fa-solid fa-users"></i>
+                            <i class="fa-solid fa-users text-lg"></i>
                             {{ __('Connections') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('communities.index')" :active="request()->routeIs('communities.*')">
-                            <i class="fa-solid fa-group-arrows-rotate"></i>
+                            <i class="fa-solid fa-group-arrows-rotate text-lg"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
 
                         <x-nav-link :href="route('messages.index')" :active="request()->routeIs('messages.*')">
-                            <i class="fa-regular fa-message"></i>
+                            <span class="relative">
+                                <i class="fa-regular fa-message text-lg"></i>
+                                <span x-show="msgCount > 0" x-text="msgCount" x-cloak
+                                    class="absolute -top-0.5 -end-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-100 px-1 text-[10px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
+                            </span>
                             {{ __('Messages') }}
-                            <span x-show="msgCount > 0" x-text="msgCount"
-                                class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                         </x-nav-link>
 
                         <x-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
-                            <i class="fa-regular fa-bell"></i>
+                            <span class="relative">
+                                <i class="fa-regular fa-bell text-lg"></i>
+                                <span x-show="notifCount > 0" x-text="notifCount" x-cloak
+                                    class="absolute -top-0.5 -end-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-100 px-1 text-[10px] font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
+                            </span>
                             {{ __('Notifications') }}
-                            <span x-show="notifCount > 0" x-text="notifCount"
-                                class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"></span>
                         </x-nav-link>
                     @endif
                 </div>
@@ -100,11 +106,15 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button
-                            class="inline-flex items-center px-3 py-2 border border-red-900 text-sm leading-4 font-medium rounded-md text-red-900 bg-white hover:text-[#FFC107] hover:border-[#FFC107] focus:outline-none transition ease-in-out duration-150">
-                            <div class="max-w-32 truncate">{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                            class="flex flex-col items-center text-sm font-medium text-red-900 hover:text-[#FFC107] focus:outline-none transition ease-in-out duration-150">
+                            <img src="{{ Auth::user()->profileAvatarUrl() }}"
+                                alt="{{ Auth::user()->name }}"
+                                class="h-8 w-8 shrink-0 rounded-full border border-red-900/20 object-cover"
+                                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+                            <div class="inline-flex items-center">
+                                <span>{{ __('Me') }}</span>
+                                <svg class="fill-current h-4 w-4 transition-transform duration-200"
+                                    :class="{ 'rotate-180': open }" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
                                         d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
