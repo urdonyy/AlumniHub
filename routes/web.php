@@ -176,6 +176,16 @@ Route::get('/feed/posts', function (Request $request, FeedService $feed) {
     ]);
 })->middleware('auth')->name('feed.posts');
 
+Route::get('/communities/{community}/feed', function (Request $request, Community $community, FeedService $feed) {
+    $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+    $posts = $feed->getCommunityFeed($community, $request->user(), 10, $selectedFlairIds);
+
+    return response()->json([
+        'html' => view('partials.feed-posts', ['posts' => $posts])->render(),
+        'hasMore' => $posts->hasMorePages(),
+    ]);
+})->middleware('auth')->name('communities.feed');
+
 Route::middleware('auth')->group(function () {
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
 

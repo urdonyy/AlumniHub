@@ -23,17 +23,22 @@ class PostPolicy
             return true;
         }
 
-        // Non-public posts require an authenticated, verified account.
-        if (!$user || !$user->isVerified()) {
+        if (!$user) {
             return false;
         }
 
-        // Members-only posts: check if user is a community member
+        // Members-only posts are viewable by any member of the community — including
+        // unverified members (everyone is auto-joined to General Alumni Hub and their
+        // program-batch). It's read-only for them; interaction is gated by verification.
         if ($post->visibility === 'members') {
             return $this->isCommunityMember($user, $post->community);
         }
 
-        // Connections visibility: check if user is connected with the post author or a community member
+        // Connections posts require a verified, connected account.
+        if (!$user->isVerified()) {
+            return false;
+        }
+
         if ($post->visibility === 'connections') {
             return $user->isConnectedWith($post->user) || $this->isCommunityMember($user, $post->community);
         }

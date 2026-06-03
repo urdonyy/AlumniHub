@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Community;
 use App\Models\CommunityCreationRequest;
 use App\Models\CommunityJoinRequest;
+use App\Models\Flair;
 use App\Models\Post;
+use App\Services\FeedService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -69,7 +71,7 @@ class CommunityController extends Controller
         ]);
     }
 
-    public function show(Request $request, Community $community): View
+    public function show(Request $request, Community $community, FeedService $feed): View
     {
         $community->loadCount('members');
         $community->load([
@@ -114,23 +116,41 @@ class CommunityController extends Controller
         }
 
         // Activity feed: members (and admins) see every post in the community,
-        // everyone else only sees public posts. Newest first.
-        $activityPosts = Post::query()
-            ->with(['user', 'community', 'flairs', 'media'])
-            ->withCount(['allComments as comments_count', 'likes'])
+        // everyone else only sees public posts. Pulse-ranked, paginated, with
+        // an optional flair filter — same engine as the dashboard feed.
+        $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+        $communityFeed = $feed->getCommunityFeed($community, $user, 10, $selectedFlairIds);
+
+        // Members (incl. unverified) see all posts; non-members see public only.
+        $canSeeAllPosts = $isMember || $isAdmin;
+        $postCount = Post::query()
             ->where('status', 'published')
             ->whereNull('trashed_at')
             ->where('community_id', $community->id)
-            ->when(! ($isMember || $isAdmin), function ($query) {
-                $query->where('visibility', 'public');
-            })
-            ->orderByDesc('published_at')
-            ->orderByDesc('id')
+            ->when(! $canSeeAllPosts, fn ($query) => $query->where('visibility', 'public'))
+            ->count();
+
+        // Flairs available for the filter (global + this community's), and the
+        // composer picker (selectable flairs only — system flairs like "Event" excluded).
+        $availableFlairs = Flair::query()
+            ->whereNull('community_id')
+            ->orWhere('community_id', $community->id)
             ->get();
+
+        $flairsByCommunity = $availableFlairs
+            ->where('is_system', false)
+            ->groupBy(fn ($f) => $f->community_id ?? 'global')
+            ->map(fn ($group) => $group->values()->map(fn ($f) => [
+                'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
+            ]));
 
         return view('communities.show', [
             'community' => $community,
-            'activityPosts' => $activityPosts,
+            'communityFeed' => $communityFeed,
+            'postCount' => $postCount,
+            'availableFlairs' => $availableFlairs,
+            'flairsByCommunity' => $flairsByCommunity,
+            'selectedFlairIds' => $selectedFlairIds,
             'isMember' => $isMember,
             'canInteract' => $user->canInteractInCommunities(),
             'isVerified' => $user->isVerified(),

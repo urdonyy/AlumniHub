@@ -104,6 +104,9 @@ class StoreCommunityCreationRequest extends FormRequest
                 if (! $user->isConnectedWith($coMod)) {
                     $v->errors()->add("co_moderator_ids.$idx", $coMod->name . ' is not in your connections.');
                 }
+                if ($coMod->batch_year !== $user->batch_year || $coMod->program_course !== $user->program_course) {
+                    $v->errors()->add("co_moderator_ids.$idx", $coMod->name . ' is not in your program/batch.');
+                }
             }
         });
     }

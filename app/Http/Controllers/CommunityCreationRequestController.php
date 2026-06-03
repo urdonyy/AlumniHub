@@ -48,7 +48,10 @@ class CommunityCreationRequestController extends Controller
             })
             ->get()
             ->map(fn (Connection $c) => $c->otherPartyFor($user))
-            ->filter(fn (?User $u) => $u !== null && $u->isVerified())
+            ->filter(fn (?User $u) => $u !== null
+                && $u->isVerified()
+                && $u->batch_year === $user->batch_year
+                && $u->program_course === $user->program_course)
             ->unique('id')
             ->values();
 

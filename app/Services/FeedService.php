@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Community;
 use App\Models\Post;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -12,12 +13,20 @@ class FeedService
     {
         $flairIds = array_values(array_unique(array_map('intval', $flairIds)));
 
-        // Unverified users may only browse public posts.
+        // Unverified users browse read-only: public posts, plus members posts from
+        // the communities they're auto-joined to (General Alumni Hub + program-batch).
+        // They can't view connections posts. Matches PostPolicy::view + the community feed.
         if (! $user->isVerified()) {
             $query = Post::with(['user', 'community', 'flairs', 'media'])
                 ->where('status', 'published')
                 ->whereNull('trashed_at')
-                ->where('visibility', 'public');
+                ->where(function ($q) use ($user) {
+                    $q->where('visibility', 'public')
+                        ->orWhere(function ($q2) use ($user) {
+                            $q2->where('visibility', 'members')
+                                ->whereIn('community_id', $user->communities()->pluck('communities.id'));
+                        });
+                });
 
             return $this->withFlairRanking($query, $flairIds)->paginate($perPage);
         }
@@ -49,6 +58,29 @@ class FeedService
                             });
                     });
             });
+
+        return $this->withFlairRanking($query, $flairIds)->paginate($perPage);
+    }
+
+    /**
+     * Pulse-ranked, flair-filterable feed scoped to a single community.
+     * Members (and admins) see every post; everyone else sees public posts only.
+     */
+    public function getCommunityFeed(Community $community, User $user, int $perPage = 10, array $flairIds = []): LengthAwarePaginator
+    {
+        $flairIds = array_values(array_unique(array_map('intval', $flairIds)));
+
+        // Members (including unverified, auto-joined members) see every post in the
+        // community; non-members see public posts only. Interaction stays gated by
+        // verification, but viewing members posts is allowed for members.
+        $canSeeAll = $user->communities()->whereKey($community->id)->exists()
+            || $user->canManageCommunities();
+
+        $query = Post::with(['user', 'community', 'flairs', 'media'])
+            ->where('status', 'published')
+            ->whereNull('trashed_at')
+            ->where('community_id', $community->id)
+            ->when(! $canSeeAll, fn ($q) => $q->where('visibility', 'public'));
 
         return $this->withFlairRanking($query, $flairIds)->paginate($perPage);
     }
