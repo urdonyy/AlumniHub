@@ -105,7 +105,15 @@
                                     </div>
                                 @elseif ($viewer->canSendConnectionRequests() && $profileUser->isVerified())
                                     @if ($connectionState === 'connected')
-                                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('messages.show', $profileUser) }}"
+                                                class="inline-flex items-center gap-1.5 rounded-md bg-red-900 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800 transition">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                                </svg>
+                                                {{ __('Message') }}
+                                            </a>
+                                            <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
                                                 class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-emerald-700 hover:bg-emerald-100 transition">
                                                 {{ __('Connected') }}
@@ -131,7 +139,8 @@
                                                     </button>
                                                 </form>
                                             </div>
-                                        </div>
+                                            </div>{{-- end Connected dropdown --}}
+                                        </div>{{-- end message + connected row --}}
                                     @elseif ($connectionState === 'invite_sent' && $activeConnection)
                                         <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
