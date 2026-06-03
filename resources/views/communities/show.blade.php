@@ -11,7 +11,8 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8"
+            x-data="communityMembersModal('{{ route('communities.members', $community) }}', {{ $isVerified ? 'true' : 'false' }})">
             <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                 <div class="space-y-5 px-6 py-6">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -29,11 +30,16 @@
                     </div>
 
                     <div class="grid gap-3 sm:grid-cols-3">
-                        <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Members') }}
+                        <button type="button" @click="openMembers()"
+                            class="group rounded-lg bg-gray-50 px-4 py-3 text-left text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-1">
+                            <p class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                {{ __('Members') }}
+                                <!-- <svg class="h-3.5 w-3.5 text-gray-400 transition group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg> -->
                             </p>
                             <p class="mt-1 text-lg font-semibold text-gray-900">{{ $community->members_count }}</p>
-                        </div>
+                        </button>
 
                         <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -179,65 +185,6 @@
                 ])
             </div>
 
-            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                <div class="px-6 py-5">
-                    <h4 class="text-lg font-semibold text-gray-900">{{ __('Members') }}</h4>
-                    <p class="mt-1 text-sm text-gray-600">
-                        {{ __('Browse member profiles. Unverified viewers will only see limited details.') }}
-                    </p>
-                </div>
-
-                @if ($isVerified)
-                    <div class="border-t border-gray-200 px-6 py-5">
-                        <p class="text-sm text-gray-600">{{ __('Member count: :count', ['count' => $community->members_count]) }}</p>
-
-                        @if ($community->members->isNotEmpty())
-                            <ul class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                                @foreach ($community->members as $member)
-                                    <li>
-                                        <a href="{{ route('profiles.show', $member) }}"
-                                            class="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2.5 transition hover:border-gray-300 hover:bg-gray-50">
-                                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-xs font-semibold uppercase text-red-900">
-                                                {{ \Illuminate\Support\Str::substr($member->name, 0, 1) }}
-                                            </span>
-                                            <span class="truncate text-sm font-medium text-gray-700">{{ $member->name }}</span>
-                                        </a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    </div>
-                @else
-                    <div class="border-t border-gray-200 px-6 py-8">
-                        <div class="flex flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-6 py-8 text-center">
-                            <div class="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                            </div>
-                            <h5 class="text-sm font-semibold text-amber-900">{{ __('Verify your account to view members and posts') }}</h5>
-                            <p class="max-w-md text-sm text-amber-800">
-                                {{ __('Community posts and member profiles are hidden until your alumni status is verified. Complete verification to unlock the full community.') }}
-                            </p>
-                            @if ($user->hasPendingVerificationDocument())
-                                <div class="relative group mt-1 inline-block">
-                                    <span class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-amber-200 px-4 py-2 text-sm font-semibold text-amber-500">
-                                        {{ __('Pending review') }}
-                                    </span>
-                                    <div class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2.5 py-1.5 text-xs text-white group-hover:block">
-                                        {{ __('Waiting for admin approval') }}
-                                    </div>
-                                </div>
-                            @else
-                                <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
-                                    class="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">
-                                    {{ __('Verify now') }}
-                                </a>
-                            @endif
-                        </div>
-                    </div>
-                @endif
-            </div>
 
             @if ($canModerate && $community->isProgramBatch())
                 <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -320,10 +267,100 @@
                     @endif
                 </div>
             @endif
+
+            {{-- Members modal (opened from the Members stat card) --}}
+            <div x-show="open" x-cloak @keydown.escape.window="close()"
+                class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4" style="display:none;">
+                <div class="fixed inset-0 bg-black/50" @click="close()"></div>
+                <div class="relative z-10 flex max-h-[85vh] sm:max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl sm:rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                    <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-900">{{ __('Members') }}</h3>
+                            <p class="text-xs text-gray-500">
+                                <span x-text="count ?? {{ $community->members_count }}"></span>
+                                {{ __('in') }} {{ $community->name }}
+                            </p>
+                        </div>
+                        <button type="button" @click="close()"
+                            class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition" aria-label="{{ __('Close') }}">&times;</button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto p-5">
+                        @if ($isVerified)
+                            {{-- Loading --}}
+                            <div x-show="loading" class="flex justify-center py-10 text-gray-400">
+                                <svg class="h-6 w-6 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                                </svg>
+                            </div>
+                            <div x-show="error" x-text="error" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" style="display:none;"></div>
+                            <div x-show="loaded && count === 0" class="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500" style="display:none;">
+                                {{ __('No members yet.') }}
+                            </div>
+                            <div x-show="loaded && count > 0" class="grid gap-2 sm:grid-cols-2" x-html="html" style="display:none;"></div>
+                        @else
+                            <div class="flex flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-6 py-8 text-center">
+                                <div class="flex h-11 w-11 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                    </svg>
+                                </div>
+                                <h5 class="text-sm font-semibold text-amber-900">{{ __('Verify your account to view members') }}</h5>
+                                <p class="max-w-md text-sm text-amber-800">{{ __('Member profiles are hidden until your alumni status is verified.') }}</p>
+                                @if ($user->hasPendingVerificationDocument())
+                                    <span class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-amber-200 px-4 py-2 text-sm font-semibold text-amber-500">{{ __('Pending review') }}</span>
+                                @else
+                                    <a href="{{ route('profile.edit', ['section' => 'verification-document']) }}"
+                                        class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700">{{ __('Verify now') }}</a>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <x-post-detail-modal />
 
     @include('partials.feed-scripts')
+
+    <script>
+        function communityMembersModal(url, isVerified) {
+            return {
+                url,
+                isVerified,
+                open: false,
+                loading: false,
+                loaded: false,
+                error: null,
+                html: '',
+                count: null,
+
+                openMembers() {
+                    this.open = true;
+                    document.body.classList.add('overflow-hidden');
+                    if (this.isVerified && !this.loaded && !this.loading) this.fetchMembers();
+                },
+                close() {
+                    this.open = false;
+                    document.body.classList.remove('overflow-hidden');
+                },
+                fetchMembers() {
+                    this.loading = true;
+                    this.error = null;
+                    fetch(this.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                        .then(r => { if (!r.ok) throw new Error('Failed to load members'); return r.json(); })
+                        .then(d => {
+                            this.html = d.html;
+                            this.count = d.count;
+                            this.loaded = true;
+                            this.loading = false;
+                        })
+                        .catch(e => { this.error = e.message || 'Error loading members'; this.loading = false; });
+                },
+            };
+        }
+    </script>
 </x-app-layout>

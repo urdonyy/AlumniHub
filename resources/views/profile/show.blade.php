@@ -463,6 +463,7 @@
                                                                 </div>
                                                             @endif
                                                             </div>{{-- end pill+menu wrapper --}}
+                                                        </div>{{-- end header row --}}
 
                                                         @if ($post->flairs->count() > 0)
                                                             <div class="mt-3 flex flex-wrap gap-1.5">

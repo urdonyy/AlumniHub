@@ -8,6 +8,7 @@ use App\Models\CommunityJoinRequest;
 use App\Models\Flair;
 use App\Models\Post;
 use App\Services\FeedService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -161,6 +162,24 @@ class CommunityController extends Controller
             'pendingJoinRequests' => $pendingJoinRequests,
             'otherProgramBatch' => $otherProgramBatch,
             'user' => $user,
+        ]);
+    }
+
+    /**
+     * Full member list for the community members modal (AJAX, loaded on open).
+     * Alphabetical, scrollable (not paginated). Visible to verified users only.
+     */
+    public function members(Request $request, Community $community): JsonResponse
+    {
+        abort_unless($request->user()->isVerified(), 403);
+
+        $members = $community->members()
+            ->orderBy('name')
+            ->get(['users.id', 'users.name', 'users.program_course', 'users.batch_year', 'users.avatar_path']);
+
+        return response()->json([
+            'html' => view('partials.community-members', ['members' => $members])->render(),
+            'count' => $members->count(),
         ]);
     }
 }

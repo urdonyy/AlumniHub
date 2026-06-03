@@ -206,6 +206,7 @@ Route::middleware('auth')->group(function () {
         ->name('community-invites.decline');
 
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
+    Route::get('/communities/{community}/members', [CommunityController::class, 'members'])->name('communities.members');
     Route::post('/communities/{community}/join', [MembershipController::class, 'join'])->name('communities.join');
     Route::delete('/communities/{community}/leave', [MembershipController::class, 'leave'])->name('communities.leave');
 

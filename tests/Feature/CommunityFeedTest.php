@@ -70,6 +70,27 @@ test('unverified member can VIEW members posts but cannot interact', function ()
         ->assertForbidden();
 });
 
+test('members modal endpoint returns the alphabetical list to verified users, 403 for unverified', function () {
+    $member = User::factory()->create(['account_status' => 'approved', 'name' => 'Bea']);
+    $other = User::factory()->create(['account_status' => 'approved', 'name' => 'Ana']);
+    $unverified = User::factory()->create(['account_status' => 'pending']);
+    $community = makeCommunity('DICT 3-3 Batch 2023');
+    $community->members()->attach([$member->id, $other->id, $unverified->id]);
+
+    $res = actingAs($member)
+        ->getJson(route('communities.members', $community))
+        ->assertOk()
+        ->assertJsonStructure(['html', 'count'])
+        ->assertJsonPath('count', 3);
+    // Alphabetical: Ana appears before Bea in the rendered html.
+    $html = $res->json('html');
+    expect(strpos($html, 'Ana'))->toBeLessThan(strpos($html, 'Bea'));
+
+    actingAs($unverified)
+        ->getJson(route('communities.members', $community))
+        ->assertForbidden();
+});
+
 test('co-mod candidate list excludes different program/batch connections', function () {
     $requestor = User::factory()->create([
         'account_status' => 'approved', 'batch_year' => 2023, 'program_course' => 'DICT',
