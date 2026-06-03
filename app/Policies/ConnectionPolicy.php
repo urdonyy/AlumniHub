@@ -14,7 +14,12 @@ class ConnectionPolicy
 
     public function create(User $user, User $recipient): bool
     {
-        return $user->canSendConnectionRequests() && $user->id !== $recipient->id;
+        // The sender must be verified, and you cannot send a request to yourself
+        // or to an unverified (pending/rejected) member — they can't respond and
+        // would only get a notification leading to a gated page.
+        return $user->canSendConnectionRequests()
+            && $user->id !== $recipient->id
+            && $recipient->isVerified();
     }
 
     public function respond(User $user, Connection $connection): bool

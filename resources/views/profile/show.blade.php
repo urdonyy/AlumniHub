@@ -103,7 +103,7 @@
                                             <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
                                         </a>
                                     </div>
-                                @elseif ($viewer->canSendConnectionRequests())
+                                @elseif ($viewer->canSendConnectionRequests() && $profileUser->isVerified())
                                     @if ($connectionState === 'connected')
                                         <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
