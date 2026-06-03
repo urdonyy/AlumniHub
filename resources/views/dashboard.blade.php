@@ -73,7 +73,8 @@
 
                 <div class="grid gap-6 md:grid-cols-3 lg:grid-cols-12">
                     <aside class="space-y-3 min-w-0 md:hidden lg:block lg:col-span-3 lg:sticky lg:top-6 lg:self-start">
-                        <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                        <a href="{{ route('profiles.show', auth()->id()) }}"
+                            class="block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Profile') }}</p>
                             <h3 class="mt-2 text-lg font-semibold text-gray-900">{{ auth()->user()->name }}</h3>
                             <p class="text-sm text-gray-600">{{ auth()->user()->program_course ?? __('Program pending') }}</p>
@@ -81,11 +82,7 @@
                                 class="mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ auth()->user()->accountStatusBadgeClass() }}">
                                 {{ auth()->user()->accountStatusLabel() }}
                             </div>
-                            <a href="{{ route('profiles.show', auth()->id()) }}"
-                                class="mt-4 inline-flex items-center px-3 py-1 sm:px-5 sm:py-1.5 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150">
-                                {{ __('Open Profile') }}
-                            </a>
-                        </section>
+                        </a>
 
                         <section class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Shortcuts') }}</p>
