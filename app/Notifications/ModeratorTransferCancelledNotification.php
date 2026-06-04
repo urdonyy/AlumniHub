@@ -25,7 +25,7 @@ class ModeratorTransferCancelledNotification extends Notification
     {
         return [
             'type'           => 'moderator_transfer_cancelled',
-            'message'        => $this->leftUser->name . ' left "' . $this->transfer->community->name . '" so your moderator role transfer was cancelled. You can offer it to another member.',
+            'message'        => $this->leftUser->name . ' left "' . $this->transfer->community->name . '" so your moderator role transfer was cancelled.',
             'actor_id'       => $this->leftUser->id,
             'actor_name'     => $this->leftUser->name,
             'community_id'   => $this->transfer->community_id,
