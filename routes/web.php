@@ -212,6 +212,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community}/leave', [MembershipController::class, 'leave'])->name('communities.leave');
 
     // Program-batch join requests
+    Route::get('/communities/{community}/join-requests', [CommunityJoinRequestController::class, 'index'])
+        ->name('communities.join-requests.index');
+    Route::get('/communities/{community}/manage-members', [CommunityModerationController::class, 'manageMembers'])
+        ->name('communities.manage-members');
     Route::post('/communities/{community}/join-request', [CommunityJoinRequestController::class, 'store'])
         ->name('communities.join-request.store');
     Route::post('/communities/{community}/join-requests/{joinRequest}/accept', [CommunityJoinRequestController::class, 'accept'])

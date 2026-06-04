@@ -9,12 +9,31 @@ use App\Services\CommunityJoinRequestService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CommunityJoinRequestController extends Controller
 {
     use AuthorizesRequests;
 
     public function __construct(private readonly CommunityJoinRequestService $service) {}
+
+    public function index(Request $request, Community $community): View
+    {
+        abort_unless($community->isProgramBatch(), 404);
+        $this->authorizeMod($request, $community);
+
+        $pendingJoinRequests = CommunityJoinRequest::query()
+            ->with('user')
+            ->where('community_id', $community->id)
+            ->where('status', CommunityJoinRequest::STATUS_PENDING)
+            ->latest()
+            ->get();
+
+        return view('communities.join-requests', [
+            'community' => $community,
+            'pendingJoinRequests' => $pendingJoinRequests,
+        ]);
+    }
 
     public function store(Request $request, Community $community): RedirectResponse
     {

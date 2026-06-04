@@ -32,7 +32,7 @@ class JoinRequestSubmittedNotification extends Notification
             'actor_name' => $this->actor->name,
             'community_id' => $this->community->id,
             'join_request_id' => $this->joinRequest->id,
-            'url' => route('communities.show', $this->community),
+            'url' => route('communities.join-requests.index', $this->community),
         ];
     }
 }

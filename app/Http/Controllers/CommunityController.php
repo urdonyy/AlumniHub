@@ -76,13 +76,7 @@ class CommunityController extends Controller
     public function show(Request $request, Community $community, FeedService $feed): View
     {
         $community->loadCount('members');
-        $community->load([
-            'creator',
-            'rules',
-            'members' => function ($query) {
-                $query->orderBy('name')->limit(12);
-            },
-        ]);
+        $community->load(['creator', 'rules']);
 
         $user = $request->user();
         $user->loadMissing('communities');
@@ -93,7 +87,7 @@ class CommunityController extends Controller
         $canModerate = $isModerator || $isAdmin;
 
         $pendingJoinRequest = null;
-        $pendingJoinRequests = collect();
+        $pendingJoinRequestCount = 0;
         $otherProgramBatch = null;
 
         if ($community->isProgramBatch()) {
@@ -108,12 +102,9 @@ class CommunityController extends Controller
             }
 
             if ($canModerate) {
-                $pendingJoinRequests = CommunityJoinRequest::query()
-                    ->with('user')
-                    ->where('community_id', $community->id)
+                $pendingJoinRequestCount = CommunityJoinRequest::where('community_id', $community->id)
                     ->where('status', CommunityJoinRequest::STATUS_PENDING)
-                    ->latest()
-                    ->get();
+                    ->count();
             }
         }
 
@@ -146,15 +137,6 @@ class CommunityController extends Controller
                 'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
             ]));
 
-        // Pending outgoing transfer from this moderator (keyed by to_user_id for O(1) view lookup)
-        $myPendingTransfers = $isModerator
-            ? CommunityModeratorTransfer::where('community_id', $community->id)
-                ->where('from_user_id', $user->id)
-                ->where('status', CommunityModeratorTransfer::STATUS_PENDING)
-                ->get()
-                ->keyBy('to_user_id')
-            : collect();
-
         // Incoming transfer invite — only relevant if the user is still a member
         $pendingTransferToMe = $isMember
             ? CommunityModeratorTransfer::where('community_id', $community->id)
@@ -178,9 +160,8 @@ class CommunityController extends Controller
             'isAdmin' => $isAdmin,
             'canModerate' => $canModerate,
             'pendingJoinRequest' => $pendingJoinRequest,
-            'pendingJoinRequests' => $pendingJoinRequests,
+            'pendingJoinRequestCount' => $pendingJoinRequestCount,
             'otherProgramBatch' => $otherProgramBatch,
-            'myPendingTransfers' => $myPendingTransfers,
             'pendingTransferToMe' => $pendingTransferToMe,
             'user' => $user,
         ]);
