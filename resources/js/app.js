@@ -1,4 +1,5 @@
 import './bootstrap';
+import './avatar-cropper';
 
 import Alpine from 'alpinejs';
 

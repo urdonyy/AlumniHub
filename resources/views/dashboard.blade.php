@@ -306,11 +306,19 @@
 
             {{-- Progress bar + step label --}}
             <div class="shrink-0 px-6 pt-6 pb-4 border-b border-gray-100">
-                <div class="flex gap-1.5 mb-3">
-                    <template x-for="i in [1,2,3,4,5]" :key="i">
-                        <div class="h-1 flex-1 rounded-full transition-colors duration-300"
-                            :class="i <= step ? 'bg-red-900' : 'bg-gray-200'"></div>
-                    </template>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                    <div class="flex flex-1 gap-1.5">
+                        <template x-for="i in [1,2,3,4,5]" :key="i">
+                            <div class="h-1 flex-1 rounded-full transition-colors duration-300"
+                                :class="i <= step ? 'bg-red-900' : 'bg-gray-200'"></div>
+                        </template>
+                    </div>
+                    <button type="button" x-show="step === 1" @click="close()" aria-label="Close"
+                        class="-mt-2.5 shrink-0 rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
                 <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">
                     Step <span x-text="step"></span> of 5 &mdash;
@@ -340,8 +348,8 @@
                         <input id="wizard-avatar" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
                             @change="onAvatarPick($event)" />
                     </div>
-                    <p x-show="avatarFile" x-text="avatarFile ? avatarFile.name : ''"
-                        class="text-xs font-medium text-green-600"></p>
+                    <p x-show="avatarFile" class="text-xs font-medium text-green-600">Photo ready &mdash; looking good!</p>
+                    <p class="text-xs text-gray-400">Tap the camera icon to upload, then drag &amp; zoom to frame it.</p>
                 </div>
 
                 {{-- Step 2: Banner --}}
@@ -494,6 +502,37 @@
             </div>
 
         </div>
+
+        {{-- Avatar crop modal (overlays the wizard) --}}
+        <div x-show="cropOpen" x-cloak
+            class="fixed inset-0 z-[650] flex items-center justify-center bg-black/70 p-4">
+            <div class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-2xl">
+                <h4 class="text-base font-semibold text-gray-900">Adjust profile photo</h4>
+                <p class="mt-1 text-xs text-gray-500">Drag the photo to reposition, use the slider to zoom.</p>
+
+                <div class="mt-4 flex items-center justify-center">
+                    <canvas x-ref="cropCanvas" width="320" height="320"
+                        class="h-56 w-56 touch-none select-none rounded-full border border-gray-200 bg-gray-100"></canvas>
+                </div>
+
+                <div class="mt-4">
+                    <label class="text-xs font-medium text-gray-700">Zoom</label>
+                    <input x-ref="cropZoom" type="range" min="100" max="250" value="100"
+                        class="mt-1 w-full accent-red-900" />
+                </div>
+
+                <div class="mt-5 flex items-center justify-end gap-3">
+                    <button type="button" @click="cancelCrop()"
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="button" @click="applyCrop()"
+                        class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -503,6 +542,10 @@
             step: 1,
             saving: false,
             persisted: false,
+
+            cropOpen: false,
+            cropper: null,
+            avatarUrl: null,
 
             avatarFile: null,
             avatarPreview: '{{ $wizardAvatarUrl }}',
@@ -517,9 +560,36 @@
             onAvatarPick(event) {
                 const file = event.target.files?.[0];
                 if (!file) return;
-                this.avatarFile = file;
-                this.avatarPreview = URL.createObjectURL(file);
+
+                if (this.avatarUrl) URL.revokeObjectURL(this.avatarUrl);
+                this.avatarUrl = URL.createObjectURL(file);
+
+                // Lazily build the cropper once so drag/zoom listeners aren't stacked.
+                if (!this.cropper) {
+                    this.cropper = window.createAvatarCropper({
+                        canvas: this.$refs.cropCanvas,
+                        zoomInput: this.$refs.cropZoom,
+                        outputSize: 512,
+                    });
+                }
+
+                this.cropper.reset();
+                this.cropper.setImage(this.avatarUrl);
+                this.cropOpen = true;
+                event.target.value = ''; // allow re-picking the same file
             },
+
+            applyCrop() {
+                if (!this.cropper) return;
+                this.cropper.toBlob((blob) => {
+                    if (!blob) return;
+                    this.avatarFile = new File([blob], 'avatar-cropped.png', { type: 'image/png' });
+                    this.avatarPreview = URL.createObjectURL(blob);
+                    this.cropOpen = false;
+                });
+            },
+
+            cancelCrop() { this.cropOpen = false; },
 
             onBannerPick(event) {
                 const file = event.target.files?.[0];

@@ -297,16 +297,20 @@
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <h4 id="avatar-crop-title" class="text-base font-semibold text-gray-900">{{ __('Adjust profile photo') }}</h4>
-                        <p class="mt-1 text-xs text-gray-600">{{ __('Drag the zoom and apply when ready.') }}</p>
+                        <p class="mt-1 text-xs text-gray-600">{{ __('Drag the photo to reposition, use the slider to zoom, then apply.') }}</p>
                     </div>
                     <button id="close-avatar-crop-modal" type="button"
-                        class="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                        aria-label="{{ __('Close crop dialog') }}">&times;</button>
+                        class="-mt-1 rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                        aria-label="{{ __('Close crop dialog') }}">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
 
                 <div class="mt-4 flex items-center justify-center">
                     <canvas id="avatar-crop-canvas" width="320" height="320"
-                        class="h-56 w-56 rounded-full border border-gray-200 bg-gray-100"></canvas>
+                        class="h-56 w-56 touch-none select-none rounded-full border border-gray-200 bg-gray-100"></canvas>
                 </div>
 
                 <div class="mt-4">
@@ -317,11 +321,11 @@
 
                 <div class="mt-5 flex items-center justify-end gap-3">
                     <button id="cancel-avatar-crop" type="button"
-                        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition hover:bg-gray-100">
+                        class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                         {{ __('Cancel') }}
                     </button>
                     <button id="apply-avatar-crop" type="button"
-                        class="inline-flex items-center rounded-md border border-gray-900 bg-gray-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-white hover:text-gray-900">
+                        class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
                         {{ __('Apply Crop') }}
                     </button>
                 </div>
@@ -448,8 +452,7 @@
             return;
         }
 
-        const context = cropCanvas.getContext('2d');
-        let sourceImage = null;
+        const cropper = window.createAvatarCropper({ canvas: cropCanvas, zoomInput: cropZoom, outputSize: 512 });
         let sourceUrl = null;
 
         const openCropModal = () => {
@@ -462,21 +465,6 @@
             cropModal.classList.add('hidden');
             cropModal.classList.remove('flex');
             document.body.classList.remove('overflow-hidden');
-        };
-
-        const renderCrop = () => {
-            if (!sourceImage || !context) {
-                return;
-            }
-
-            const zoom = Number(cropZoom.value) / 100;
-            const base = Math.min(sourceImage.naturalWidth, sourceImage.naturalHeight);
-            const sampleSize = Math.max(1, Math.floor(base / zoom));
-            const sx = Math.floor((sourceImage.naturalWidth - sampleSize) / 2);
-            const sy = Math.floor((sourceImage.naturalHeight - sampleSize) / 2);
-
-            context.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-            context.drawImage(sourceImage, sx, sy, sampleSize, sampleSize, 0, 0, cropCanvas.width, cropCanvas.height);
         };
 
         bannerInput.addEventListener('change', () => {
@@ -508,25 +496,10 @@
             }
 
             sourceUrl = URL.createObjectURL(file);
-            cropZoom.value = '100';
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                if (event.target && typeof event.target.result === 'string') {
-                    avatarPreview.src = event.target.result;
-                }
-            };
-            reader.readAsDataURL(file);
-
-            sourceImage = new Image();
-            sourceImage.onload = () => {
-                renderCrop();
-                openCropModal();
-            };
-            sourceImage.src = sourceUrl;
+            cropper.reset();
+            cropper.setImage(sourceUrl);
+            openCropModal();
         });
-
-        cropZoom.addEventListener('input', renderCrop);
 
         cropModal.addEventListener('click', (event) => {
             if (event.target === cropModal) {
@@ -538,13 +511,7 @@
         cancelCropBtn.addEventListener('click', closeCropModal);
 
         applyCropBtn.addEventListener('click', () => {
-            if (!context || !sourceImage) {
-                return;
-            }
-
-            renderCrop();
-
-            cropCanvas.toBlob((blob) => {
+            cropper.toBlob((blob) => {
                 if (!blob) {
                     return;
                 }
@@ -557,10 +524,10 @@
                 transfer.items.add(croppedFile);
                 avatarInput.files = transfer.files;
 
-                avatarPreview.src = cropCanvas.toDataURL('image/png');
+                avatarPreview.src = URL.createObjectURL(blob);
                 cropMessage.textContent = 'Crop applied. Save to upload this avatar.';
                 closeCropModal();
-            }, 'image/png', 0.92);
+            });
         });
     });
 </script>
