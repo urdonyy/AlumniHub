@@ -400,15 +400,32 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="mb-1 block text-xs text-gray-500">Start month</label>
-                                        <input x-model="exp.start_month" type="month"
-                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                        <input x-model="exp.start_month" type="month" :max="todayMonth"
+                                            :class="exp.start_month && exp.start_month > todayMonth ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-gray-300 focus:border-red-900 focus:ring-red-900'"
+                                            class="block w-full rounded-lg text-sm shadow-sm" />
                                     </div>
                                     <div>
-                                        <label class="mb-1 block text-xs text-gray-500">End month</label>
-                                        <input x-model="exp.end_month" type="month"
-                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                        <div class="mb-1 flex items-center justify-between">
+                                            <label class="block text-xs text-gray-500">End month</label>
+                                            <label class="flex items-center gap-1 text-xs font-medium text-gray-500">
+                                                <input type="checkbox" x-model="exp.present" @change="exp.present && (exp.end_month = '')"
+                                                    class="h-3.5 w-3.5 rounded border-gray-300 text-red-900 focus:ring-red-900" />
+                                                Present
+                                            </label>
+                                        </div>
+                                        <input x-show="!exp.present" x-model="exp.end_month" type="month" :max="todayMonth"
+                                            :class="exp.end_month && ((exp.start_month && exp.end_month < exp.start_month) || exp.end_month > todayMonth) ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-gray-300 focus:border-red-900 focus:ring-red-900'"
+                                            class="block w-full rounded-lg text-sm shadow-sm" />
+                                        <div x-show="exp.present"
+                                            class="flex items-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-500">Present</div>
                                     </div>
                                 </div>
+                                <p x-show="(exp.start_month && exp.start_month > todayMonth) || (exp.end_month && exp.end_month > todayMonth)"
+                                    class="text-xs font-medium text-rose-600">Dates can't be in the future.</p>
+                                <p x-show="exp.start_month && exp.end_month && exp.end_month < exp.start_month"
+                                    class="text-xs font-medium text-rose-600">End month can't be before the start month.</p>
+                                <p x-show="(exp.title.trim() || exp.organization.trim() || exp.start_month || exp.end_month) && !(exp.title.trim() && exp.organization.trim() && exp.start_month)"
+                                    class="text-xs font-medium text-amber-600">Title, organization, and start month are all required.</p>
                             </div>
                         </template>
                     </div>
@@ -446,15 +463,32 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <div>
                                         <label class="mb-1 block text-xs text-gray-500">Start date</label>
-                                        <input x-model="edu.start_date" type="date"
-                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                        <input x-model="edu.start_date" type="date" :max="todayDate"
+                                            :class="edu.start_date && edu.start_date > todayDate ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-gray-300 focus:border-red-900 focus:ring-red-900'"
+                                            class="block w-full rounded-lg text-sm shadow-sm" />
                                     </div>
                                     <div>
-                                        <label class="mb-1 block text-xs text-gray-500">End date</label>
-                                        <input x-model="edu.end_date" type="date"
-                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                        <div class="mb-1 flex items-center justify-between">
+                                            <label class="block text-xs text-gray-500">End date</label>
+                                            <label class="flex items-center gap-1 text-xs font-medium text-gray-500">
+                                                <input type="checkbox" x-model="edu.present" @change="edu.present && (edu.end_date = '')"
+                                                    class="h-3.5 w-3.5 rounded border-gray-300 text-red-900 focus:ring-red-900" />
+                                                Present
+                                            </label>
+                                        </div>
+                                        <input x-show="!edu.present" x-model="edu.end_date" type="date"
+                                            :class="edu.start_date && edu.end_date && edu.end_date < edu.start_date ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-500' : 'border-gray-300 focus:border-red-900 focus:ring-red-900'"
+                                            class="block w-full rounded-lg text-sm shadow-sm" />
+                                        <div x-show="edu.present"
+                                            class="flex items-center rounded-lg border border-gray-200 bg-gray-100 px-3 py-2 text-sm font-medium text-gray-500">Present</div>
                                     </div>
                                 </div>
+                                <p x-show="edu.start_date && edu.start_date > todayDate"
+                                    class="text-xs font-medium text-rose-600">Start date can't be in the future.</p>
+                                <p x-show="edu.start_date && edu.end_date && edu.end_date < edu.start_date"
+                                    class="text-xs font-medium text-rose-600">End date can't be before the start date.</p>
+                                <p x-show="(edu.school.trim() || edu.degree.trim() || edu.start_date || edu.end_date) && !(edu.school.trim() && edu.degree.trim() && edu.start_date)"
+                                    class="text-xs font-medium text-amber-600">School, degree, and start date are all required.</p>
                             </div>
                         </template>
                     </div>
@@ -494,8 +528,8 @@
                     class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                     Skip
                 </button>
-                <button type="button" @click="saveStep()" :disabled="saving"
-                    class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:opacity-60">
+                <button type="button" @click="saveStep()" :disabled="saving || ! stepHasData() || hasDateError()"
+                    class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50">
                     <span x-show="!saving" x-text="step < 5 ? 'Continue' : 'Done'"></span>
                     <span x-show="saving">Saving...</span>
                 </button>
@@ -553,9 +587,16 @@
             bannerFile: null,
             bannerPreview: '{{ $wizardBannerUrl }}',
 
-            experiences: [{ title: '', organization: '', start_month: '', end_month: '', description: '' }],
-            educations:  [{ school: '', degree: '', start_date: '', end_date: '' }],
+            experiences: [{ title: '', organization: '', start_month: '', end_month: '', present: false, description: '' }],
+            educations:  [{ school: '', degree: '', start_date: '', end_date: '', present: false }],
             skills: '',
+
+            // Local "today" for capping date inputs (no future starts).
+            get todayDate() {
+                const d = new Date();
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            },
+            get todayMonth() { return this.todayDate.slice(0, 7); },
 
             onAvatarPick(event) {
                 const file = event.target.files?.[0];
@@ -599,16 +640,52 @@
             },
 
             addExperience() {
-                this.experiences.push({ title: '', organization: '', start_month: '', end_month: '', description: '' });
+                this.experiences.push({ title: '', organization: '', start_month: '', end_month: '', present: false, description: '' });
             },
             removeExperience(i) { this.experiences.splice(i, 1); },
 
             addEducation() {
-                this.educations.push({ school: '', degree: '', start_date: '', end_date: '' });
+                this.educations.push({ school: '', degree: '', start_date: '', end_date: '', present: false });
             },
             removeEducation(i) { this.educations.splice(i, 1); },
 
             skip() { this.advance(); },
+
+            // Whether the current step holds enough data to "Continue" (save).
+            // Empty steps must be passed with "Skip" instead.
+            stepHasData() {
+                if (this.step === 1) return !!this.avatarFile;
+                if (this.step === 2) return !!this.bannerFile;
+                if (this.step === 3) {
+                    const filled = this.experiences.filter(e => e.title.trim() || e.organization.trim() || e.start_month || e.end_month);
+                    return filled.length > 0 && filled.every(e => e.title.trim() && e.organization.trim() && e.start_month);
+                }
+                if (this.step === 4) {
+                    const filled = this.educations.filter(e => e.school.trim() || e.degree.trim() || e.start_date || e.end_date);
+                    return filled.length > 0 && filled.every(e => e.school.trim() && e.degree.trim() && e.start_date);
+                }
+                if (this.step === 5) return this.skills.trim() !== '';
+                return false;
+            },
+
+            // True if any entry on the current step has an end date before its
+            // start date. Zero-padded YYYY-MM / YYYY-MM-DD compare lexically.
+            hasDateError() {
+                if (this.step === 3) {
+                    return this.experiences.some(e =>
+                        (e.start_month && e.end_month && e.end_month < e.start_month) ||
+                        (e.start_month && e.start_month > this.todayMonth) ||
+                        (e.end_month && e.end_month > this.todayMonth)
+                    );
+                }
+                if (this.step === 4) {
+                    return this.educations.some(e =>
+                        (e.start_date && e.end_date && e.end_date < e.start_date) ||
+                        (e.start_date && e.start_date > this.todayDate)
+                    );
+                }
+                return false;
+            },
 
             // Close without persisting. Escaping on step 1 (before any engagement)
             // lets the wizard reappear once on the next login as a gentle nudge.

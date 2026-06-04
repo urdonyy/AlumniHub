@@ -354,8 +354,8 @@ class ProfileController extends Controller
                 'experiences'               => ['nullable', 'array', 'max:10'],
                 'experiences.*.title'       => ['nullable', 'string', 'max:120'],
                 'experiences.*.organization'=> ['nullable', 'string', 'max:120'],
-                'experiences.*.start_month' => ['nullable', 'date_format:Y-m'],
-                'experiences.*.end_month'   => ['nullable', 'date_format:Y-m'],
+                'experiences.*.start_month' => ['nullable', 'date_format:Y-m', 'before_or_equal:' . now()->format('Y-m')],
+                'experiences.*.end_month'   => ['nullable', 'date_format:Y-m', 'after_or_equal:experiences.*.start_month', 'before_or_equal:' . now()->format('Y-m')],
                 'experiences.*.description' => ['nullable', 'string', 'max:1000'],
             ]);
             $entries = collect($request->input('experiences', []))
@@ -366,7 +366,7 @@ class ProfileController extends Controller
                     'end_date'     => ($e['end_month'] ?? '') ? $e['end_month'] . '-01' : null,
                     'description'  => trim($e['description'] ?? '') ?: null,
                 ])
-                ->filter(fn($e) => $e['title'] !== '' && $e['organization'] !== '')
+                ->filter(fn($e) => $e['title'] !== '' && $e['organization'] !== '' && $e['start_date'] !== null)
                 ->values();
             if ($entries->isNotEmpty()) {
                 DB::transaction(function () use ($user, $entries): void {
@@ -380,8 +380,8 @@ class ProfileController extends Controller
                 'educations'          => ['nullable', 'array', 'max:10'],
                 'educations.*.school' => ['nullable', 'string', 'max:160'],
                 'educations.*.degree' => ['nullable', 'string', 'max:160'],
-                'educations.*.start_date' => ['nullable', 'date'],
-                'educations.*.end_date'   => ['nullable', 'date'],
+                'educations.*.start_date' => ['nullable', 'date', 'before_or_equal:today'],
+                'educations.*.end_date'   => ['nullable', 'date', 'after_or_equal:educations.*.start_date'],
             ]);
             $entries = collect($request->input('educations', []))
                 ->map(fn($e) => [
@@ -390,7 +390,7 @@ class ProfileController extends Controller
                     'start_date' => ($e['start_date'] ?? '') ?: null,
                     'end_date'   => ($e['end_date'] ?? '') ?: null,
                 ])
-                ->filter(fn($e) => $e['school'] !== '' && $e['degree'] !== '')
+                ->filter(fn($e) => $e['school'] !== '' && $e['degree'] !== '' && $e['start_date'] !== null)
                 ->values();
             if ($entries->isNotEmpty()) {
                 DB::transaction(function () use ($user, $entries): void {
