@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Community;
 use App\Models\CommunityCreationRequest;
 use App\Models\CommunityJoinRequest;
+use App\Models\CommunityModeratorTransfer;
 use App\Models\Flair;
 use App\Models\Post;
 use App\Services\FeedService;
@@ -145,6 +146,24 @@ class CommunityController extends Controller
                 'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
             ]));
 
+        // Pending outgoing transfer from this moderator (keyed by to_user_id for O(1) view lookup)
+        $myPendingTransfers = $isModerator
+            ? CommunityModeratorTransfer::where('community_id', $community->id)
+                ->where('from_user_id', $user->id)
+                ->where('status', CommunityModeratorTransfer::STATUS_PENDING)
+                ->get()
+                ->keyBy('to_user_id')
+            : collect();
+
+        // Incoming transfer invite — only relevant if the user is still a member
+        $pendingTransferToMe = $isMember
+            ? CommunityModeratorTransfer::where('community_id', $community->id)
+                ->where('to_user_id', $user->id)
+                ->where('status', CommunityModeratorTransfer::STATUS_PENDING)
+                ->with('fromUser')
+                ->first()
+            : null;
+
         return view('communities.show', [
             'community' => $community,
             'communityFeed' => $communityFeed,
@@ -161,6 +180,8 @@ class CommunityController extends Controller
             'pendingJoinRequest' => $pendingJoinRequest,
             'pendingJoinRequests' => $pendingJoinRequests,
             'otherProgramBatch' => $otherProgramBatch,
+            'myPendingTransfers' => $myPendingTransfers,
+            'pendingTransferToMe' => $pendingTransferToMe,
             'user' => $user,
         ]);
     }

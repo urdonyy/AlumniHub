@@ -10,6 +10,7 @@ use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityCreationRequestController;
 use App\Http\Controllers\CommunityJoinRequestController;
 use App\Http\Controllers\CommunityModerationController;
+use App\Http\Controllers\CommunityModeratorTransferController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\CoModeratorInviteController;
@@ -217,10 +218,27 @@ Route::middleware('auth')->group(function () {
         ->name('communities.join-requests.accept');
     Route::post('/communities/{community}/join-requests/{joinRequest}/ignore', [CommunityJoinRequestController::class, 'ignore'])
         ->name('communities.join-requests.ignore');
+    Route::delete('/communities/{community}/join-requests/{joinRequest}/withdraw', [CommunityJoinRequestController::class, 'withdraw'])
+        ->name('communities.join-requests.withdraw');
+    Route::get('/communities/{community}/join-requests/{joinRequest}/withdraw', function (Community $community) {
+        return redirect()->route('communities.show', $community);
+    });
 
     // Moderator actions
+    Route::patch('/communities/{community}/description', [CommunityModerationController::class, 'updateDescription'])
+        ->name('communities.description.update');
     Route::delete('/communities/{community}/members/{member}', [CommunityModerationController::class, 'removeMember'])
         ->name('communities.members.remove');
+
+    // Moderator role transfer (invite-based)
+    Route::post('/communities/{community}/mod-transfer/{toUser}', [CommunityModeratorTransferController::class, 'store'])
+        ->name('communities.mod-transfer.store');
+    Route::post('/mod-transfers/{transfer}/accept', [CommunityModeratorTransferController::class, 'accept'])
+        ->name('mod-transfers.accept');
+    Route::post('/mod-transfers/{transfer}/decline', [CommunityModeratorTransferController::class, 'decline'])
+        ->name('mod-transfers.decline');
+    Route::delete('/mod-transfers/{transfer}/cancel', [CommunityModeratorTransferController::class, 'cancel'])
+        ->name('mod-transfers.cancel');
     Route::delete('/communities/{community}/mod/posts/{post}', [CommunityModerationController::class, 'deletePost'])
         ->name('communities.mod.posts.destroy');
 

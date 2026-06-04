@@ -15,6 +15,19 @@ class CommunityModerationController extends Controller
 {
     use AuthorizesRequests;
 
+    public function updateDescription(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorizeMod($request, $community);
+
+        $validated = $request->validate([
+            'description' => ['required', 'string', 'min:10', 'max:2000'],
+        ]);
+
+        $community->update(['description' => $validated['description']]);
+
+        return back()->with('status', 'description-updated');
+    }
+
     public function removeMember(Request $request, Community $community, User $member): RedirectResponse
     {
         $this->authorizeMod($request, $community);

@@ -16,11 +16,50 @@
             <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
                 <div class="space-y-5 px-6 py-6">
                     <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
+                        <div
+                            x-data="{
+                                editing: false,
+                                text: @js($community->description ?? ''),
+                            }"
+                            class="min-w-0 flex-1">
                             <h3 class="text-2xl font-semibold text-gray-900">{{ $community->name }}</h3>
-                            <p class="mt-2 text-sm text-gray-600">
-                                {{ $community->description ?? __('No description provided yet.') }}
-                            </p>
+
+                            {{-- Display mode --}}
+                            <div x-show="!editing" class="group mt-2 flex items-start gap-2">
+                                <p class="min-w-0 break-all text-sm text-gray-600" x-text="text || '{{ __('No description provided yet.') }}'"></p>
+                                @if ($canModerate)
+                                    <button type="button" @click="editing = true"
+                                        class="mt-0.5 shrink-0 text-gray-400 transition hover:text-gray-600"
+                                        aria-label="{{ __('Edit description') }}">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
+                                        </svg>
+                                    </button>
+                                @endif
+                            </div>
+
+                            {{-- Edit mode --}}
+                            @if ($canModerate)
+                                <form x-show="editing" method="POST"
+                                    action="{{ route('communities.description.update', $community) }}"
+                                    class="mt-2 space-y-2">
+                                    @csrf
+                                    @method('PATCH')
+                                    <textarea name="description" rows="3" required minlength="10" maxlength="2000"
+                                        x-model="text"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-50 resize-none"></textarea>
+                                    <div class="flex gap-2">
+                                        <button type="submit"
+                                            class="inline-flex items-center rounded-md bg-red-900 px-3 py-1.5 text-xs font-semibold tracking-widest text-white transition hover:bg-red-800">
+                                            {{ __('Save') }}
+                                        </button>
+                                        <button type="button" @click="editing = false"
+                                            class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
+                                            {{ __('Cancel') }}
+                                        </button>
+                                    </div>
+                                </form>
+                            @endif
                         </div>
 
                         <div
@@ -78,29 +117,29 @@
                         @endforeach
                     </div>
 
-                    @if (session('status') === 'join-request-submitted')
-                        <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                            {{ __('Your join request was submitted. Moderators will be notified.') }}
-                        </div>
-                    @endif
-                    @if (session('status') === 'already-a-member')
-                        <div class="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                            {{ __('You are already a member of this community.') }}
-                        </div>
-                    @endif
-                    @if (session('status') === 'member-removed')
-                        <div class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                            {{ __('Member removed.') }}
-                        </div>
-                    @endif
-                    @if ($errors->has('member'))
-                        <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                            {{ $errors->first('member') }}
-                        </div>
-                    @endif
-                    @if ($errors->has('join_request'))
-                        <div class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
-                            {{ $errors->first('join_request') }}
+                    {{-- Incoming transfer invite --}}
+                    @if ($pendingTransferToMe ?? null)
+                        <div class="flex flex-col gap-3 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-indigo-900">{{ __('Moderator role offer') }}</p>
+                                <p class="mt-0.5 text-xs text-indigo-700">
+                                    {{ $pendingTransferToMe->fromUser->name }} {{ __('is offering you the moderator role in this community.') }}
+                                </p>
+                            </div>
+                            <div class="flex shrink-0 gap-2">
+                                <form method="POST" action="{{ route('mod-transfers.accept', $pendingTransferToMe) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center rounded-md bg-indigo-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-indigo-600">
+                                        {{ __('Accept') }}
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('mod-transfers.decline', $pendingTransferToMe) }}">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center rounded-md border border-indigo-300 px-3 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100">
+                                        {{ __('Decline') }}
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     @endif
 
@@ -117,16 +156,35 @@
                                     </div>
                                 @endif
                             @elseif ($isMember)
-                                <form method="post" action="{{ route('communities.leave', $community) }}">
-                                    @csrf
-                                    @method('delete')
-                                    <x-primary-button>{{ __('Leave Community') }}</x-primary-button>
-                                </form>
+                                @if ($community->isProgramBatch() && $isModerator)
+                                    <div class="flex items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+                                        </svg>
+                                        {{ __('Moderators cannot leave. Transfer your role to another member first.') }}
+                                    </div>
+                                @else
+                                    <form method="post" action="{{ route('communities.leave', $community) }}">
+                                        @csrf
+                                        @method('delete')
+                                        <x-primary-button>{{ __('Leave Community') }}</x-primary-button>
+                                    </form>
+                                @endif
                             @elseif ($community->isProgramBatch())
                                 @if ($pendingJoinRequest)
-                                    <span class="inline-flex items-center rounded-md bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800">
-                                        {{ __('Join request pending') }}
-                                    </span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="inline-flex items-center rounded-md bg-amber-100 px-4 py-2 text-sm font-semibold text-amber-800">
+                                            {{ __('Join request pending') }}
+                                        </span>
+                                        <form method="post" action="{{ route('communities.join-requests.withdraw', [$community, $pendingJoinRequest]) }}">
+                                            @csrf
+                                            @method('delete')
+                                            <button type="submit"
+                                                class="inline-flex items-center rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
+                                                {{ __('Withdraw') }}
+                                            </button>
+                                        </form>
+                                    </div>
                                 @else
                                     <form method="post" action="{{ route('communities.join', $community) }}">
                                         @csrf
@@ -220,15 +278,15 @@
                                         <form method="POST" action="{{ route('communities.join-requests.accept', [$community, $jr]) }}">
                                             @csrf
                                             <button type="submit"
-                                                @disabled($otherPb && $otherPb->id !== $community->id)
-                                                class="inline-flex items-center rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                                @if($otherPb && $otherPb->id !== $community->id) disabled @endif
+                                                class="inline-flex items-center justify-center rounded-md bg-red-900 px-3 py-2 text-xs font-semibold tracking-widest text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
                                                 {{ __('Accept') }}
                                             </button>
                                         </form>
                                         <form method="POST" action="{{ route('communities.join-requests.ignore', [$community, $jr]) }}">
                                             @csrf
                                             <button type="submit"
-                                                class="inline-flex items-center rounded-md border border-rose-300 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
+                                                class="inline-flex items-center justify-center rounded-md border border-gray-300 px-3 py-2 text-xs font-semibold tracking-widest text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2">
                                                 {{ __('Ignore') }}
                                             </button>
                                         </form>
@@ -259,15 +317,70 @@
                                     @if ($community->isModerator($member) && ! $isAdmin)
                                         <span class="text-xs font-semibold uppercase tracking-wide text-indigo-700">{{ __('Moderator') }}</span>
                                     @else
-                                        <form method="POST" action="{{ route('communities.members.remove', [$community, $member]) }}">
-                                            @csrf
-                                            @method('delete')
-                                            <button type="submit"
-                                                onclick="return confirm('{{ __('Remove this member?') }}')"
-                                                class="inline-flex items-center rounded-md border border-rose-300 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-50">
-                                                {{ __('Remove') }}
+                                        <div x-data="{
+                                                open: false,
+                                                above: false,
+                                                toggle() {
+                                                    const rect = this.$el.getBoundingClientRect();
+                                                    this.above = rect.bottom + 100 > window.innerHeight;
+                                                    this.open = !this.open;
+                                                }
+                                            }" class="relative">
+                                            <button type="button" @click="toggle()" @keydown.escape.window="open = false"
+                                                class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600">
+                                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M10 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM10 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4ZM10 18a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/>
+                                                </svg>
                                             </button>
-                                        </form>
+                                            <div x-show="open" @click.outside="open = false" x-transition
+                                                :class="above ? 'bottom-full mb-1' : 'top-full mt-1'"
+                                                class="absolute right-0 z-20 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                                                @if ($isModerator && ! $isAdmin)
+                                                    @if (isset($myPendingTransfers[$member->id]))
+                                                        @php($pendingTransfer = $myPendingTransfers[$member->id])
+                                                        <div class="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-indigo-600">
+                                                            <svg class="h-3.5 w-3.5 shrink-0 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                                                <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm.75-13a.75.75 0 0 0-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 0 0 0-1.5h-3.25V5Z" clip-rule="evenodd"/>
+                                                            </svg>
+                                                            {{ __('Transfer pending…') }}
+                                                        </div>
+                                                        <form method="POST" action="{{ route('mod-transfers.cancel', $pendingTransfer) }}">
+                                                            @csrf
+                                                            @method('delete')
+                                                            <button type="submit"
+                                                                class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-600 hover:bg-gray-50">
+                                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                                                                </svg>
+                                                                {{ __('Cancel Invite') }}
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <form method="POST" action="{{ route('communities.mod-transfer.store', [$community, $member]) }}">
+                                                            @csrf
+                                                            <button type="submit"
+                                                                class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-indigo-700 hover:bg-indigo-50">
+                                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"/>
+                                                                </svg>
+                                                                {{ __('Transfer Role') }}
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                @endif
+                                                <form method="POST" action="{{ route('communities.members.remove', [$community, $member]) }}">
+                                                    @csrf
+                                                    @method('delete')
+                                                    <button type="submit"
+                                                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-rose-700 hover:bg-rose-50">
+                                                        <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>
+                                                        </svg>
+                                                        {{ __('Remove') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     @endif
                                 </li>
                             @endforeach
@@ -329,6 +442,35 @@
             </div>
         </div>
     </div>
+
+    {{-- Toast notifications --}}
+    @if (session('status') === 'join-request-submitted')
+        <x-toast message="{{ __('Your join request was submitted. Moderators will be notified.') }}" color="emerald" />
+    @elseif (session('status') === 'join-request-withdrawn')
+        <x-toast message="{{ __('Your join request was withdrawn.') }}" />
+    @elseif (session('status') === 'join-request-already-accepted')
+        <x-toast message="{{ __('A moderator already accepted your request before you withdrew — you are now a member!') }}" color="emerald" />
+    @elseif (session('status') === 'co-mod-cannot-leave')
+        <x-toast message="{{ __('Moderators cannot leave. Transfer your role to another member first.') }}" color="rose" />
+    @elseif (session('status') === 'already-a-member')
+        <x-toast message="{{ __('You are already a member of this community.') }}" color="blue" />
+    @elseif (session('status') === 'member-removed')
+        <x-toast message="{{ __('Member removed.') }}" color="emerald" />
+    @elseif (session('status') === 'transfer-invite-sent')
+        <x-toast message="{{ __('Transfer invite sent. The member must accept before you can leave.') }}" color="indigo" />
+    @elseif (session('status') === 'transfer-accepted')
+        <x-toast message="{{ __('You accepted the moderator role.') }}" color="emerald" />
+    @elseif (session('status') === 'transfer-declined')
+        <x-toast message="{{ __('You declined the moderator role transfer.') }}" />
+    @elseif (session('status') === 'transfer-cancelled')
+        <x-toast message="{{ __('Transfer invite cancelled.') }}" />
+    @elseif (session('status') === 'description-updated')
+        <x-toast message="{{ __('Description updated.') }}" color="emerald" />
+    @elseif ($errors->has('member'))
+        <x-toast message="{{ $errors->first('member') }}" color="rose" />
+    @elseif ($errors->has('join_request'))
+        <x-toast message="{{ $errors->first('join_request') }}" color="rose" />
+    @endif
 
     <x-post-detail-modal />
 
