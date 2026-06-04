@@ -310,6 +310,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profiles/{user}', [ProfileController::class, 'show'])->name('profiles.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/onboarding-step', [ProfileController::class, 'onboardingStep'])->name('profile.onboarding-step');
+    Route::post('/profile/onboarding-complete', [ProfileController::class, 'onboardingComplete'])->name('profile.onboarding-complete');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/verification', [VerificationController::class, 'store'])->name('verification.store');

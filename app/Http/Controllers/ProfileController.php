@@ -10,6 +10,7 @@ use App\Services\ImageOptimizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
@@ -319,6 +320,107 @@ class ProfileController extends Controller
         }
 
         return $dateValue;
+    }
+
+    public function onboardingStep(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $step = (int) $request->input('step', 0);
+
+        if ($step === 1) {
+            $request->validate(['avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480']]);
+            if ($request->hasFile('avatar')) {
+                $oldPath = $user->avatar_path;
+                $user->avatar_path = $this->storeOptimizedImage($request->file('avatar'), 'avatars/user_' . $user->id, 512);
+                $user->avatar_uploaded_at = now();
+                $user->save();
+                if ($oldPath && Storage::exists($oldPath)) {
+                    Storage::delete($oldPath);
+                }
+            }
+        } elseif ($step === 2) {
+            $request->validate(['banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480']]);
+            if ($request->hasFile('banner')) {
+                $oldPath = $user->banner_path;
+                $user->banner_path = $this->storeOptimizedImage($request->file('banner'), 'banners/user_' . $user->id, 1600);
+                $user->banner_uploaded_at = now();
+                $user->save();
+                if ($oldPath && Storage::exists($oldPath)) {
+                    Storage::delete($oldPath);
+                }
+            }
+        } elseif ($step === 3) {
+            $request->validate([
+                'experiences'               => ['nullable', 'array', 'max:10'],
+                'experiences.*.title'       => ['nullable', 'string', 'max:120'],
+                'experiences.*.organization'=> ['nullable', 'string', 'max:120'],
+                'experiences.*.start_month' => ['nullable', 'date_format:Y-m'],
+                'experiences.*.end_month'   => ['nullable', 'date_format:Y-m'],
+                'experiences.*.description' => ['nullable', 'string', 'max:1000'],
+            ]);
+            $entries = collect($request->input('experiences', []))
+                ->map(fn($e) => [
+                    'title'        => trim($e['title'] ?? ''),
+                    'organization' => trim($e['organization'] ?? ''),
+                    'start_date'   => ($e['start_month'] ?? '') ? $e['start_month'] . '-01' : null,
+                    'end_date'     => ($e['end_month'] ?? '') ? $e['end_month'] . '-01' : null,
+                    'description'  => trim($e['description'] ?? '') ?: null,
+                ])
+                ->filter(fn($e) => $e['title'] !== '' && $e['organization'] !== '')
+                ->values();
+            if ($entries->isNotEmpty()) {
+                DB::transaction(function () use ($user, $entries): void {
+                    foreach ($entries as $entry) {
+                        $user->profileExperiences()->create($entry);
+                    }
+                });
+            }
+        } elseif ($step === 4) {
+            $request->validate([
+                'educations'          => ['nullable', 'array', 'max:10'],
+                'educations.*.school' => ['nullable', 'string', 'max:160'],
+                'educations.*.degree' => ['nullable', 'string', 'max:160'],
+                'educations.*.start_date' => ['nullable', 'date'],
+                'educations.*.end_date'   => ['nullable', 'date'],
+            ]);
+            $entries = collect($request->input('educations', []))
+                ->map(fn($e) => [
+                    'school'     => trim($e['school'] ?? ''),
+                    'degree'     => trim($e['degree'] ?? ''),
+                    'start_date' => ($e['start_date'] ?? '') ?: null,
+                    'end_date'   => ($e['end_date'] ?? '') ?: null,
+                ])
+                ->filter(fn($e) => $e['school'] !== '' && $e['degree'] !== '')
+                ->values();
+            if ($entries->isNotEmpty()) {
+                DB::transaction(function () use ($user, $entries): void {
+                    foreach ($entries as $entry) {
+                        $user->profileEducations()->create($entry);
+                    }
+                });
+            }
+        } elseif ($step === 5) {
+            $request->validate(['skills' => ['nullable', 'string', 'max:2000']]);
+            $skills = collect(explode(',', (string) $request->input('skills', '')))
+                ->map(fn($s) => trim($s))
+                ->filter()
+                ->unique()
+                ->values();
+            $user->skills = $skills->isEmpty() ? null : $skills->implode(', ');
+            $user->save();
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Mark the profile-setup wizard as completed so it stops appearing on future logins.
+     */
+    public function onboardingComplete(Request $request): JsonResponse
+    {
+        $request->user()->forceFill(['profile_setup_completed_at' => now()])->save();
+
+        return response()->json(['ok' => true]);
     }
 
     /**

@@ -290,38 +290,327 @@
     @endif
 
     {{-- "Complete your profile" prompt (shown to users with a pending verification review) --}}
-    @if (session('show_setup_prompt') && auth()->user()->hasPendingVerificationDocument())
-        <div x-data="{ open: true }"
-            x-show="open"
-            x-transition.opacity
-            @keydown.escape.window="open = false"
-            class="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 p-4"
-            style="display: none;">
-            <div @click.away="open = false"
-                class="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
-                <div class="flex flex-col items-center gap-3 px-6 pt-8 text-center">
-                    <div class="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class=”text-lg font-bold text-gray-900”>{{ __('While you wait...') }}</h3>
-                    <p class=”text-sm leading-relaxed text-gray-600”>
-                        {{ __('Your verification document is under review. In the meantime, complete your profile - add your skills, experience, and education so you are ready to connect with your batchmates the moment you get approved.') }}
-                    </p>
+    @if (session('show_setup_prompt') && auth()->user()->hasPendingVerificationDocument() && ! auth()->user()->profile_setup_completed_at)
+    @php
+        $wizardAvatarUrl = auth()->user()->profileAvatarUrl();
+        $wizardBannerUrl = auth()->user()->profileBannerUrl();
+    @endphp
+    <div x-data="profileSetupWizard()"
+        x-show="open"
+        x-transition.opacity
+        @keydown.escape.window="close()"
+        class="fixed inset-0 z-[600] flex items-center justify-center bg-black/60 p-4"
+        style="display: none;">
+        <div class="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl"
+            style="max-height: 90vh;">
+
+            {{-- Progress bar + step label --}}
+            <div class="shrink-0 px-6 pt-6 pb-4 border-b border-gray-100">
+                <div class="flex gap-1.5 mb-3">
+                    <template x-for="i in [1,2,3,4,5]" :key="i">
+                        <div class="h-1 flex-1 rounded-full transition-colors duration-300"
+                            :class="i <= step ? 'bg-red-900' : 'bg-gray-200'"></div>
+                    </template>
                 </div>
-                <div class="flex gap-3 px-6 py-6">
-                    <button type="button" @click="open = false"
-                        class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
-                        {{ __('Skip for now') }}
-                    </button>
-                    <a href="{{ route('profile.edit', ['section' => 'profile-information']) }}"
-                        class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-red-800">
-                        {{ __('Set up profile') }}
-                    </a>
-                </div>
+                <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                    Step <span x-text="step"></span> of 5 &mdash;
+                    <span x-text="['Profile photo', 'Cover photo', 'Experience', 'Education', 'Skills'][step - 1]"></span>
+                </p>
             </div>
+
+            {{-- Scrollable step content --}}
+            <div class="flex-1 overflow-y-auto px-6 py-5">
+
+                {{-- Step 1: Avatar --}}
+                <div x-show="step === 1" class="flex flex-col items-center gap-4 text-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900">Add a profile photo</h3>
+                        <p class="mt-1 text-sm text-gray-500">Help your batchmates recognize you.</p>
+                    </div>
+                    <div class="relative">
+                        <img :src="avatarPreview" alt="Avatar preview"
+                            class="h-28 w-28 rounded-full border-2 border-gray-200 bg-gray-100 object-cover" />
+                        <label for="wizard-avatar"
+                            class="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-red-900 text-white shadow hover:bg-red-800">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </label>
+                        <input id="wizard-avatar" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                            @change="onAvatarPick($event)" />
+                    </div>
+                    <p x-show="avatarFile" x-text="avatarFile ? avatarFile.name : ''"
+                        class="text-xs font-medium text-green-600"></p>
+                </div>
+
+                {{-- Step 2: Banner --}}
+                <div x-show="step === 2" class="flex flex-col gap-4">
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-gray-900">Add a cover photo</h3>
+                        <p class="mt-1 text-sm text-gray-500">A wide banner that appears at the top of your profile.</p>
+                    </div>
+                    <div class="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                        <img :src="bannerPreview" alt="Banner preview"
+                            class="h-36 w-full object-cover" />
+                        <label for="wizard-banner"
+                            class="absolute bottom-2 right-2 flex cursor-pointer items-center gap-1.5 rounded-lg bg-red-900 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-red-800">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            Upload
+                        </label>
+                        <input id="wizard-banner" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+                            @change="onBannerPick($event)" />
+                    </div>
+                    <p x-show="bannerFile" x-text="bannerFile ? bannerFile.name : ''"
+                        class="text-xs font-medium text-green-600"></p>
+                </div>
+
+                {{-- Step 3: Experience --}}
+                <div x-show="step === 3" class="space-y-3">
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-gray-900">Add your experience</h3>
+                        <p class="mt-1 text-sm text-gray-500">Let batchmates know where you have worked.</p>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="(exp, i) in experiences" :key="i">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                                        x-text="'Entry ' + (i + 1)"></span>
+                                    <button type="button" @click="removeExperience(i)"
+                                        x-show="experiences.length > 1"
+                                        class="text-xs font-medium text-rose-600 hover:underline">Remove</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input x-model="exp.title" type="text" placeholder="Role / Title"
+                                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                    <input x-model="exp.organization" type="text" placeholder="Organization"
+                                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="mb-1 block text-xs text-gray-500">Start month</label>
+                                        <input x-model="exp.start_month" type="month"
+                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs text-gray-500">End month</label>
+                                        <input x-model="exp.end_month" type="month"
+                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="addExperience()"
+                        class="flex items-center gap-1.5 text-sm font-medium text-red-900 hover:underline">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add another
+                    </button>
+                </div>
+
+                {{-- Step 4: Education --}}
+                <div x-show="step === 4" class="space-y-3">
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-gray-900">Add your education</h3>
+                        <p class="mt-1 text-sm text-gray-500">Share your academic background with your network.</p>
+                    </div>
+                    <div class="space-y-3">
+                        <template x-for="(edu, i) in educations" :key="i">
+                            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+                                        x-text="'Entry ' + (i + 1)"></span>
+                                    <button type="button" @click="removeEducation(i)"
+                                        x-show="educations.length > 1"
+                                        class="text-xs font-medium text-rose-600 hover:underline">Remove</button>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input x-model="edu.school" type="text" placeholder="School"
+                                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                    <input x-model="edu.degree" type="text" placeholder="Degree / Field"
+                                        class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label class="mb-1 block text-xs text-gray-500">Start date</label>
+                                        <input x-model="edu.start_date" type="date"
+                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs text-gray-500">End date</label>
+                                        <input x-model="edu.end_date" type="date"
+                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <button type="button" @click="addEducation()"
+                        class="flex items-center gap-1.5 text-sm font-medium text-red-900 hover:underline">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add another
+                    </button>
+                </div>
+
+                {{-- Step 5: Skills --}}
+                <div x-show="step === 5" class="space-y-4">
+                    <div class="text-center">
+                        <h3 class="text-lg font-bold text-gray-900">Add your skills</h3>
+                        <p class="mt-1 text-sm text-gray-500">Help others discover what you are good at.</p>
+                    </div>
+                    <div>
+                        <input x-model="skills" type="text" placeholder="e.g. Laravel, UI Design, AutoCAD"
+                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-red-900 focus:ring-red-900" />
+                        <p class="mt-1 text-xs text-gray-400">Separate multiple skills with commas.</p>
+                    </div>
+                    <div x-show="skills.trim()" class="flex flex-wrap gap-1.5">
+                        <template x-for="tag in skills.split(',').map(s => s.trim()).filter(s => s)" :key="tag">
+                            <span class="inline-flex items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200"
+                                x-text="tag"></span>
+                        </template>
+                    </div>
+                </div>
+
+            </div>{{-- end scrollable content --}}
+
+            {{-- Footer actions --}}
+            <div class="shrink-0 flex gap-3 border-t border-gray-100 px-6 py-4">
+                <button type="button" @click="skip()"
+                    class="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
+                    Skip
+                </button>
+                <button type="button" @click="saveStep()" :disabled="saving"
+                    class="flex-1 rounded-lg bg-red-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-800 disabled:opacity-60">
+                    <span x-show="!saving" x-text="step < 5 ? 'Continue' : 'Done'"></span>
+                    <span x-show="saving">Saving...</span>
+                </button>
+            </div>
+
         </div>
+    </div>
+
+    <script>
+    function profileSetupWizard() {
+        return {
+            open: true,
+            step: 1,
+            saving: false,
+            persisted: false,
+
+            avatarFile: null,
+            avatarPreview: '{{ $wizardAvatarUrl }}',
+
+            bannerFile: null,
+            bannerPreview: '{{ $wizardBannerUrl }}',
+
+            experiences: [{ title: '', organization: '', start_month: '', end_month: '', description: '' }],
+            educations:  [{ school: '', degree: '', start_date: '', end_date: '' }],
+            skills: '',
+
+            onAvatarPick(event) {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                this.avatarFile = file;
+                this.avatarPreview = URL.createObjectURL(file);
+            },
+
+            onBannerPick(event) {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                this.bannerFile = file;
+                this.bannerPreview = URL.createObjectURL(file);
+            },
+
+            addExperience() {
+                this.experiences.push({ title: '', organization: '', start_month: '', end_month: '', description: '' });
+            },
+            removeExperience(i) { this.experiences.splice(i, 1); },
+
+            addEducation() {
+                this.educations.push({ school: '', degree: '', start_date: '', end_date: '' });
+            },
+            removeEducation(i) { this.educations.splice(i, 1); },
+
+            skip() { this.advance(); },
+
+            // Close without persisting. Escaping on step 1 (before any engagement)
+            // lets the wizard reappear once on the next login as a gentle nudge.
+            close() { this.open = false; },
+
+            // Persist completion (once) so the wizard never reappears on future
+            // logins. Fired the moment the user engages (advances to step 2+) or
+            // finishes the flow -- never on a step-1 escape.
+            markComplete() {
+                if (this.persisted) return;
+                this.persisted = true;
+                fetch('/profile/onboarding-complete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                }).catch(e => console.error('Onboarding complete error:', e));
+            },
+
+            async saveStep() {
+                this.saving = true;
+                try {
+                    const fd = new FormData();
+                    fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    fd.append('step', String(this.step));
+
+                    if (this.step === 1) {
+                        if (this.avatarFile) fd.append('avatar', this.avatarFile);
+                    } else if (this.step === 2) {
+                        if (this.bannerFile) fd.append('banner', this.bannerFile);
+                    } else if (this.step === 3) {
+                        this.experiences.forEach((exp, i) => {
+                            fd.append(`experiences[${i}][title]`,        exp.title || '');
+                            fd.append(`experiences[${i}][organization]`, exp.organization || '');
+                            fd.append(`experiences[${i}][start_month]`,  exp.start_month || '');
+                            fd.append(`experiences[${i}][end_month]`,    exp.end_month || '');
+                            fd.append(`experiences[${i}][description]`,  exp.description || '');
+                        });
+                    } else if (this.step === 4) {
+                        this.educations.forEach((edu, i) => {
+                            fd.append(`educations[${i}][school]`,      edu.school || '');
+                            fd.append(`educations[${i}][degree]`,      edu.degree || '');
+                            fd.append(`educations[${i}][start_date]`,  edu.start_date || '');
+                            fd.append(`educations[${i}][end_date]`,    edu.end_date || '');
+                        });
+                    } else if (this.step === 5) {
+                        fd.append('skills', this.skills || '');
+                    }
+
+                    const res = await fetch('/profile/onboarding-step', { method: 'POST', body: fd });
+                    if (res.ok) this.advance();
+                } catch (e) {
+                    console.error('Onboarding step error:', e);
+                } finally {
+                    this.saving = false;
+                }
+            },
+
+            advance() {
+                if (this.step < 5) {
+                    this.step++;
+                    // Reaching step 2+ means the user engaged -- lock it in.
+                    if (this.step >= 2) this.markComplete();
+                } else {
+                    this.markComplete();
+                    this.open = false;
+                }
+            },
+        };
+    }
+    </script>
     @endif
 </x-app-layout>
 

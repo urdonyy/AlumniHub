@@ -16,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'profile_setup_completed_at', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -296,6 +296,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'avatar_uploaded_at' => 'datetime',
             'banner_uploaded_at' => 'datetime',
             'email_verified_at' => 'datetime',
+            'profile_setup_completed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
