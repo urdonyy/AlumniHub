@@ -401,15 +401,9 @@
                 fuzzyMatch(haystack, needle) {
                     if (!needle) return true;
                     const h = (haystack || '').toLowerCase();
-                    const n = needle.toLowerCase();
-                    if (h.includes(n)) return true;
-                    // subsequence match (cheap "fuzzy")
-                    let i = 0;
-                    for (const ch of h) {
-                        if (ch === n[i]) i++;
-                        if (i === n.length) return true;
-                    }
-                    return false;
+                    // every search word must appear as a substring (word order independent)
+                    const terms = needle.toLowerCase().split(/\s+/).filter(Boolean);
+                    return terms.every(term => h.includes(term));
                 },
 
                 get filtered() {
