@@ -15,7 +15,7 @@ class VerificationStatusChanged extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -35,5 +35,24 @@ class VerificationStatusChanged extends Notification
                 'logoUrl' => asset('images/alumnihub-logo.png'),
                 'appName' => config('app.name', 'AlumniHub'),
             ]);
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        $isApproved = $this->verificationDocument->status === 'approved';
+        $notes = $this->verificationDocument->admin_notes;
+
+        $message = $isApproved
+            ? 'Your account verification was approved. Welcome to AlumniHub!'
+            : 'Your account verification was rejected.' . ($notes ? ' Reason: ' . $notes : '');
+
+        return [
+            'type' => $isApproved ? 'verification_approved' : 'verification_rejected',
+            'message' => $message,
+            'notes' => $notes,
+            'url' => $isApproved
+                ? url('/dashboard')
+                : route('profile.edit', ['section' => 'verification-document']),
+        ];
     }
 }
