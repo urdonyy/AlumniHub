@@ -45,7 +45,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canInteractInCommunities(): bool
     {
-        return $this->role === 'admin' || $this->isVerifiedAlumni();
+        // Any verified account (approved alumni or student, or admin) has full
+        // community access — matching isVerified(), which the rest of the app
+        // (feed, composer, post/comment policies) gates on.
+        return $this->isVerified();
     }
 
     public function canManageCommunities(): bool

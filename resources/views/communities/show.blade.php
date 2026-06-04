@@ -24,22 +24,22 @@
                         </div>
 
                         <div
-                            class="inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset {{ $user->communityAccessBadgeClass() }}">
+                            class="inline-flex shrink-0 items-center self-start whitespace-nowrap rounded-full px-3 py-1 text-xs sm:text-sm font-semibold ring-1 ring-inset {{ $user->communityAccessBadgeClass() }}">
                             {{ $user->communityAccessLabel() }}
                         </div>
                     </div>
 
-                    <div class="grid gap-3 sm:grid-cols-3">
+                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <button type="button" @click="openMembers()"
                             class="group rounded-lg bg-gray-50 px-4 py-3 text-left text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-1">
-                            <p class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                {{ __('Members') }}
-                                <!-- <svg class="h-3.5 w-3.5 text-gray-400 transition group-hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                </svg> -->
-                            </p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Members') }}</p>
                             <p class="mt-1 text-lg font-semibold text-gray-900">{{ $community->members_count }}</p>
                         </button>
+
+                        <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Posts') }}</p>
+                            <p class="mt-1 text-lg font-semibold text-gray-900">{{ $postCount }}</p>
+                        </div>
 
                         <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -55,7 +55,15 @@
                                 {{ __('Membership') }}
                             </p>
                             <p class="mt-1 text-lg font-semibold text-gray-900">
-                                {{ $isMember ? __('Joined') : __('Not joined') }}
+                                @if ($isMember)
+                                    {{ __('Joined') }}
+                                @elseif ($community->is_system)
+                                    {{-- System program communities are auto-assigned; you can still interact
+                                         with their public posts, you just can't join. --}}
+                                    {{ __('Not eligible') }}
+                                @else
+                                    {{ __('Not joined') }}
+                                @endif
                             </p>
                         </div>
                     </div>
