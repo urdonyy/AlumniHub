@@ -198,8 +198,10 @@ class CommunityController extends Controller
             ->orderBy('name')
             ->get(['users.id', 'users.name', 'users.program_course', 'users.batch_year', 'users.avatar_path']);
 
+        $modRoles = $community->moderators()->pluck('role', 'user_id');
+
         return response()->json([
-            'html' => view('partials.community-members', ['members' => $members])->render(),
+            'html' => view('partials.community-members', ['members' => $members, 'modRoles' => $modRoles])->render(),
             'count' => $members->count(),
         ]);
     }

@@ -8,12 +8,20 @@
             $member->batch_year ? 'Batch ' . $member->batch_year : null,
             $programAbbr ?? $member->program_course,
         ])->filter()->implode(' · ');
+        $modRole = $modRoles[$member->id] ?? null;
     @endphp
     <a href="{{ route('profiles.show', $member) }}"
         class="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2.5 transition hover:border-gray-300 hover:bg-gray-50">
-        <img src="{{ $member->profileAvatarUrl() }}" alt="{{ $member->name }}"
-            class="h-9 w-9 shrink-0 rounded-full border border-gray-200 object-cover"
-            onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+        <div class="relative shrink-0">
+            <img src="{{ $member->profileAvatarUrl() }}" alt="{{ $member->name }}"
+                class="h-9 w-9 rounded-full border border-gray-200 object-cover"
+                onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
+            @if ($modRole === 'senior_moderator')
+                <i class="fa-solid fa-crown absolute -top-2 -right-1.5 text-xs text-red-600 drop-shadow-sm" title="{{ __('Senior Moderator') }}"></i>
+            @elseif ($modRole === 'moderator')
+                <i class="fa-solid fa-crown absolute -top-2 -right-1.5 text-xs text-yellow-400 drop-shadow-sm" title="{{ __('Moderator') }}"></i>
+            @endif
+        </div>
         <div class="min-w-0">
             <p class="truncate text-sm font-medium text-gray-900">{{ $member->name }}</p>
             @if ($meta)

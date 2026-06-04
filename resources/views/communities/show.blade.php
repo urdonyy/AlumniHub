@@ -14,108 +14,109 @@
         <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8"
             x-data="communityMembersModal('{{ route('communities.members', $community) }}', {{ $isVerified ? 'true' : 'false' }})">
             <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
-                <div class="space-y-5 px-6 py-6">
-                    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div
-                            x-data="{
-                                editing: false,
-                                text: @js($community->description ?? ''),
-                            }"
-                            class="min-w-0 flex-1">
-                            <h3 class="text-2xl font-semibold text-gray-900">{{ $community->name }}</h3>
+                <div class="space-y-5 px-6 py-6"
+                    x-data="{
+                        editing: false,
+                        text: @js($community->description ?? ''),
+                    }">
+                    <div class="flex flex-col gap-1.5">
+                        <h3 class="text-2xl font-semibold text-gray-900 sm:text-3xl">{{ $community->name }}</h3>
 
-                            {{-- Display mode --}}
-                            <div x-show="!editing" class="group mt-2 flex items-start gap-2">
-                                <p class="min-w-0 break-all text-sm text-gray-600" x-text="text || '{{ __('No description provided yet.') }}'"></p>
-                                @if ($canModerate)
+                        {{-- Description display --}}
+                        <div x-show="!editing">
+                            <p class="min-w-0 break-all text-sm text-gray-600 sm:text-base" x-text="text || '{{ __('No description provided yet.') }}'"></p>
+                            @if ($canModerate)
+                                <div class="mt-1.5 flex justify-end">
                                     <button type="button" @click="editing = true"
-                                        class="mt-0.5 shrink-0 text-gray-400 transition hover:text-gray-600"
+                                        class="text-red-900/60 transition hover:text-red-900"
                                         aria-label="{{ __('Edit description') }}">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/>
                                         </svg>
                                     </button>
-                                @endif
-                            </div>
-
-                            {{-- Edit mode --}}
-                            @if ($canModerate)
-                                <form x-show="editing" method="POST"
-                                    action="{{ route('communities.description.update', $community) }}"
-                                    class="mt-2 space-y-2">
-                                    @csrf
-                                    @method('PATCH')
-                                    <textarea name="description" rows="3" required minlength="10" maxlength="2000"
-                                        x-model="text"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-50 resize-none"></textarea>
-                                    <div class="flex gap-2">
-                                        <button type="submit"
-                                            class="inline-flex items-center rounded-md bg-red-900 px-3 py-1.5 text-xs font-semibold tracking-widest text-white transition hover:bg-red-800">
-                                            {{ __('Save') }}
-                                        </button>
-                                        <button type="button" @click="editing = false"
-                                            class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
-                                            {{ __('Cancel') }}
-                                        </button>
-                                    </div>
-                                </form>
+                                </div>
                             @endif
                         </div>
 
-                        <div
-                            class="inline-flex shrink-0 items-center self-start whitespace-nowrap rounded-full px-3 py-1 text-xs sm:text-sm font-semibold ring-1 ring-inset {{ $user->communityAccessBadgeClass() }}">
-                            {{ $user->communityAccessLabel() }}
+                        {{-- Description edit form --}}
+                        @if ($canModerate)
+                            <form x-show="editing" method="POST"
+                                action="{{ route('communities.description.update', $community) }}"
+                                class="space-y-2">
+                                @csrf
+                                @method('PATCH')
+                                <textarea name="description" rows="3" required minlength="10" maxlength="2000"
+                                    x-model="text"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800 focus:border-red-300 focus:outline-none focus:ring-1 focus:ring-red-50 resize-none"></textarea>
+                                <div class="flex gap-2">
+                                    <button type="submit"
+                                        class="inline-flex items-center rounded-md bg-red-900 px-3 py-1.5 text-xs font-semibold tracking-widest text-white transition hover:bg-red-800">
+                                        {{ __('Save') }}
+                                    </button>
+                                    <button type="button" @click="editing = false"
+                                        class="inline-flex items-center rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50">
+                                        {{ __('Cancel') }}
+                                    </button>
+                                </div>
+                            </form>
+                        @endif
+
+                        {{-- Access badge inline, below description --}}
+                        <div class="mt-1 flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ $user->communityAccessBadgeClass() }}">
+                                {{ $user->communityAccessLabel() }}
+                            </span>
                         </div>
                     </div>
 
-                    <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-1 sm:gap-3 sm:rounded-lg sm:border sm:border-gray-200 sm:bg-gray-50">
+                        {{-- Members --}}
                         <button type="button" @click="openMembers()"
-                            class="group rounded-lg bg-gray-50 px-4 py-3 text-left text-sm text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-1">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Members') }}</p>
-                            <p class="mt-1 text-lg font-semibold text-gray-900">{{ $community->members_count }}</p>
+                            class="relative flex flex-col items-center justify-center gap-[6px] p-0 sm:p-4 transition hover:bg-gray-100 focus:outline-none min-w-0">
+                            <div class="flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-users text-red-900 text-xs sm:text-sm lg:text-xl"></i>
+                                <p class="text-sm sm:text-lg lg:text-2xl font-semibold text-red-900">{{ $community->members_count }}</p>
+                            </div>
+                            <p class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">{{ __('Members') }}</p>
+                            <div class="border border-red-900 absolute h-[50%] right-0 hidden sm:flex flex-col items-center"></div>
                         </button>
 
-                        <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Posts') }}</p>
-                            <p class="mt-1 text-lg font-semibold text-gray-900">{{ $postCount }}</p>
+                        {{-- Posts --}}
+                        <div class="relative flex flex-col items-center justify-center gap-[6px] p-0 sm:p-4 min-w-0 border-l border-red-900/30 sm:border-l-0">
+                            <div class="flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-pen-to-square text-red-900 text-xs sm:text-sm lg:text-xl"></i>
+                                <p class="text-sm sm:text-lg lg:text-2xl font-semibold text-red-900">{{ $postCount }}</p>
+                            </div>
+                            <p class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">{{ $postCount !== 1 ? __('Posts') : __('Post') }}</p>
+                            <div class="border border-red-900 absolute h-[50%] right-0 hidden sm:flex flex-col items-center"></div>
                         </div>
 
-                        <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                {{ __('Created by') }}
-                            </p>
-                            <p class="mt-1 text-lg font-semibold text-gray-900">
-                                {{ $community->creator?->name ?? __('System') }}
-                            </p>
-                        </div>
-
-                        <div class="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-700">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                {{ __('Membership') }}
-                            </p>
-                            <p class="mt-1 text-lg font-semibold text-gray-900">
-                                @if ($isMember)
-                                    {{ __('Joined') }}
-                                @elseif ($community->is_system)
-                                    {{-- System program communities are auto-assigned; you can still interact
-                                         with their public posts, you just can't join. --}}
-                                    {{ __('Not eligible') }}
-                                @else
-                                    {{ __('Not joined') }}
-                                @endif
-                            </p>
+                        {{-- Membership status --}}
+                        <div class="col-span-2 sm:col-span-1 flex flex-col items-center justify-center gap-[6px] p-0 pt-2 sm:p-4 min-w-0 border-t border-red-900/30 sm:border-t-0">
+                            @if ($isMember)
+                                <i class="fa-solid fa-circle-check text-red-900 text-xs sm:text-sm lg:text-xl"></i>
+                                <p class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">{{ __('Joined') }}</p>
+                            @elseif ($community->is_system)
+                                <i class="fa-solid fa-ban text-red-900 text-xs sm:text-sm lg:text-xl"></i>
+                                <p class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">{{ __('Not Eligible') }}</p>
+                            @else
+                                <i class="fa-solid fa-circle-xmark text-red-900 text-xs sm:text-sm lg:text-xl"></i>
+                                <p class="min-w-0 truncate text-xs lg:text-base font-semibold uppercase tracking-wide text-[#FFC107]">{{ __('Not Joined') }}</p>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($community->rules as $rule)
-                            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                                {{ $rule->batch_year ? 'Batch ' . $rule->batch_year : __('Any batch') }}
-                                ·
-                                {{ $rule->program_course ?? __('Any program') }}
-                            </span>
-                        @endforeach
-                    </div>
+                    @if ($community->rules->isNotEmpty())
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($community->rules as $rule)
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                                    {{ $rule->batch_year ? 'Batch ' . $rule->batch_year : __('Any batch') }}
+                                    ·
+                                    {{ $rule->program_course ?? __('Any program') }}
+                                </span>
+                            @endforeach
+                        </div>
+                    @endif
 
                     {{-- Incoming transfer invite --}}
                     @if ($pendingTransferToMe ?? null)
