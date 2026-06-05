@@ -35,7 +35,7 @@
                         Stay connected<br>with your PUP-ITECH<br>alumni community.
                     </h2>
                     <p class="mt-5 text-red-200 text-sm leading-relaxed max-w-xs">
-                        Share experiences, grow your network, and discover career opportunities — all in one place built for PUP-ITECH graduates.
+                        Share experiences, grow your network, and discover career opportunities — all in one place built for PUP-ITECH graduates and students.
                     </p>
                 </div>
 
