@@ -1,4 +1,4 @@
-<header class="bg-red-900/10 w-full h-16 text-sm flex items-center justify-between not-has-[nav]:hidden px-2 sm:px-5">
+<header class="w-full h-16 text-sm flex items-center justify-between not-has-[nav]:hidden px-2 sm:px-5 sticky top-0 z-40 bg-gradient-to-r from-white via-amber-50 to-red-900/10 backdrop-blur-md shadow-sm">
     <a href="{{ url('/') }}" class="flex items-center gap-2 sm:gap-4 cursor-pointer decoration-none">
         <img src="{{ asset('images/alumnihub-logo.png') }}" alt="AlumniHub Logo" class="w-6 sm:w-8" />
         <h1 class="font-bold text-base sm:text-xl ">
