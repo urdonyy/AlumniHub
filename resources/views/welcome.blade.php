@@ -40,7 +40,7 @@
                 </h2>
                 <p class="mb-2 text-gray-600 lg:text-base">AlumniHub is a web-based platform designed to connect
                     graduates and students of the Polytechnic University of the Philippines – Institute of Technology (PUP ITECH)
-                    with their alma mater and fellow alumni.</p>
+                    with their alma mater and fellow Teknolohistas ng Bayan.</p>
                 <ul class="flex gap-3 text-sm leading-normal mt-8">
                     <li>
                         <a href="/about" target="_blank"
