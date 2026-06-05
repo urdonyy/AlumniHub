@@ -26,7 +26,7 @@
 <body class="bg-[#FDFDFC] text-[#1b1b18] flex items-center lg:justify-center min-h-screen flex-col">
     <x-header />
 
-    <div class="bg-cover bg-center flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0 pt-8 lg:pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24"
+    <div class="bg-cover bg-center flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0 pt-8 lg:pt-20 mx-auto px-4 sm:px-6 lg:px-8 pb-24"
         style="background-image: url('{{ asset('images/element.png') }}');">
         <main class="flex max-w-[335px] w-full flex-col-reverse lg:max-w-4xl lg:flex-row rounded-2xl overflow-hidden shadow-sm border border-gray-200 bg-white">
             <div
