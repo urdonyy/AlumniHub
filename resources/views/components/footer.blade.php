@@ -10,7 +10,7 @@
                 </div>
 
                 <p class="text-sm text-white/80 leading-relaxed">
-                    AlumniHub connects PUP ITECH graduates with opportunities, events, and fellow alumni.
+                    AlumniHub connects PUP ITECH graduates and students with opportunities, events, and their fellow Teknolohistas ng Bayan.
                 </p>
 
                 <div class="flex gap-3 mt-5">
@@ -19,14 +19,6 @@
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path
                                 d="M22 12a10 10 0 1 0-11.5 9.9v-7h-2v-3h2V9.5c0-2 1.2-3.1 3-3.1.9 0 1.8.1 1.8.1v2h-1c-1 0-1.3.6-1.3 1.2V12h2.3l-.4 3h-1.9v7A10 10 0 0 0 22 12z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="p-2 rounded-md bg-white/10 hover:bg-white/20 transition">
-                        <!-- LinkedIn Icon -->
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M20.4 20.4h-3.6v-5.6c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1c.5-.9 1.6-1.8 3.3-1.8 3.5 0 4.2 2.3 4.2 5.3v6.3zM5.3 7.4c-1.2 0-2.1-1-2.1-2.1S4.1 3.2 5.3 3.2s2.1 1 2.1 2.1-1 2.1-2.1 2.1zM7.1 20.4H3.5V9h3.6v11.4z" />
                         </svg>
                     </a>
 
@@ -53,7 +45,6 @@
             <div>
                 <h3 class="font-semibold text-base mb-4 text-[#FFC107]">Resources</h3>
                 <ul class="space-y-2 text-sm text-white/80">
-                    <li><a href="#" class="hover:text-white transition">Job Opportunities</a></li>
                     <li><a href="#" class="hover:text-white transition">Announcements</a></li>
                     <li><a href="#" class="hover:text-white transition">FAQ</a></li>
                     <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
