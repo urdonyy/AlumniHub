@@ -37,8 +37,7 @@
         <div class="relative z-10 text-center px-6 py-24 max-w-3xl mx-auto">
             <p class="text-[#FFC107] text-xs font-semibold tracking-[0.25em] uppercase mb-3"><span
                     class="text-[#afafaf]">A</span> Capstone Project <span class="text-[#afafaf]">dedicated
-                    to</span> Teknolohistas ng Bayan &middot; PUP&ndash;ITECH<span
-                    class="text-[#afafaf]">.</span>
+                    to</span> Teknolohistas ng Bayan &middot; PUP&ndash;ITECH<span class="text-[#afafaf]">.</span>
             </p>
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight">
                 Welcome to <span class="text-red-900    ">Alumni</span><span class="text-[#FFC107]">Hub</span>

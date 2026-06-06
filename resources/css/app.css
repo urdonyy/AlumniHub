@@ -55,3 +55,73 @@ html {
 ::-webkit-scrollbar-thumb:hover {
     background: #e1b11f;
 }
+    
+/* custom on scroll anims ;3 */
+@keyframes appear {
+    from {
+        opacity: 0;
+        scale: 0.5;
+        /* transform: translateX(-100px); slides */
+    }
+
+    to {
+        opacity: 1;
+        scale: 1;
+        /* transform: translateX(0); */
+    }
+}
+
+#alumnihub-team {
+    animation: appear linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 33%;
+}
+
+@keyframes slideR {
+    from {
+        opacity: 0;
+        transform: translateX(-100px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+#features {
+    animation: slideR linear;
+    animation-timeline: view();
+    animation-range: entry 0% cover 33%;
+}
+
+/* load-anim */
+/* .fade-inY {
+    opacity: 0;
+    transform: translateY(55px);
+}
+
+.fade-only {
+    opacity: 0;
+}
+
+body.loaded .fade-inY {
+    animation: fadeInY 3s ease forwards;
+}
+
+body.loaded .fade-only {
+    animation: fadeOnly 3s ease forwards;
+}
+
+@keyframes fadeInY {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOnly {
+    to {
+        opacity: 1;
+    }
+} */
