@@ -29,44 +29,44 @@
 <body class="bg-[#FDFDFC] text-[#1b1b18] flex items-center lg:justify-center min-h-screen flex-col">
     <x-header />
 
+    <!-- para__hero -->
+    <section id="parallax-hero"
+        class="relative w-full h-full min-h-[100vh] flex items-center justify-center overflow-hidden mb-16 shadow-sm"
+        style="background-image: url('{{ asset('images/itech.png') }}'); background-attachment: fixed; background-size: cover; background-position: center;">
+        <div class="absolute inset-0 bg-gradient-to-b from-red-950/80 via-[#1b1b18]/65 to-[#1b1b18]/85"></div>
+        <div class="relative z-10 text-center px-6 py-24 max-w-3xl mx-auto">
+            <p class="text-[#FFC107] text-xs font-semibold tracking-[0.25em] uppercase mb-3"><span
+                    class="text-[#afafaf]">A</span> Capstone Project <span class="text-[#afafaf]">dedicated
+                    to</span> Teknolohistas ng Bayan &middot; PUP&ndash;ITECH<span
+                    class="text-[#afafaf]">.</span>
+            </p>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight">
+                Welcome to <span class="text-red-900    ">Alumni</span><span class="text-[#FFC107]">Hub</span>
+            </h1>
+            <p class="text-gray-300 text-sm md:text-base mb-10 max-w-xl mx-auto leading-relaxed">
+                Connect with fellow Teknolohistas ng Bayan academically and professionally. Together, stay tuned,
+                coordinated, and thriving all-in-one platform. Growth never stops, explore your space here at <span
+                    class="text-red-900">Alumni</span><span class="text-[#ffc107]">Hub</span>.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a href="#features"
+                    class="inline-flex items-center justify-center gap-2 rounded-md bg-red-900 px-6 py-2.5 text-sm font-semibold tracking-widest text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150">
+                    Learn More
+                    <i class="fa-regular fa-lightbulb" style="color: white !important;"></i>
+                </a>
+                <a href="#alumnihub-team"
+                    class="inline-flex items-center justify-center gap-2 rounded-md border border-white/25 bg-white/10 backdrop-blur-sm px-6 py-2.5 text-sm font-semibold tracking-widest text-white hover:bg-white/20 transition ease-in-out duration-150">
+                    The Team
+                    <i class="fa-solid fa-hand-holding-hand" style="color: white !important;"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
     <!-- bg__mask -->
-    <div class="bg-center bg-no-repeat [background-size:auto] flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0 pt-8 lg:pt-20 mx-auto px-4 sm:px-6 lg:px-8 pb-24"
+    <div class="bg-center bg-no-repeat [background-size:auto] flex items-center justify-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0 mx-auto px-4 sm:px-6 lg:px-8 pb-24"
         style="background-image: url('{{ asset('images/element.png') }}');">
         <main class="flex flex-col max-w-7xl w-full">
-
-            <!-- para__hero -->
-            <section id="parallax-hero"
-                class="relative w-full min-h-[65vh] flex items-center justify-center overflow-hidden rounded-2xl mb-16"
-                style="background-image: url('{{ asset('images/itech.png') }}'); background-attachment: fixed; background-size: cover; background-position: center;">
-                <div class="absolute inset-0 bg-gradient-to-b from-red-950/80 via-[#1b1b18]/65 to-[#1b1b18]/85"></div>
-                <div class="relative z-10 text-center px-6 py-24 max-w-3xl mx-auto">
-                    <p class="text-[#FFC107] text-xs font-semibold tracking-[0.25em] uppercase mb-3"><span
-                            class="text-[#afafaf]">A</span> Capstone Project <span class="text-[#afafaf]">dedicated
-                            to</span> Teknolohistas ng Bayan &middot; PUP&ndash;ITECH<span
-                            class="text-[#afafaf]">.</span></span>
-                    </p>
-                    <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-5 leading-tight">
-                        Welcome to <span class="text-red-900    ">Alumni</span><span class="text-[#FFC107]">Hub</span>
-                    </h1>
-                    <p class="text-gray-300 text-sm md:text-base mb-10 max-w-xl mx-auto leading-relaxed">
-                        Connect with fellow Teknolohistas ng Bayan academically and professionally. Together, stay tuned,
-                        coordinated, and thriving all-in-one platform. Growth never stops, explore your space here at <span class="text-red-900">Alumni</span><span class="text-[#ffc107]">Hub</span>.
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                        <a href="#features"
-                            class="inline-flex items-center justify-center gap-2 rounded-md bg-red-900 px-6 py-2.5 text-sm font-semibold tracking-widest text-white hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150">
-                            Learn More
-                            <i class="fa-regular fa-lightbulb" style="color: white !important;"></i>
-                        </a>
-                        <a href="#alumnihub-team"
-                            class="inline-flex items-center justify-center gap-2 rounded-md border border-white/25 bg-white/10 backdrop-blur-sm px-6 py-2.5 text-sm font-semibold tracking-widest text-white hover:bg-white/20 transition ease-in-out duration-150">
-                            The Team
-                            <i class="fa-solid fa-hand-holding-hand" style="color: white !important;"></i>
-                        </a>
-                    </div>
-                </div>
-            </section>
-
             <!-- <section id="parallax-hero"
                 class="text-[13px] leading-[20px] flex-1 p-6 pb-6 lg:p-20 lg:pb-10 dark:text-[#EDEDEC] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] lg:rounded-tl-lg lg:rounded-br-none">
                 <h2 class="mb-1 font-medium text-xl md:text-2xl lg:text-3xl relative inline-block">
@@ -313,6 +313,49 @@
     @if (Route::has('login'))
         <div class="h-14.5 hidden lg:block"></div>
     @endif
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.getElementById('main-header');
+            if (!header) return;
+
+            const brandText = header.querySelector('.nav-text-brand');
+            const navButtons = header.querySelectorAll('.nav-btn-outline');
+
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.classList.remove('bg-transparent', 'text-white');
+                    header.classList.add('bg-gradient-to-r', 'from-white', 'via-amber-50', 'to-red-900/10', 'backdrop-blur-md', 'shadow-sm', 'text-[#1b1b18]');
+
+                    if (brandText) {
+                        brandText.classList.remove('text-white');
+                        brandText.classList.add('text-red-900');
+                        brandText.classList.remove('border-white');
+                        brandText.classList.add('border-red-900');
+                    }
+
+                    navButtons.forEach(btn => {
+                        btn.classList.remove('text-white', 'border-white');
+                        btn.classList.add('text-red-900', 'border-red-900');
+                    });
+
+                } else {
+                    // rev
+                    header.classList.remove('bg-gradient-to-r', 'from-white', 'via-amber-50', 'to-red-900/10', 'backdrop-blur-md', 'shadow-sm', 'text-[#1b1b18]');
+                    header.classList.add('bg-transparent', 'text-white');
+
+                    if (brandText) {
+                        brandText.classList.remove('text-red-900');
+                        brandText.classList.add('text-white');
+                    }
+
+                    navButtons.forEach(btn => {
+                        btn.classList.remove('text-red-900', 'border-red-900');
+                        btn.classList.add('text-white', 'border-white');
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
