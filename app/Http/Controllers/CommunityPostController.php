@@ -25,45 +25,6 @@ class CommunityPostController extends Controller
         $this->eventInviteService = $eventInviteService;
     }
 
-    public function index(Request $request, Community $community)
-    {
-        // Unverified users may not browse community posts.
-        if (! $request->user()->isVerified()) {
-            return redirect()
-                ->route('communities.show', $community)
-                ->with('error', 'Verify your account to view posts in this community.');
-        }
-
-        $user = $request->user();
-        $isMember = $community->members()->whereKey($user->id)->exists();
-        $isOutsiderViewingProgramBatch = ! $isMember && ($community->isProgramBatch() || $community->is_system);
-
-        $postsQuery = $community->posts()
-            ->published()
-            ->with(['user', 'flairs', 'media', 'event'])
-            ->orderByDesc('pinned')
-            ->orderByDesc('published_at');
-
-        if ($isOutsiderViewingProgramBatch) {
-            $postsQuery->where('visibility', 'public');
-        }
-
-        $posts = $postsQuery->paginate(15);
-
-        $flairs = $community->flairs()
-            ->forCommunity($community->id)
-            ->orderBy('name')
-            ->get();
-
-        return view('communities.posts.index', compact(
-            'community',
-            'posts',
-            'flairs',
-            'isMember',
-            'isOutsiderViewingProgramBatch',
-        ));
-    }
-
     public function show(Community $community, Post $post)
     {
         if ($post->community_id !== $community->id) {
@@ -117,7 +78,7 @@ class CommunityPostController extends Controller
             data: $validated
         );
 
-        return redirect()->route('communities.posts.index', $community)
+        return redirect()->route('communities.show', $community)
             ->with('success', 'Post created successfully!');
     }
 
@@ -165,7 +126,7 @@ class CommunityPostController extends Controller
 
         $this->postService->updatePost($post, $validated);
 
-        return redirect()->route('communities.posts.index', $community)
+        return redirect()->route('communities.show', $community)
             ->with('success', 'Post updated successfully!');
     }
 
@@ -179,7 +140,7 @@ class CommunityPostController extends Controller
 
         $post->delete();
 
-        return redirect()->route('communities.posts.index', $community)
+        return redirect()->route('communities.show', $community)
             ->with('success', 'Post deleted successfully!');
     }
 
@@ -254,6 +215,6 @@ class CommunityPostController extends Controller
             $this->eventInviteService->dispatch($post, $request->user());
         }
 
-        return redirect()->route('dashboard')->with('success', 'Post created successfully!');
+        return redirect()->back(fallback: route('dashboard'))->with('success', 'Post created successfully!');
     }
 }

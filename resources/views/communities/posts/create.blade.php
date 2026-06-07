@@ -52,7 +52,7 @@
                         <!-- Buttons -->
                         <div class="flex gap-4">
                             <x-primary-button>{{ __('Post') }}</x-primary-button>
-                            <a href="{{ route('communities.posts.index', $community) }}"
+                            <a href="{{ route('communities.show', $community) }}"
                                 class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                 Cancel
                             </a>

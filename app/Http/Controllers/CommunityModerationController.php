@@ -94,7 +94,7 @@ class CommunityModerationController extends Controller
         }
 
         return redirect()
-            ->route('communities.posts.index', $community)
+            ->route('communities.show', $community)
             ->with('status', 'post-removed');
     }
 

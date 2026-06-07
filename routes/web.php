@@ -248,9 +248,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/communities/{community}/mod/posts/{post}', [CommunityModerationController::class, 'deletePost'])
         ->name('communities.mod.posts.destroy');
 
+    // Redirect legacy /posts index URL to the community page
+    Route::get('/communities/{community}/posts', fn (Community $community) => redirect()->route('communities.show', $community));
+
     // Posts - read routes
     Route::resource('communities.posts', CommunityPostController::class)
-        ->only(['index', 'show']);
+        ->only(['show']);
 
     // Posts - write routes (member-only)
     Route::middleware('ensure.community.member')

@@ -128,10 +128,11 @@
                     </div>
                 @endif
             </div>
+            @endif
 
             <!-- Back Link -->
             <div class="mt-6">
-                <a href="{{ route('communities.posts.index', $community) }}"
+                <a href="{{ route('communities.show', $community) }}"
                     class="text-indigo-600 hover:text-indigo-700 font-semibold">
                     ← Back to Posts
                 </a>
