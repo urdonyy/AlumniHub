@@ -18,6 +18,39 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css">
 
+    <style>
+        /* tag + bridge slide-in */
+        .problem-reveal {
+            opacity: 0;
+            transform: translateY(2rem);
+            transition: opacity 0.85s cubic-bezier(0.22, 1, 0.36, 1), transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .problem-reveal.in-view {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* question scroll-fill */
+        .problem-question p {
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.16) 0%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .problem-question .highlight-scroll {
+            background-image: linear-gradient(to right, rgb(255, 193, 7) 0%, rgba(255, 193, 7, 0.18) 0%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .problem-question .quote-mark {
+            color: rgba(127, 29, 29, 0.2);
+        }
+    </style>
+
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -31,9 +64,9 @@
 
     <!-- para__hero -->
     <section id="parallax-hero"
-        class="relative w-full h-full min-h-[100vh] flex items-center justify-center overflow-hidden mb-16 shadow-sm"
+        class="relative w-full h-full min-h-[100vh] flex items-center justify-center overflow-hidden shadow-sm"
         style="background-image: url('{{ asset('images/itech.png') }}'); background-attachment: fixed; background-size: cover; background-position: center;">
-        <div class="absolute inset-0 bg-gradient-to-b from-red-950/80 via-[#1b1b18]/65 to-[#1b1b18]/85"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-red-950/60 via-[#1b1b18]/65 to-[#1b1b18]/85"></div>
         <div class="relative z-10 text-center px-6 py-24 max-w-3xl mx-auto">
             <p class="text-[#FFC107] text-xs font-semibold tracking-[0.25em] uppercase mb-3"><span
                     class="text-[#afafaf]">A</span> Capstone Project <span class="text-[#afafaf]">dedicated
@@ -43,9 +76,11 @@
                 Welcome to <span class="text-red-900    ">Alumni</span><span class="text-[#FFC107]">Hub</span>
             </h1>
             <p class="text-gray-300 text-sm md:text-base mb-10 max-w-xl mx-auto leading-relaxed">
-                Connect with fellow Teknolohistas ng Bayan academically and professionally. Together, stay tuned,
-                coordinated, and thriving all-in-one platform. Growth never stops, explore your space here at <span
-                    class="text-red-900">Alumni</span><span class="text-[#ffc107]">Hub</span>.
+                Connect with fellow <em>Teknolohistas ng Bayan</em> academically and professionally. Together, stay
+                <b>tuned</b>,
+                <b>coordinated</b>, and <b>thriving</b> all-in-one platform. Growth never stops, explore your space here
+                at <strong><i><span class="text-red-900">Alumni</span><span
+                            class="text-[#ffc107]">Hub</span></i></strong>.
             </p>
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
                 <a href="#features"
@@ -53,11 +88,76 @@
                     Learn More
                     <i class="fa-regular fa-lightbulb" style="color: white !important;"></i>
                 </a>
-                <a href="#alumnihub-team"
+                <a href="#prblem"
                     class="inline-flex items-center justify-center gap-2 rounded-md border border-white/25 bg-white/10 backdrop-blur-sm px-6 py-2.5 text-sm font-semibold tracking-widest text-white hover:bg-white/20 transition ease-in-out duration-150">
-                    The Team
-                    <i class="fa-solid fa-hand-holding-hand" style="color: white !important;"></i>
+                    Challenges
+                    <!-- <i class="fa-solid fa-hand-holding-hand" style="color: white !important;"></i> -->
+                    <i class="fa-regular fa-question-circle" style="color: white !important;"></i>
                 </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="prblem" class="relative w-full bg-[#1b1b18] py-28 px-6 overflow-hidden mb-16">
+        <img src="{{ asset('images/alumnihub-logo.png') }}" alt=""
+            class="absolute inset-0 m-auto w-80 opacity-[0.04] pointer-events-none select-none"
+            aria-hidden="true">
+
+        <div class="relative z-10 max-w-3xl mx-auto">
+            <div class="text-center mb-4 problem-reveal">
+                <h2 class="mb-1 font-medium text-xl md:text-2xl lg:text-3xl relative inline-block">
+                    <span class="relative z-10">
+                        <span class="text-red-900">The</span> <span class="text-[#FFC107]">Problem</span>
+                    </span>
+                    <img src="{{ asset('images/paint-stroke.png') }}" alt="paint stroke"
+                        class="absolute left-0 bottom-0 w-full h-auto z-0 pointer-events-none" />
+                </h2>
+            </div>
+
+            <div class="flex items-center justify-center gap-3 mb-16 problem-reveal">
+                <span class="h-px w-full bg-gradient-to-l from-red-900/40 to-transparent"></span>
+                <p class="text-[#FFC107] text-xs font-semibold tracking-[0.3em] uppercase whitespace-nowrap">Sounds familiar?</p>
+                <span class="h-px w-full bg-gradient-to-r from-red-900/40 to-transparent"></span>
+            </div>
+
+            <div class="space-y-14">
+                <div class="problem-question flex gap-5 items-start">
+                    <span
+                        class="quote-mark text-5xl font-serif leading-none mt-1 select-none flex-shrink-0">&ldquo;</span>
+                    <p class="text-xl md:text-2xl lg:text-3xl font-medium leading-snug">
+                        Tired of <span class="highlight-scroll">fragmented platforms</span> just to connect with fellow
+                        <em>Teknolohistas</em>?
+                    </p>
+                </div>
+
+                <div class="problem-question flex gap-5 items-start">
+                    <span
+                        class="quote-mark text-5xl font-serif leading-none mt-1 select-none flex-shrink-0">&ldquo;</span>
+                    <p class="text-xl md:text-2xl lg:text-3xl font-medium leading-snug">
+                        Want to <span class="highlight-scroll">stay engaged with the institute</span> even after
+                        graduation?
+                    </p>
+                </div>
+
+                <div class="problem-question flex gap-5 items-start">
+                    <span
+                        class="quote-mark text-5xl font-serif leading-none mt-1 select-none flex-shrink-0">&ldquo;</span>
+                    <p class="text-xl md:text-2xl lg:text-3xl font-medium leading-snug">
+                        Missing out on <span class="highlight-scroll">opportunities and events</span> because your
+                        network is decentralized?
+                    </p>
+                </div>
+            </div>
+
+            <div class="problem-reveal mt-20 text-center">
+                <div class="inline-flex flex-col items-center gap-3">
+                    <p class="text-gray-500 text-xs font-semibold tracking-[0.3em] uppercase">We hear you</p>
+                    <div class="w-px h-10 bg-gradient-to-b from-[#FFC107]/40 to-transparent"></div>
+                    <p class="text-gray-100 text-lg md:text-xl font-semibold">
+                        That's exactly why we built
+                        <span class="text-red-900">Alumni</span><span class="text-[#FFC107]">Hub</span>.
+                    </p>
+                </div>
             </div>
         </div>
     </section>
@@ -314,6 +414,53 @@
     @endif
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // tag + bridge slide-in
+            const revealItems = document.querySelectorAll('.problem-reveal');
+            const revealObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('in-view');
+                        revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.25 });
+            revealItems.forEach((item, index) => {
+                item.style.transitionDelay = `${index * 160}ms`;
+                revealObserver.observe(item);
+            });
+
+            // scroll-driven text fill
+            const problemQuestions = document.querySelectorAll('.problem-question');
+            function updateProblemFill() {
+                const vh = window.innerHeight;
+                problemQuestions.forEach(q => {
+                    const rect = q.getBoundingClientRect();
+                    const itemCenter = rect.top + rect.height / 2;
+                    // 0 when item center is at viewport bottom, 1 when at viewport center
+                    const progress = Math.max(0, Math.min(1, (vh - itemCenter) / (vh * 0.5)));
+                    const f = (progress * 100).toFixed(1);
+                    const edge = 8; // soft feather width %
+                    const lo = Math.max(0, parseFloat(f) - edge).toFixed(1);
+
+                    const p = q.querySelector('p');
+                    if (p) p.style.backgroundImage =
+                        `linear-gradient(to right, rgba(255,255,255,0.92) ${lo}%, rgba(255,255,255,0.16) ${f}%)`;
+
+                    q.querySelectorAll('.highlight-scroll').forEach(span => {
+                        span.style.backgroundImage =
+                            `linear-gradient(to right, rgb(255,193,7) ${lo}%, rgba(255,193,7,0.16) ${f}%)`;
+                    });
+
+                    const quote = q.querySelector('.quote-mark');
+                    if (quote) quote.style.color = `rgba(127,29,29,${(0.18 + progress * 0.6).toFixed(2)})`;
+                });
+            }
+            let fillRaf = false;
+            window.addEventListener('scroll', () => {
+                if (!fillRaf) { fillRaf = true; requestAnimationFrame(() => { updateProblemFill(); fillRaf = false; }); }
+            }, { passive: true });
+            updateProblemFill();
+            // end of problem section
             const header = document.getElementById('main-header');
             if (!header) return;
 
