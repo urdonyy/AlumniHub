@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <div class="py-6"
+    <div class="pb-24"
         x-data="{
             managing: false,
             selected: [],
@@ -350,3 +350,4 @@
         </div>
     </div>
 </x-app-layout>
+<x-footer />
