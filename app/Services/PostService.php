@@ -9,9 +9,12 @@ use App\Models\PostEvent;
 use App\Models\PostMedia;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class PostService
 {
+    public function __construct(private readonly ImageOptimizer $imageOptimizer) {}
+
     /**
      * Create a new post with attachments and flairs.
      */
@@ -113,6 +116,14 @@ class PostService
     }
 
     /**
+     * Publicly append new file attachments to an existing post (used when editing).
+     */
+    public function addAttachments(Post $post, User $user, array $files): void
+    {
+        $this->handleAttachments($post, $user, $files);
+    }
+
+    /**
      * Handle file attachments for a post.
      */
     protected function handleAttachments(Post $post, User $user, array $files): void
@@ -127,21 +138,32 @@ class PostService
                 ? "posts/{$post->community_id}/{$post->id}"
                 : "posts/personal/{$post->id}";
 
-            // Extract file metadata before storing
-            $fileSize = $file->getSize();
-            $fileType = $file->getClientMimeType();
+            // Resize + compress images before storing to cut storage egress.
+            // Non-images and animated GIFs return null and are stored as-is.
+            $optimized = $this->imageOptimizer->optimize($file);
 
-            // Get image dimensions from temp file before upload
-            $meta = [];
-            if (str_starts_with($fileType, 'image/')) {
-                $size = getimagesize($file->getRealPath());
-                if ($size) {
-                    $meta['width'] = $size[0];
-                    $meta['height'] = $size[1];
+            if ($optimized) {
+                $path = $storagePath . '/' . Str::random(40) . '.' . $optimized['extension'];
+                Storage::put($path, $optimized['contents'], ['CacheControl' => ImageOptimizer::CACHE_CONTROL]);
+
+                $fileType = $optimized['mime'];
+                $fileSize = strlen($optimized['contents']);
+                $meta = ['width' => $optimized['width'], 'height' => $optimized['height']];
+            } else {
+                $fileType = $file->getClientMimeType();
+                $fileSize = $file->getSize();
+
+                $meta = [];
+                if (str_starts_with($fileType, 'image/')) {
+                    $size = getimagesize($file->getRealPath());
+                    if ($size) {
+                        $meta['width'] = $size[0];
+                        $meta['height'] = $size[1];
+                    }
                 }
-            }
 
-            $path = $file->store($storagePath);
+                $path = $file->store($storagePath, ['CacheControl' => ImageOptimizer::CACHE_CONTROL]);
+            }
 
             // Create media record
             PostMedia::create([

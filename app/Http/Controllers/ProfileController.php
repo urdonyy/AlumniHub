@@ -6,8 +6,11 @@ use App\Http\Requests\ProfileUpdateRequest;
 use App\Models\Connection;
 use App\Models\Post;
 use App\Models\User;
+use App\Services\ImageOptimizer;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
@@ -17,6 +20,26 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    public function __construct(private readonly ImageOptimizer $imageOptimizer) {}
+
+    /**
+     * Resize + compress an uploaded image, then store it. Falls back to storing
+     * the original for formats the optimizer skips (e.g. GIF).
+     */
+    private function storeOptimizedImage(UploadedFile $file, string $directory, int $maxDimension): string
+    {
+        $optimized = $this->imageOptimizer->optimize($file, $maxDimension);
+
+        if ($optimized) {
+            $path = $directory . '/' . Str::random(40) . '.' . $optimized['extension'];
+            Storage::put($path, $optimized['contents'], ['CacheControl' => ImageOptimizer::CACHE_CONTROL]);
+
+            return $path;
+        }
+
+        return $file->store($directory, ['CacheControl' => ImageOptimizer::CACHE_CONTROL]);
+    }
+
     public function show(Request $request, User $user): View
     {
         $viewer = $request->user();
@@ -48,6 +71,7 @@ class ProfileController extends Controller
             ->with(['user', 'community', 'flairs', 'media'])
             ->withCount(['allComments as comments_count', 'likes'])
             ->where('status', 'published')
+            ->whereNull('trashed_at')
             ->where('user_id', $user->id)
             ->where(function ($q) {
                 $q->whereNull('body_markdown')
@@ -130,7 +154,7 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             $oldAvatarPath = $user->avatar_path;
-            $newAvatarPath = $request->file('avatar')->store('avatars/user_' . $user->id);
+            $newAvatarPath = $this->storeOptimizedImage($request->file('avatar'), 'avatars/user_' . $user->id, 512);
 
             $user->avatar_path = $newAvatarPath;
             $user->avatar_uploaded_at = now();
@@ -142,7 +166,7 @@ class ProfileController extends Controller
 
         if ($request->hasFile('banner')) {
             $oldBannerPath = $user->banner_path;
-            $newBannerPath = $request->file('banner')->store('banners/user_' . $user->id);
+            $newBannerPath = $this->storeOptimizedImage($request->file('banner'), 'banners/user_' . $user->id, 1600);
 
             $user->banner_path = $newBannerPath;
             $user->banner_uploaded_at = now();
@@ -296,6 +320,107 @@ class ProfileController extends Controller
         }
 
         return $dateValue;
+    }
+
+    public function onboardingStep(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $step = (int) $request->input('step', 0);
+
+        if ($step === 1) {
+            $request->validate(['avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480']]);
+            if ($request->hasFile('avatar')) {
+                $oldPath = $user->avatar_path;
+                $user->avatar_path = $this->storeOptimizedImage($request->file('avatar'), 'avatars/user_' . $user->id, 512);
+                $user->avatar_uploaded_at = now();
+                $user->save();
+                if ($oldPath && Storage::exists($oldPath)) {
+                    Storage::delete($oldPath);
+                }
+            }
+        } elseif ($step === 2) {
+            $request->validate(['banner' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480']]);
+            if ($request->hasFile('banner')) {
+                $oldPath = $user->banner_path;
+                $user->banner_path = $this->storeOptimizedImage($request->file('banner'), 'banners/user_' . $user->id, 1600);
+                $user->banner_uploaded_at = now();
+                $user->save();
+                if ($oldPath && Storage::exists($oldPath)) {
+                    Storage::delete($oldPath);
+                }
+            }
+        } elseif ($step === 3) {
+            $request->validate([
+                'experiences'               => ['nullable', 'array', 'max:10'],
+                'experiences.*.title'       => ['nullable', 'string', 'max:120'],
+                'experiences.*.organization'=> ['nullable', 'string', 'max:120'],
+                'experiences.*.start_month' => ['nullable', 'date_format:Y-m', 'before_or_equal:' . now()->format('Y-m')],
+                'experiences.*.end_month'   => ['nullable', 'date_format:Y-m', 'after_or_equal:experiences.*.start_month', 'before_or_equal:' . now()->format('Y-m')],
+                'experiences.*.description' => ['nullable', 'string', 'max:1000'],
+            ]);
+            $entries = collect($request->input('experiences', []))
+                ->map(fn($e) => [
+                    'title'        => trim($e['title'] ?? ''),
+                    'organization' => trim($e['organization'] ?? ''),
+                    'start_date'   => ($e['start_month'] ?? '') ? $e['start_month'] . '-01' : null,
+                    'end_date'     => ($e['end_month'] ?? '') ? $e['end_month'] . '-01' : null,
+                    'description'  => trim($e['description'] ?? '') ?: null,
+                ])
+                ->filter(fn($e) => $e['title'] !== '' && $e['organization'] !== '' && $e['start_date'] !== null)
+                ->values();
+            if ($entries->isNotEmpty()) {
+                DB::transaction(function () use ($user, $entries): void {
+                    foreach ($entries as $entry) {
+                        $user->profileExperiences()->create($entry);
+                    }
+                });
+            }
+        } elseif ($step === 4) {
+            $request->validate([
+                'educations'          => ['nullable', 'array', 'max:10'],
+                'educations.*.school' => ['nullable', 'string', 'max:160'],
+                'educations.*.degree' => ['nullable', 'string', 'max:160'],
+                'educations.*.start_date' => ['nullable', 'date', 'before_or_equal:today'],
+                'educations.*.end_date'   => ['nullable', 'date', 'after_or_equal:educations.*.start_date'],
+            ]);
+            $entries = collect($request->input('educations', []))
+                ->map(fn($e) => [
+                    'school'     => trim($e['school'] ?? ''),
+                    'degree'     => trim($e['degree'] ?? ''),
+                    'start_date' => ($e['start_date'] ?? '') ?: null,
+                    'end_date'   => ($e['end_date'] ?? '') ?: null,
+                ])
+                ->filter(fn($e) => $e['school'] !== '' && $e['degree'] !== '' && $e['start_date'] !== null)
+                ->values();
+            if ($entries->isNotEmpty()) {
+                DB::transaction(function () use ($user, $entries): void {
+                    foreach ($entries as $entry) {
+                        $user->profileEducations()->create($entry);
+                    }
+                });
+            }
+        } elseif ($step === 5) {
+            $request->validate(['skills' => ['nullable', 'string', 'max:2000']]);
+            $skills = collect(explode(',', (string) $request->input('skills', '')))
+                ->map(fn($s) => trim($s))
+                ->filter()
+                ->unique()
+                ->values();
+            $user->skills = $skills->isEmpty() ? null : $skills->implode(', ');
+            $user->save();
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Mark the profile-setup wizard as completed so it stops appearing on future logins.
+     */
+    public function onboardingComplete(Request $request): JsonResponse
+    {
+        $request->user()->forceFill(['profile_setup_completed_at' => now()])->save();
+
+        return response()->json(['ok' => true]);
     }
 
     /**

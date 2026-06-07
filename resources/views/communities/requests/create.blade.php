@@ -51,7 +51,16 @@
                     x-data="{
                         year: @js($oldYear),
                         section: @js($oldSection),
-                        get yearSection() { return (this.year && this.section) ? this.year + '-' + this.section : ''; }
+                        yearErr: false,
+                        get yearSection() { return (this.year && this.section) ? this.year + '-' + this.section : ''; },
+                        onYearInput() {
+                            if (this.year && (this.year < 1 || this.year > 3)) {
+                                this.yearErr = true;
+                                setTimeout(() => { this.year = ''; this.yearErr = false; }, 900);
+                            } else {
+                                this.yearErr = false;
+                            }
+                        }
                     }"
                     class="space-y-6 border-t border-gray-200 px-6 py-6">
                     @csrf
@@ -68,15 +77,22 @@
                             <x-input-label :value="__('Year & Section')" />
                             <div class="mt-1 flex items-center gap-2">
                                 <x-text-input type="text" inputmode="numeric" maxlength="1"
-                                    class="block w-full text-center" x-model="year"
-                                    required placeholder="Y" pattern="\d" aria-label="{{ __('Year') }}" />
+                                    class="block w-full text-center transition"
+                                    x-bind:class="yearErr ? 'border-rose-400 bg-rose-50 text-rose-700' : ''"
+                                    x-model="year"
+                                    @input="onYearInput()"
+                                    required placeholder="Y" pattern="[1-3]" aria-label="{{ __('Year') }}" />
                                 <span class="text-gray-500 select-none">-</span>
                                 <x-text-input type="text" inputmode="numeric" maxlength="1"
                                     class="block w-full text-center" x-model="section"
                                     required placeholder="S" pattern="\d" aria-label="{{ __('Section') }}" />
                             </div>
                             <input type="hidden" name="year_section" :value="yearSection">
-                            <p class="mt-1 text-xs text-gray-500">{{ __('Format: Y-S (e.g., 3-3)') }}</p>
+                            <p class="mt-1 text-xs transition"
+                                :class="yearErr ? 'text-rose-500 font-medium' : 'text-gray-500'">
+                                <span x-show="!yearErr">{{ __('Format: Y-S (e.g., 3-3)') }}</span>
+                                <span x-show="yearErr">{{ __('Year must be 1, 2, or 3 only.') }}</span>
+                            </p>
                             <x-input-error :messages="$errors->get('year_section')" class="mt-2" />
                         </div>
 
@@ -191,7 +207,7 @@
             <h2 class="mt-3 text-base font-semibold text-gray-900">{{ __('How does this work?') }}</h2>
 
             <p class="mt-1.5 text-sm leading-6 text-gray-600">
-                {{ __('Submit a program-batch community for admin review. Two co-moderators from your connections must accept first.') }}
+                {{ __('Submit a program-batch community for admin review. Two co-moderators from your connections must accept first (must be same batch and program).') }}
             </p>
 
             <x-tertiary-button x-on:click="$dispatch('close')" class="mt-5">{{ __('Got it') }}</x-tertiary-button>

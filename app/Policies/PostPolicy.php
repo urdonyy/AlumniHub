@@ -23,17 +23,22 @@ class PostPolicy
             return true;
         }
 
-        // Non-public posts require an authenticated, verified account.
-        if (!$user || !$user->isVerified()) {
+        if (!$user) {
             return false;
         }
 
-        // Members-only posts: check if user is a community member
+        // Members-only posts are viewable by any member of the community — including
+        // unverified members (everyone is auto-joined to General Alumni Hub and their
+        // program-batch). It's read-only for them; interaction is gated by verification.
         if ($post->visibility === 'members') {
             return $this->isCommunityMember($user, $post->community);
         }
 
-        // Connections visibility: check if user is connected with the post author or a community member
+        // Connections posts require a verified, connected account.
+        if (!$user->isVerified()) {
+            return false;
+        }
+
         if ($post->visibility === 'connections') {
             return $user->isConnectedWith($post->user) || $this->isCommunityMember($user, $post->community);
         }
@@ -51,31 +56,52 @@ class PostPolicy
     }
 
     /**
-     * Determine if the user can update the post.
+     * Determine if the user can update the post (edit via composer).
      */
     public function update(User $user, Post $post): bool
     {
-        // Post author can update their own post
+        return $user->id === $post->user_id;
+    }
+
+    /**
+     * Determine if the user can trash (soft-delete) the post.
+     * Authors trash their own; moderators/admins can also trash community posts.
+     */
+    public function trash(User $user, Post $post): bool
+    {
         if ($user->id === $post->user_id) {
             return true;
         }
 
-        // Community moderators or admins can update any post in their community
         return $this->isModeratorOrAdmin($user, $post->community);
     }
 
     /**
-     * Determine if the user can delete the post.
+     * Determine if the user can delete the post (hard delete via mod action).
      */
     public function delete(User $user, Post $post): bool
     {
-        // Post author can delete their own post
         if ($user->id === $post->user_id) {
             return true;
         }
 
-        // Community moderators or admins can delete any post in their community
         return $this->isModeratorOrAdmin($user, $post->community);
+    }
+
+    /**
+     * Determine if the user can restore a trashed post.
+     */
+    public function restore(User $user, Post $post): bool
+    {
+        return $user->id === $post->user_id;
+    }
+
+    /**
+     * Determine if the user can permanently delete a trashed post.
+     */
+    public function forceDelete(User $user, Post $post): bool
+    {
+        return $user->id === $post->user_id;
     }
 
     /**

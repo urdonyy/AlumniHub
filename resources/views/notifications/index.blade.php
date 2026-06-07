@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <div class="py-6"
+    <div class="pb-24"
         x-data="{
             managing: false,
             selected: [],
@@ -43,10 +43,6 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="bg-white shadow-sm sm:rounded-lg">
                 <div class="p-6">
-
-                    @if ($notifications->count() === 0 && $filter === 'all')
-                        <p class="text-sm text-gray-600">No notifications yet.</p>
-                    @else
 
                         {{-- Toolbar --}}
                         <div class="mb-3 flex items-center justify-between gap-3">
@@ -185,7 +181,11 @@
 
                         @if ($notifications->count() === 0)
                             <p class="rounded-lg border border-dashed border-gray-300 px-3 py-6 text-center text-sm text-gray-500">
-                                No {{ $filter !== 'all' ? $filter : '' }} notifications.
+                                @if ($filter === 'all')
+                                    No notifications yet.
+                                @else
+                                    No {{ $filter }} notifications.
+                                @endif
                             </p>
                         @else
                             <div class="space-y-3">
@@ -203,6 +203,11 @@
                                                 : route('posts.open', ['post' => $data['post_id']]);
                                         }
                                         $type           = $data['type'] ?? null;
+                                        // Post-removed notices point nowhere useful (the post is gone),
+                                        // so there's no "View" to offer.
+                                        if ($type === 'post_removed_violation') {
+                                            $url = null;
+                                        }
                                         $postTitle      = $data['post_title'] ?? null;
                                         $commentPreview = $data['comment_preview'] ?? null;
                                         $redirectPath   = $url
@@ -260,8 +265,14 @@
                                                     <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Removed</span>
                                                 @elseif ($type === 'community_post_removed')
                                                     <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Post removed</span>
+                                                @elseif ($type === 'post_removed_violation')
+                                                    <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Post removed</span>
                                                 @elseif ($type === 'event_invite')
                                                     <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">Event invite</span>
+                                                @elseif ($type === 'verification_approved')
+                                                    <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">Verified</span>
+                                                @elseif ($type === 'verification_rejected')
+                                                    <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Verification rejected</span>
                                                 @endif
 
                                                 @if ($postTitle)
@@ -269,7 +280,7 @@
                                                 @endif
                                             </div>
 
-                                            <p class="text-sm text-gray-900 truncate">{{ $message }}</p>
+                                            <p class="text-sm text-gray-900">{{ $message }}</p>
 
                                             @if ($commentPreview)
                                                 <p class="mt-1 text-xs text-gray-600 line-clamp-2">"{{ $commentPreview }}"</p>
@@ -334,10 +345,9 @@
                         <div class="mt-6">
                             {{ $notifications->links() }}
                         </div>
-
-                    @endif
                 </div>
             </div>
         </div>
     </div>
 </x-app-layout>
+<x-footer />

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Models\CommunityModeratorTransfer;
 use App\Models\Post;
 use App\Models\User;
 use App\Notifications\CommunityMemberRemovedNotification;
@@ -10,10 +11,52 @@ use App\Notifications\CommunityPostRemovedNotification;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CommunityModerationController extends Controller
 {
     use AuthorizesRequests;
+
+    public function manageMembers(Request $request, Community $community): View
+    {
+        abort_unless($community->isProgramBatch(), 404);
+        $this->authorizeMod($request, $community);
+
+        $user = $request->user();
+        $isModerator = $community->isModerator($user);
+        $isAdmin = $user->canManageCommunities();
+
+        $community->load(['members' => fn ($q) => $q->orderBy('name')]);
+
+        $myPendingTransfers = $isModerator
+            ? CommunityModeratorTransfer::where('community_id', $community->id)
+                ->where('from_user_id', $user->id)
+                ->where('status', CommunityModeratorTransfer::STATUS_PENDING)
+                ->get()
+                ->keyBy('to_user_id')
+            : collect();
+
+        return view('communities.manage-members', [
+            'community' => $community,
+            'user' => $user,
+            'isModerator' => $isModerator,
+            'isAdmin' => $isAdmin,
+            'myPendingTransfers' => $myPendingTransfers,
+        ]);
+    }
+
+    public function updateDescription(Request $request, Community $community): RedirectResponse
+    {
+        $this->authorizeMod($request, $community);
+
+        $validated = $request->validate([
+            'description' => ['required', 'string', 'min:10', 'max:2000'],
+        ]);
+
+        $community->update(['description' => $validated['description']]);
+
+        return back()->with('status', 'description-updated');
+    }
 
     public function removeMember(Request $request, Community $community, User $member): RedirectResponse
     {
@@ -51,7 +94,7 @@ class CommunityModerationController extends Controller
         }
 
         return redirect()
-            ->route('communities.posts.index', $community)
+            ->route('communities.show', $community)
             ->with('status', 'post-removed');
     }
 

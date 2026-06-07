@@ -5,16 +5,22 @@ use App\Http\Controllers\Admin\CommunityAdminController;
 use App\Http\Controllers\Admin\CommunityCreationRequestAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\AdminInboxController;
+use App\Http\Controllers\Admin\PostReportAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityCreationRequestController;
 use App\Http\Controllers\CommunityJoinRequestController;
 use App\Http\Controllers\CommunityModerationController;
+use App\Http\Controllers\CommunityModeratorTransferController;
 use App\Http\Controllers\ConnectionController;
 use App\Http\Controllers\CommunityPostController;
 use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostReportController;
+use App\Http\Controllers\PostTrashController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VerificationController;
@@ -173,6 +179,16 @@ Route::get('/feed/posts', function (Request $request, FeedService $feed) {
     ]);
 })->middleware('auth')->name('feed.posts');
 
+Route::get('/communities/{community}/feed', function (Request $request, Community $community, FeedService $feed) {
+    $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+    $posts = $feed->getCommunityFeed($community, $request->user(), 10, $selectedFlairIds);
+
+    return response()->json([
+        'html' => view('partials.feed-posts', ['posts' => $posts])->render(),
+        'hasMore' => $posts->hasMorePages(),
+    ]);
+})->middleware('auth')->name('communities.feed');
+
 Route::middleware('auth')->group(function () {
     Route::get('/communities', [CommunityController::class, 'index'])->name('communities.index');
 
@@ -193,26 +209,51 @@ Route::middleware('auth')->group(function () {
         ->name('community-invites.decline');
 
     Route::get('/communities/{community}', [CommunityController::class, 'show'])->name('communities.show');
+    Route::get('/communities/{community}/members', [CommunityController::class, 'members'])->name('communities.members');
     Route::post('/communities/{community}/join', [MembershipController::class, 'join'])->name('communities.join');
     Route::delete('/communities/{community}/leave', [MembershipController::class, 'leave'])->name('communities.leave');
 
     // Program-batch join requests
+    Route::get('/communities/{community}/join-requests', [CommunityJoinRequestController::class, 'index'])
+        ->name('communities.join-requests.index');
+    Route::get('/communities/{community}/manage-members', [CommunityModerationController::class, 'manageMembers'])
+        ->name('communities.manage-members');
     Route::post('/communities/{community}/join-request', [CommunityJoinRequestController::class, 'store'])
         ->name('communities.join-request.store');
     Route::post('/communities/{community}/join-requests/{joinRequest}/accept', [CommunityJoinRequestController::class, 'accept'])
         ->name('communities.join-requests.accept');
     Route::post('/communities/{community}/join-requests/{joinRequest}/ignore', [CommunityJoinRequestController::class, 'ignore'])
         ->name('communities.join-requests.ignore');
+    Route::delete('/communities/{community}/join-requests/{joinRequest}/withdraw', [CommunityJoinRequestController::class, 'withdraw'])
+        ->name('communities.join-requests.withdraw');
+    Route::get('/communities/{community}/join-requests/{joinRequest}/withdraw', function (Community $community) {
+        return redirect()->route('communities.show', $community);
+    });
 
     // Moderator actions
+    Route::patch('/communities/{community}/description', [CommunityModerationController::class, 'updateDescription'])
+        ->name('communities.description.update');
     Route::delete('/communities/{community}/members/{member}', [CommunityModerationController::class, 'removeMember'])
         ->name('communities.members.remove');
+
+    // Moderator role transfer (invite-based)
+    Route::post('/communities/{community}/mod-transfer/{toUser}', [CommunityModeratorTransferController::class, 'store'])
+        ->name('communities.mod-transfer.store');
+    Route::post('/mod-transfers/{transfer}/accept', [CommunityModeratorTransferController::class, 'accept'])
+        ->name('mod-transfers.accept');
+    Route::post('/mod-transfers/{transfer}/decline', [CommunityModeratorTransferController::class, 'decline'])
+        ->name('mod-transfers.decline');
+    Route::delete('/mod-transfers/{transfer}/cancel', [CommunityModeratorTransferController::class, 'cancel'])
+        ->name('mod-transfers.cancel');
     Route::delete('/communities/{community}/mod/posts/{post}', [CommunityModerationController::class, 'deletePost'])
         ->name('communities.mod.posts.destroy');
 
+    // Redirect legacy /posts index URL to the community page
+    Route::get('/communities/{community}/posts', fn (Community $community) => redirect()->route('communities.show', $community));
+
     // Posts - read routes
     Route::resource('communities.posts', CommunityPostController::class)
-        ->only(['index', 'show']);
+        ->only(['show']);
 
     // Posts - write routes (member-only)
     Route::middleware('ensure.community.member')
@@ -274,6 +315,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/like', [PostLikeController::class, 'toggleForPost'])
         ->middleware('auth')
         ->name('posts.like');
+
+    // Post management: edit, trash, restore, permanent delete
+    Route::middleware('auth')->group(function () {
+        Route::patch('/posts/{post}', [PostController::class, 'update'])
+            ->name('posts.update');
+        Route::delete('/posts/{post}/trash', [PostTrashController::class, 'destroy'])
+            ->name('posts.trash');
+        Route::post('/posts/{post}/restore', [PostTrashController::class, 'restore'])
+            ->name('posts.restore');
+        Route::delete('/posts/{post}/force', [PostTrashController::class, 'forceDelete'])
+            ->name('posts.force-delete');
+        Route::get('/profile/trash', [PostTrashController::class, 'index'])
+            ->name('profile.post-trash');
+
+        // Abuse reports — any verified user in a post's audience can report it.
+        Route::post('/posts/{post}/report', [PostReportController::class, 'store'])
+            ->name('posts.report');
+    });
     // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
 
     // // Posts - create/edit/delete (requires membership)
@@ -282,14 +341,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::get('/profiles/{user}', [ProfileController::class, 'show'])->name('profiles.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/onboarding-step', [ProfileController::class, 'onboardingStep'])->name('profile.onboarding-step');
+    Route::post('/profile/onboarding-complete', [ProfileController::class, 'onboardingComplete'])->name('profile.onboarding-complete');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/verification', [VerificationController::class, 'store'])->name('verification.store');
 
-    Route::view('/messages', 'placeholders.module', [
-        'title' => 'Messages',
-        'description' => 'Direct messaging will be available after the messaging backend is implemented.',
-    ])->name('messages.index');
+    // Direct messaging (1-on-1, accepted connections only). The unread-count and
+    // index routes are declared before the numeric {user} route to avoid collision.
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::get('/messages/unread-count', [MessageController::class, 'unreadCount'])->name('messages.unread-count');
+    Route::get('/messages/{user}', [MessageController::class, 'show'])->whereNumber('user')->name('messages.show');
+    Route::post('/messages/{user}', [MessageController::class, 'store'])->whereNumber('user')->name('messages.store');
+    Route::post('/messages/{user}/read', [MessageController::class, 'markRead'])->whereNumber('user')->name('messages.read');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/trash', [NotificationController::class, 'trash'])->name('notifications.trash');
@@ -334,6 +398,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->name('community-requests.approve');
     Route::post('/community-requests/{communityRequest}/reject', [CommunityCreationRequestAdminController::class, 'reject'])
         ->name('community-requests.reject');
+
+    // Reported posts review queue
+    Route::get('/reports', [PostReportAdminController::class, 'index'])->name('reports.index');
+    Route::post('/reports/{post}/keep', [PostReportAdminController::class, 'keep'])->name('reports.keep');
+    Route::delete('/reports/{post}', [PostReportAdminController::class, 'destroy'])->name('reports.destroy');
 
     Route::get('/verifications', [VerificationAdminController::class, 'index'])->name('verifications.index');
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');

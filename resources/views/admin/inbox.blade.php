@@ -108,6 +108,57 @@
                 @endif
             </div>
 
+            {{-- Reported Posts --}}
+            <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div class="flex items-center justify-between gap-3 border-b border-gray-200 px-6 py-5">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900">{{ __('Reported Posts') }}</h3>
+                        <p class="mt-0.5 text-sm text-gray-500">{{ __('Posts flagged by the community for review.') }}</p>
+                    </div>
+                    @if ($reportedPosts->isNotEmpty())
+                        <span class="inline-flex shrink-0 items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800 ring-1 ring-inset ring-rose-200">
+                            {{ $reportedPosts->count() }} {{ __('flagged') }}
+                        </span>
+                    @endif
+                </div>
+
+                <ul class="divide-y divide-gray-200">
+                    @forelse ($reportedPosts as $post)
+                        <li class="flex flex-col gap-3 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold text-gray-900">
+                                    {{ $post->title ?: \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 60) ?: __('(untitled post)') }}
+                                </p>
+                                <p class="mt-0.5 text-xs text-gray-500">
+                                    {{ __('By') }} {{ $post->user->name }}
+                                    @if ($post->community)
+                                        · {{ $post->community->name }}
+                                    @endif
+                                    · {{ $post->reports_count }} {{ __('reports') }}
+                                    · {{ $post->flagged_at?->diffForHumans() }}
+                                </p>
+                            </div>
+                            <a href="{{ route('admin.reports.index') }}"
+                                class="inline-flex shrink-0 items-center rounded-md bg-rose-700 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-600">
+                                {{ __('Review') }}
+                            </a>
+                        </li>
+                    @empty
+                        <li class="px-6 py-8 text-center text-sm text-gray-500">
+                            {{ __('No reported posts pending review.') }}
+                        </li>
+                    @endforelse
+                </ul>
+
+                @if ($reportedPosts->isNotEmpty())
+                    <div class="border-t border-gray-100 px-6 py-3">
+                        <a href="{{ route('admin.reports.index') }}" class="text-xs font-semibold text-indigo-700 hover:underline">
+                            {{ __('View all reported posts →') }}
+                        </a>
+                    </div>
+                @endif
+            </div>
+
         </div>
     </div>
 </x-app-layout>

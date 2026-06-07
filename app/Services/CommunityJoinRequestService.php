@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\UserAlreadyInProgramBatchException;
 use App\Models\Community;
 use App\Models\CommunityJoinRequest;
+use App\Models\CommunityModeratorTransfer;
 use App\Models\User;
 use App\Notifications\JoinRequestAcceptedNotification;
 use App\Notifications\JoinRequestIgnoredNotification;
@@ -45,6 +46,12 @@ class CommunityJoinRequestService
 
         DB::transaction(function () use ($jr, $mod) {
             $jr->community->members()->syncWithoutDetaching([$jr->user_id]);
+
+            // Clear any stale pending transfer offers so they don't carry over from a previous membership
+            CommunityModeratorTransfer::where('community_id', $jr->community_id)
+                ->where('to_user_id', $jr->user_id)
+                ->where('status', CommunityModeratorTransfer::STATUS_PENDING)
+                ->update(['status' => CommunityModeratorTransfer::STATUS_CANCELLED]);
 
             $jr->update([
                 'status' => CommunityJoinRequest::STATUS_ACCEPTED,

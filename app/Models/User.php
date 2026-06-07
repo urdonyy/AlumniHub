@@ -16,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'profile_setup_completed_at', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -45,7 +45,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function canInteractInCommunities(): bool
     {
-        return $this->role === 'admin' || $this->isVerifiedAlumni();
+        // Any verified account (approved alumni or student, or admin) has full
+        // community access — matching isVerified(), which the rest of the app
+        // (feed, composer, post/comment policies) gates on.
+        return $this->isVerified();
     }
 
     public function canManageCommunities(): bool
@@ -244,6 +247,21 @@ class User extends Authenticatable implements MustVerifyEmail
             ->exists();
     }
 
+    /**
+     * Count of unread direct messages addressed to this user (sent by others).
+     */
+    public function unreadMessagesCount(): int
+    {
+        return Message::query()
+            ->whereNull('read_at')
+            ->where('sender_id', '!=', $this->id)
+            ->whereHas('conversation', function ($query) {
+                $query->where('user_low_id', $this->id)
+                    ->orWhere('user_high_id', $this->id);
+            })
+            ->count();
+    }
+
     public function profileExperiences(): HasMany
     {
         return $this->hasMany(ProfileExperience::class)
@@ -281,6 +299,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'avatar_uploaded_at' => 'datetime',
             'banner_uploaded_at' => 'datetime',
             'email_verified_at' => 'datetime',
+            'profile_setup_completed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

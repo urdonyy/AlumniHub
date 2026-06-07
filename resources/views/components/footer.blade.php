@@ -10,11 +10,13 @@
                 </div>
 
                 <p class="text-sm text-white/80 leading-relaxed">
-                    AlumniHub connects PUP ITECH graduates with opportunities, events, and fellow alumni.
+                    AlumniHub connects PUP ITECH graduates and students with opportunities, events, and their fellow
+                    <em>Teknolohistas ng Bayan</em>.
                 </p>
 
                 <div class="flex gap-3 mt-5">
-                    <a href="#" class="p-2 rounded-md bg-white/10 hover:bg-white/20 transition">
+                    <a href="https://www.facebook.com/share/18amJzMWxS" target="_blank"
+                        class="p-2 rounded-md bg-white/10 hover:bg-white/20 transition">
                         <!-- Facebook Icon -->
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path
@@ -22,59 +24,64 @@
                         </svg>
                     </a>
 
-                    <a href="#" class="p-2 rounded-md bg-white/10 hover:bg-white/20 transition">
-                        <!-- LinkedIn Icon -->
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M20.4 20.4h-3.6v-5.6c0-1.3 0-3-1.8-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1c.5-.9 1.6-1.8 3.3-1.8 3.5 0 4.2 2.3 4.2 5.3v6.3zM5.3 7.4c-1.2 0-2.1-1-2.1-2.1S4.1 3.2 5.3 3.2s2.1 1 2.1 2.1-1 2.1-2.1 2.1zM7.1 20.4H3.5V9h3.6v11.4z" />
-                        </svg>
-                    </a>
-
-                    <a href="#" class="p-2 rounded-md bg-white/10 hover:bg-white/20 transition">
-                        <!-- Mail Icon -->
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                            <path
-                                d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
-                        </svg>
-                    </a>
+                    <address class="p-2 rounded-md bg-white/10 hover:bg-white/20 transition not-italic">
+                        <a href="mailto:alumnihub.2026@gmail.com" target="_blank" class="block">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z" />
+                            </svg>
+                        </a>
+                    </address>
                 </div>
             </div>
 
             <div>
                 <h3 class="font-semibold text-base mb-4 text-[#FFC107]">Quick Links</h3>
                 <ul class="space-y-2 text-sm text-white/80">
-                    <li><a href="{{ url('/') }}" class="hover:text-white transition">Home</a></li>
-                    <li><a href="#" class="hover:text-white transition">About</a></li>
-                    <li><a href="#" class="hover:text-white transition">Events</a></li>
-                    <li><a href="#" class="hover:text-white transition">Contact</a></li>
+                    @auth
+                        <li><a href="{{ route('dashboard') }}" class="hover:text-white transition">Dashboard</a></li>
+                        <li><a href="{{ route('connections.index') }}" class="hover:text-white transition">Connections</a>
+                        </li>
+                        <li><a href="{{ route('communities.index') }}" class="hover:text-white transition">Communities</a>
+                        </li>
+                        <li><a href="{{ route('profiles.show', auth()->user()) }}"
+                                class="hover:text-white transition">Profile</a></li>
+                    @else
+                        <li><a href="{{ url('/') }}" class="hover:text-white transition">Get Started</a></li>
+                        <li><a href="#prblem" class="hover:text-white transition">Challenges</a></li>
+                        <li><a href="#features" class="hover:text-white transition">AlumniHub Features</a></li>
+                        <li><a href="#alumnihub-team" class="hover:text-white transition">The Team</a></li>
+                    @endauth
                 </ul>
             </div>
 
             <div>
                 <h3 class="font-semibold text-base mb-4 text-[#FFC107]">Resources</h3>
                 <ul class="space-y-2 text-sm text-white/80">
-                    <li><a href="#" class="hover:text-white transition">Job Opportunities</a></li>
-                    <li><a href="#" class="hover:text-white transition">Announcements</a></li>
-                    <li><a href="#" class="hover:text-white transition">FAQ</a></li>
-                    <li><a href="#" class="hover:text-white transition">Privacy Policy</a></li>
+                    <li><a href="#" class="hover:cursor-not-allowed transition" title="Coming Soon">Announcements</a>
+                    </li>
+                    <li><a href="#" class="hover:cursor-not-allowed transition" title="Coming Soon">FAQ</a></li>
+                    <li><a href="#" class="hover:cursor-not-allowed transition" title="Coming Soon">Privacy Policy</a>
+                    </li>
                 </ul>
             </div>
 
             <div>
                 <h3 class="font-semibold text-base mb-4 text-[#FFC107]">Stay Updated</h3>
                 <p class="text-sm text-white/80 mb-4">
-                    Subscribe to get updates about alumni events and announcements.
+                    Subscribe to get updates about <em>Teknolohistas ng Bayan</em> events and announcements.
                 </p>
 
-                <form class="flex flex-col sm:flex-row gap-3">
-                    <input type="email" placeholder="Enter your email"
-                        class="w-full px-4 py-2 rounded-md text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#FFC107]" />
+                <form class="flex flex-col sm:flex-row gap-3" onsubmit="return false;" aria-disabled="true">
+                    <input type="email" placeholder="Enter your email" disabled title="Coming Soon"
+                        class="w-full px-4 py-2 rounded-md text-sm text-black bg-white/60 cursor-not-allowed focus:outline-none" />
 
-                    <button type="submit"
-                        class="bg-[#FFC107] text-red-900 font-semibold px-5 py-2 rounded-md text-sm hover:bg-yellow-400 transition whitespace-nowrap">
+                    <button type="submit" disabled title="Coming Soon"
+                        class="bg-[#FFC107]/60 text-red-900/70 font-semibold px-5 py-2 rounded-md text-sm cursor-not-allowed whitespace-nowrap">
                         Subscribe
                     </button>
                 </form>
+                <!-- <p class="mt-2 text-xs italic text-white/60 flex justify-center">Coming soon</p> -->
             </div>
 
         </div>
@@ -85,9 +92,9 @@
             </p>
 
             <div class="flex gap-4 text-xs text-white/70">
-                <a href="#" class="hover:text-white transition">Terms</a>
-                <a href="#" class="hover:text-white transition">Privacy</a>
-                <a href="#" class="hover:text-white transition">Help</a>
+                <a href="#" class="transition cursor-not-allowed">Terms</a>
+                <a href="#" class="transition cursor-not-allowed">Privacy</a>
+                <a href="#" class="transition cursor-not-allowed">Help</a>
             </div>
         </div>
     </div>

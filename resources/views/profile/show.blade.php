@@ -86,15 +86,34 @@
                                 </div>
 
                                 @if ($isOwnProfile)
-                                    <a href="{{ route('profile.edit', ['section' => 'account-status']) }}"
-                                        class="inline-flex self-end items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0 lg:self-auto">
-                                        <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
-                                        <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
-                                        <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
-                                    </a>
-                                @elseif ($viewer->canSendConnectionRequests())
+                                    <div class="flex items-center gap-2 self-end lg:self-auto">
+                                        {{-- Deleted posts bin --}}
+                                        <a href="{{ route('profile.post-trash') }}"
+                                            class="inline-flex items-center justify-center px-3 py-1 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase whitespace-nowrap tracking-widest hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0">
+                                            <svg class="h-4 w-4 min-[1025px]:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            <span class="sr-only min-[1025px]:not-sr-only hidden min-[1025px]:inline">{{ __('Deleted Posts') }}</span>
+                                        </a>
+                                        {{-- Edit profile settings --}}
+                                        <a href="{{ route('profile.edit', ['section' => 'account-status']) }}"
+                                            class="inline-flex items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0">
+                                            <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
+                                            <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
+                                            <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
+                                        </a>
+                                    </div>
+                                @elseif ($viewer->canSendConnectionRequests() && $profileUser->isVerified())
                                     @if ($connectionState === 'connected')
-                                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('messages.show', $profileUser) }}"
+                                                class="inline-flex items-center gap-1.5 rounded-md bg-red-900 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800 transition">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                                </svg>
+                                                {{ __('Message') }}
+                                            </a>
+                                            <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
                                                 class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-emerald-700 hover:bg-emerald-100 transition">
                                                 {{ __('Connected') }}
@@ -120,7 +139,8 @@
                                                     </button>
                                                 </form>
                                             </div>
-                                        </div>
+                                            </div>{{-- end Connected dropdown --}}
+                                        </div>{{-- end message + connected row --}}
                                     @elseif ($connectionState === 'invite_sent' && $activeConnection)
                                         <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
@@ -379,6 +399,11 @@
                                                 $profilePostCommentsUrl = $post->community
                                                     ? route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post])
                                                     : route('posts.comments.index', ['post' => $post]);
+                                                $carouselTrashUrl = route('posts.trash', $post);
+                                                $carouselEditUrl  = route('posts.update', $post);
+                                                $carouselReportUrl = route('posts.report', $post);
+                                                $isCarouselAuthor = auth()->id() === $post->user_id;
+                                                $canReportCarousel = ! $isCarouselAuthor && auth()->user()->isVerified();
                                             @endphp
                                             <div class="w-full shrink-0 min-w-0">
                                                 <article
@@ -403,11 +428,65 @@
                                                                 </div>
                                                             </div>
 
+                                                            <div class="flex items-center gap-1.5 shrink-0" @click.stop>
                                                             <span
-                                                                class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
+                                                                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
                                                                 {{ $visibilityConfig[1] }}
                                                             </span>
-                                                        </div>
+                                                            @if ($isCarouselAuthor || $canReportCarousel)
+                                                                <div class="relative" x-data="{ menuOpen: false }">
+                                                                    <button type="button" @click.stop="menuOpen = !menuOpen"
+                                                                        class="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                                                                        aria-label="Post options">
+                                                                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                                                                        </svg>
+                                                                    </button>
+                                                                    <div x-show="menuOpen" @click.away="menuOpen = false"
+                                                                        x-transition:enter="transition ease-out duration-100"
+                                                                        x-transition:enter-start="opacity-0 scale-95"
+                                                                        x-transition:enter-end="opacity-100 scale-100"
+                                                                        x-transition:leave="transition ease-in duration-75"
+                                                                        x-transition:leave-start="opacity-100 scale-100"
+                                                                        x-transition:leave-end="opacity-0 scale-95"
+                                                                        class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1"
+                                                                        style="display:none">
+                                                                        @if ($isCarouselAuthor)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-edit-composer', @js(['postId' => $post->id, 'postType' => $post->post_type, 'title' => $post->title, 'body' => $post->body_markdown, 'visibility' => $post->visibility, 'communityId' => $post->community_id, 'editUrl' => $carouselEditUrl, 'flairs' => $post->flairs->pluck('id'), 'media' => $post->media->map(fn($m) => ['id' => $m->id, 'url' => $m->url]), 'event' => $post->event ? ['event_type' => $post->event->event_type, 'starts_at' => $post->event->starts_at?->format('Y-m-d\TH:i'), 'ends_at' => $post->event->ends_at?->format('Y-m-d\TH:i'), 'external_link' => $post->event->external_link, 'address' => $post->event->address, 'venue' => $post->event->venue] : null]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                                            </svg>
+                                                                            Edit post
+                                                                        </button>
+                                                                        <form method="POST" action="{{ $carouselTrashUrl }}" @submit.prevent="if(confirm('Move this post to trash?')) $el.submit()">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button type="submit" @click.stop="menuOpen = false"
+                                                                                class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                                </svg>
+                                                                                Delete post
+                                                                            </button>
+                                                                        </form>
+                                                                        @endif
+                                                                        @if ($canReportCarousel)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-report-modal', @js(['reportUrl' => $carouselReportUrl]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                                                            </svg>
+                                                                            Report post
+                                                                        </button>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                            </div>{{-- end pill+menu wrapper --}}
+                                                        </div>{{-- end header row --}}
 
                                                         @if ($post->flairs->count() > 0)
                                                             <div class="mt-3 flex flex-wrap gap-1.5">
@@ -576,16 +655,20 @@
                                         <div class="flex items-start justify-between gap-3">
                                             <div>
                                                 <h4 id="avatar-crop-title" class="text-base font-semibold text-gray-900">{{ __('Adjust profile photo') }}</h4>
-                                                <p class="mt-1 text-xs text-gray-600">{{ __('Drag the zoom and apply when ready.') }}</p>
+                                                <p class="mt-1 text-xs text-gray-600">{{ __('Drag the photo to reposition, use the slider to zoom, then apply.') }}</p>
                                             </div>
                                             <button id="close-avatar-crop-modal" type="button"
-                                                class="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                                                aria-label="{{ __('Close crop dialog') }}">&times;</button>
+                                                class="-mt-1 rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                                aria-label="{{ __('Close crop dialog') }}">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
                                         </div>
 
                                         <div class="mt-4 flex items-center justify-center">
                                             <canvas id="avatar-crop-canvas" width="320" height="320"
-                                                class="h-56 w-56 rounded-full border border-gray-200 bg-gray-100"></canvas>
+                                                class="h-56 w-56 touch-none select-none rounded-full border border-gray-200 bg-gray-100"></canvas>
                                         </div>
 
                                         <div class="mt-4">
@@ -596,11 +679,11 @@
 
                                         <div class="mt-5 flex items-center justify-end gap-3">
                                             <button id="cancel-avatar-crop" type="button"
-                                                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition hover:bg-gray-100">
+                                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                                                 {{ __('Cancel') }}
                                             </button>
                                             <button id="apply-avatar-crop" type="button"
-                                                class="inline-flex items-center rounded-md border border-gray-900 bg-gray-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-white hover:text-gray-900">
+                                                class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
                                                 {{ __('Apply Crop') }}
                                             </button>
                                         </div>
@@ -714,8 +797,7 @@
                 return;
             }
 
-            const context = cropCanvas.getContext('2d');
-            let sourceImage = null;
+            const cropper = window.createAvatarCropper({ canvas: cropCanvas, zoomInput: cropZoom, outputSize: 512 });
             let sourceUrl = null;
 
             const syncBodyScroll = () => {
@@ -776,21 +858,6 @@
                 openProfileMediaModal();
             @endif
 
-            const renderCrop = () => {
-                if (!sourceImage || !context) {
-                    return;
-                }
-
-                const zoom = Number(cropZoom.value) / 100;
-                const base = Math.min(sourceImage.naturalWidth, sourceImage.naturalHeight);
-                const sampleSize = Math.max(1, Math.floor(base / zoom));
-                const sx = Math.floor((sourceImage.naturalWidth - sampleSize) / 2);
-                const sy = Math.floor((sourceImage.naturalHeight - sampleSize) / 2);
-
-                context.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-                context.drawImage(sourceImage, sx, sy, sampleSize, sampleSize, 0, 0, cropCanvas.width, cropCanvas.height);
-            };
-
             bannerInput.addEventListener('change', () => {
                 const file = bannerInput.files && bannerInput.files[0];
 
@@ -820,25 +887,10 @@
                 }
 
                 sourceUrl = URL.createObjectURL(file);
-                cropZoom.value = '100';
-
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    if (event.target && typeof event.target.result === 'string') {
-                        avatarPreview.src = event.target.result;
-                    }
-                };
-                reader.readAsDataURL(file);
-
-                sourceImage = new Image();
-                sourceImage.onload = () => {
-                    renderCrop();
-                    openCropModal();
-                };
-                sourceImage.src = sourceUrl;
+                cropper.reset();
+                cropper.setImage(sourceUrl);
+                openCropModal();
             });
-
-            cropZoom.addEventListener('input', renderCrop);
 
             cropModal.addEventListener('click', (event) => {
                 if (event.target === cropModal) {
@@ -850,13 +902,7 @@
             cancelCropBtn.addEventListener('click', closeCropModal);
 
             applyCropBtn.addEventListener('click', () => {
-                if (!context || !sourceImage) {
-                    return;
-                }
-
-                renderCrop();
-
-                cropCanvas.toBlob((blob) => {
+                cropper.toBlob((blob) => {
                     if (!blob) {
                         return;
                     }
@@ -869,15 +915,16 @@
                     transfer.items.add(croppedFile);
                     avatarInput.files = transfer.files;
 
-                    avatarPreview.src = cropCanvas.toDataURL('image/png');
+                    avatarPreview.src = URL.createObjectURL(blob);
                     cropMessage.textContent = 'Crop applied. Save to upload this avatar.';
                     closeCropModal();
-                }, 'image/png', 0.92);
+                });
             });
         });
     </script>
 
     <x-post-detail-modal />
+    <x-report-post-modal />
 
     <x-footer />
 </x-app-layout>

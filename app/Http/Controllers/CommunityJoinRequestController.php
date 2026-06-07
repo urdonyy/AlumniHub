@@ -9,12 +9,31 @@ use App\Services\CommunityJoinRequestService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CommunityJoinRequestController extends Controller
 {
     use AuthorizesRequests;
 
     public function __construct(private readonly CommunityJoinRequestService $service) {}
+
+    public function index(Request $request, Community $community): View
+    {
+        abort_unless($community->isProgramBatch(), 404);
+        $this->authorizeMod($request, $community);
+
+        $pendingJoinRequests = CommunityJoinRequest::query()
+            ->with('user')
+            ->where('community_id', $community->id)
+            ->where('status', CommunityJoinRequest::STATUS_PENDING)
+            ->latest()
+            ->get();
+
+        return view('communities.join-requests', [
+            'community' => $community,
+            'pendingJoinRequests' => $pendingJoinRequests,
+        ]);
+    }
 
     public function store(Request $request, Community $community): RedirectResponse
     {
@@ -55,6 +74,25 @@ class CommunityJoinRequestController extends Controller
         $this->service->ignore($joinRequest, $request->user());
 
         return back()->with('status', 'join-request-ignored');
+    }
+
+    public function withdraw(Request $request, Community $community, CommunityJoinRequest $joinRequest): RedirectResponse
+    {
+        abort_unless($joinRequest->user_id === $request->user()->id, 403);
+        abort_unless($joinRequest->community_id === $community->id, 404);
+
+        if ($joinRequest->status === CommunityJoinRequest::STATUS_ACCEPTED) {
+            $isMember = $community->members()->whereKey($request->user()->id)->exists();
+            return redirect()->route('communities.show', $community)
+                ->with('status', $isMember ? 'join-request-already-accepted' : 'join-request-withdrawn');
+        }
+
+        if ($joinRequest->isPending()) {
+            $joinRequest->delete();
+        }
+
+        return redirect()->route('communities.show', $community)
+            ->with('status', 'join-request-withdrawn');
     }
 
     private function authorizeMod(Request $request, Community $community): void

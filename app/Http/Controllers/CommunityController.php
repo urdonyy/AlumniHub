@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Community;
 use App\Models\CommunityCreationRequest;
 use App\Models\CommunityJoinRequest;
+use App\Models\CommunityModeratorTransfer;
+use App\Models\Flair;
 use App\Models\Post;
+use App\Services\FeedService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -69,16 +73,10 @@ class CommunityController extends Controller
         ]);
     }
 
-    public function show(Request $request, Community $community): View
+    public function show(Request $request, Community $community, FeedService $feed): View
     {
         $community->loadCount('members');
-        $community->load([
-            'creator',
-            'rules',
-            'members' => function ($query) {
-                $query->orderBy('name')->limit(12);
-            },
-        ]);
+        $community->load(['creator', 'rules']);
 
         $user = $request->user();
         $user->loadMissing('communities');
@@ -89,7 +87,7 @@ class CommunityController extends Controller
         $canModerate = $isModerator || $isAdmin;
 
         $pendingJoinRequest = null;
-        $pendingJoinRequests = collect();
+        $pendingJoinRequestCount = 0;
         $otherProgramBatch = null;
 
         if ($community->isProgramBatch()) {
@@ -104,32 +102,57 @@ class CommunityController extends Controller
             }
 
             if ($canModerate) {
-                $pendingJoinRequests = CommunityJoinRequest::query()
-                    ->with('user')
-                    ->where('community_id', $community->id)
+                $pendingJoinRequestCount = CommunityJoinRequest::where('community_id', $community->id)
                     ->where('status', CommunityJoinRequest::STATUS_PENDING)
-                    ->latest()
-                    ->get();
+                    ->count();
             }
         }
 
         // Activity feed: members (and admins) see every post in the community,
-        // everyone else only sees public posts. Newest first.
-        $activityPosts = Post::query()
-            ->with(['user', 'community', 'flairs', 'media'])
-            ->withCount(['allComments as comments_count', 'likes'])
+        // everyone else only sees public posts. Pulse-ranked, paginated, with
+        // an optional flair filter — same engine as the dashboard feed.
+        $selectedFlairIds = array_values(array_unique(array_map('intval', array_filter((array) $request->query('flairs', [])))));
+        $communityFeed = $feed->getCommunityFeed($community, $user, 10, $selectedFlairIds);
+
+        // Members (incl. unverified) see all posts; non-members see public only.
+        $canSeeAllPosts = $isMember || $isAdmin;
+        $postCount = Post::query()
             ->where('status', 'published')
+            ->whereNull('trashed_at')
             ->where('community_id', $community->id)
-            ->when(! ($isMember || $isAdmin), function ($query) {
-                $query->where('visibility', 'public');
-            })
-            ->orderByDesc('published_at')
-            ->orderByDesc('id')
+            ->when(! $canSeeAllPosts, fn ($query) => $query->where('visibility', 'public'))
+            ->count();
+
+        // Flairs available for the filter (global + this community's), and the
+        // composer picker (selectable flairs only — system flairs like "Event" excluded).
+        $availableFlairs = Flair::query()
+            ->whereNull('community_id')
+            ->orWhere('community_id', $community->id)
             ->get();
+
+        $flairsByCommunity = $availableFlairs
+            ->where('is_system', false)
+            ->groupBy(fn ($f) => $f->community_id ?? 'global')
+            ->map(fn ($group) => $group->values()->map(fn ($f) => [
+                'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
+            ]));
+
+        // Incoming transfer invite — only relevant if the user is still a member
+        $pendingTransferToMe = $isMember
+            ? CommunityModeratorTransfer::where('community_id', $community->id)
+                ->where('to_user_id', $user->id)
+                ->where('status', CommunityModeratorTransfer::STATUS_PENDING)
+                ->with('fromUser')
+                ->first()
+            : null;
 
         return view('communities.show', [
             'community' => $community,
-            'activityPosts' => $activityPosts,
+            'communityFeed' => $communityFeed,
+            'postCount' => $postCount,
+            'availableFlairs' => $availableFlairs,
+            'flairsByCommunity' => $flairsByCommunity,
+            'selectedFlairIds' => $selectedFlairIds,
             'isMember' => $isMember,
             'canInteract' => $user->canInteractInCommunities(),
             'isVerified' => $user->isVerified(),
@@ -137,9 +160,30 @@ class CommunityController extends Controller
             'isAdmin' => $isAdmin,
             'canModerate' => $canModerate,
             'pendingJoinRequest' => $pendingJoinRequest,
-            'pendingJoinRequests' => $pendingJoinRequests,
+            'pendingJoinRequestCount' => $pendingJoinRequestCount,
             'otherProgramBatch' => $otherProgramBatch,
+            'pendingTransferToMe' => $pendingTransferToMe,
             'user' => $user,
+        ]);
+    }
+
+    /**
+     * Full member list for the community members modal (AJAX, loaded on open).
+     * Alphabetical, scrollable (not paginated). Visible to verified users only.
+     */
+    public function members(Request $request, Community $community): JsonResponse
+    {
+        abort_unless($request->user()->isVerified(), 403);
+
+        $members = $community->members()
+            ->orderBy('name')
+            ->get(['users.id', 'users.name', 'users.program_course', 'users.batch_year', 'users.avatar_path']);
+
+        $modRoles = $community->moderators()->pluck('role', 'user_id');
+
+        return response()->json([
+            'html' => view('partials.community-members', ['members' => $members, 'modRoles' => $modRoles])->render(),
+            'count' => $members->count(),
         ]);
     }
 }
