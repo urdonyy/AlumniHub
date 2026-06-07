@@ -28,7 +28,7 @@
             : collect();
     @endphp
 
-    <div class="py-8"
+    <div class="pb-24"
         x-data="connectionsPage({
             countsUrl: '{{ route('connections.counts') }}',
             initial: {
@@ -426,3 +426,4 @@
         }
     </script>
 </x-app-layout>
+<x-footer />
