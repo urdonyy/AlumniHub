@@ -84,6 +84,14 @@
                     // to General Hub hides "Public", so coerce a stale "public" to "members").
                     this.$watch('communityId', () => this.coerceAudienceForCommunity());
 
+                    // Lock body scroll while the composer is open (shared with the
+                    // post-view modal so the modal→edit hand-off never snaps). Falls
+                    // back to a no-op if the shared lock isn't on the page.
+                    this.$watch('open', (val) => {
+                        if (val) window.__bodyScrollLock?.lock();
+                        else window.__bodyScrollLock?.unlock();
+                    });
+
                     window.addEventListener('open-edit-composer', (e) => {
                         const d = e.detail;
                         this.editMode    = true;

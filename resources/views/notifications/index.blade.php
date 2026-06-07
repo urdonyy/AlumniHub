@@ -203,6 +203,11 @@
                                                 : route('posts.open', ['post' => $data['post_id']]);
                                         }
                                         $type           = $data['type'] ?? null;
+                                        // Post-removed notices point nowhere useful (the post is gone),
+                                        // so there's no "View" to offer.
+                                        if ($type === 'post_removed_violation') {
+                                            $url = null;
+                                        }
                                         $postTitle      = $data['post_title'] ?? null;
                                         $commentPreview = $data['comment_preview'] ?? null;
                                         $redirectPath   = $url
@@ -260,6 +265,8 @@
                                                     <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Removed</span>
                                                 @elseif ($type === 'community_post_removed')
                                                     <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Post removed</span>
+                                                @elseif ($type === 'post_removed_violation')
+                                                    <span class="inline-flex items-center rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 ring-1 ring-inset ring-rose-200">Post removed</span>
                                                 @elseif ($type === 'event_invite')
                                                     <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200">Event invite</span>
                                                 @elseif ($type === 'verification_approved')
@@ -273,7 +280,7 @@
                                                 @endif
                                             </div>
 
-                                            <p class="text-sm text-gray-900 truncate">{{ $message }}</p>
+                                            <p class="text-sm text-gray-900">{{ $message }}</p>
 
                                             @if ($commentPreview)
                                                 <p class="mt-1 text-xs text-gray-600 line-clamp-2">"{{ $commentPreview }}"</p>

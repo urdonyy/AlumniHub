@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CommunityAdminController;
 use App\Http\Controllers\Admin\CommunityCreationRequestAdminController;
 use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\AdminInboxController;
+use App\Http\Controllers\Admin\PostReportAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityCreationRequestController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostReportController;
 use App\Http\Controllers\PostTrashController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -323,6 +325,10 @@ Route::middleware('auth')->group(function () {
             ->name('posts.force-delete');
         Route::get('/profile/trash', [PostTrashController::class, 'index'])
             ->name('profile.post-trash');
+
+        // Abuse reports — any verified user in a post's audience can report it.
+        Route::post('/posts/{post}/report', [PostReportController::class, 'store'])
+            ->name('posts.report');
     });
     // Route::get('/communities/{community}/posts/{post}', [PostController::class, 'show'])->name('communities.posts.show');
 
@@ -389,6 +395,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->name('community-requests.approve');
     Route::post('/community-requests/{communityRequest}/reject', [CommunityCreationRequestAdminController::class, 'reject'])
         ->name('community-requests.reject');
+
+    // Reported posts review queue
+    Route::get('/reports', [PostReportAdminController::class, 'index'])->name('reports.index');
+    Route::post('/reports/{post}/keep', [PostReportAdminController::class, 'keep'])->name('reports.keep');
+    Route::delete('/reports/{post}', [PostReportAdminController::class, 'destroy'])->name('reports.destroy');
 
     Route::get('/verifications', [VerificationAdminController::class, 'index'])->name('verifications.index');
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');

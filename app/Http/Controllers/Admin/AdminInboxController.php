@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CommunityCreationRequest;
+use App\Models\Post;
 use App\Models\VerificationDocument;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
@@ -24,9 +25,17 @@ class AdminInboxController extends Controller
             ->latest()
             ->get();
 
+        $reportedPosts = Post::query()
+            ->whereNotNull('flagged_at')
+            ->whereNull('trashed_at')
+            ->with(['user', 'community'])
+            ->orderByDesc('flagged_at')
+            ->get();
+
         return view('admin.inbox', [
             'pendingCommunityRequests' => $pendingCommunityRequests,
             'pendingVerifications' => $pendingVerifications,
+            'reportedPosts' => $reportedPosts,
         ]);
     }
 
@@ -34,11 +43,13 @@ class AdminInboxController extends Controller
     {
         $communityRequests = CommunityCreationRequest::pendingAdmin()->count();
         $verifications = VerificationDocument::where('status', 'pending')->count();
+        $reportedPosts = Post::whereNotNull('flagged_at')->whereNull('trashed_at')->count();
 
         return response()->json([
             'community_requests' => $communityRequests,
             'verifications' => $verifications,
-            'total' => $communityRequests + $verifications,
+            'reported_posts' => $reportedPosts,
+            'total' => $communityRequests + $verifications + $reportedPosts,
         ]);
     }
 }

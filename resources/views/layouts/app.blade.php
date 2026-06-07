@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="user-verified" content="{{ auth()->check() && auth()->user()->isVerified() ? '1' : '0' }}">
+    <meta name="user-id" content="{{ auth()->id() }}">
     <meta name="user-pending-doc" content="{{ auth()->check() && auth()->user()->hasPendingVerificationDocument() ? '1' : '0' }}">
 
     <title>{{ isset($title) ? $title . ' | ' . config('app.name', 'AlumniHub') : config('app.name', 'AlumniHub') }}</title>

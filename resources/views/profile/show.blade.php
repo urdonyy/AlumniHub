@@ -401,7 +401,9 @@
                                                     : route('posts.comments.index', ['post' => $post]);
                                                 $carouselTrashUrl = route('posts.trash', $post);
                                                 $carouselEditUrl  = route('posts.update', $post);
+                                                $carouselReportUrl = route('posts.report', $post);
                                                 $isCarouselAuthor = auth()->id() === $post->user_id;
+                                                $canReportCarousel = ! $isCarouselAuthor && auth()->user()->isVerified();
                                             @endphp
                                             <div class="w-full shrink-0 min-w-0">
                                                 <article
@@ -431,7 +433,7 @@
                                                                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
                                                                 {{ $visibilityConfig[1] }}
                                                             </span>
-                                                            @if ($isCarouselAuthor)
+                                                            @if ($isCarouselAuthor || $canReportCarousel)
                                                                 <div class="relative" x-data="{ menuOpen: false }">
                                                                     <button type="button" @click.stop="menuOpen = !menuOpen"
                                                                         class="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
@@ -449,6 +451,7 @@
                                                                         x-transition:leave-end="opacity-0 scale-95"
                                                                         class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1"
                                                                         style="display:none">
+                                                                        @if ($isCarouselAuthor)
                                                                         <button type="button"
                                                                             @click.stop="menuOpen = false; $dispatch('open-edit-composer', @js(['postId' => $post->id, 'postType' => $post->post_type, 'title' => $post->title, 'body' => $post->body_markdown, 'visibility' => $post->visibility, 'communityId' => $post->community_id, 'editUrl' => $carouselEditUrl, 'flairs' => $post->flairs->pluck('id'), 'media' => $post->media->map(fn($m) => ['id' => $m->id, 'url' => $m->url]), 'event' => $post->event ? ['event_type' => $post->event->event_type, 'starts_at' => $post->event->starts_at?->format('Y-m-d\TH:i'), 'ends_at' => $post->event->ends_at?->format('Y-m-d\TH:i'), 'external_link' => $post->event->external_link, 'address' => $post->event->address, 'venue' => $post->event->venue] : null]))"
                                                                             class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -468,6 +471,17 @@
                                                                                 Delete post
                                                                             </button>
                                                                         </form>
+                                                                        @endif
+                                                                        @if ($canReportCarousel)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-report-modal', @js(['reportUrl' => $carouselReportUrl]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                                                            </svg>
+                                                                            Report post
+                                                                        </button>
+                                                                        @endif
                                                                     </div>
                                                                 </div>
                                                             @endif
@@ -910,6 +924,7 @@
     </script>
 
     <x-post-detail-modal />
+    <x-report-post-modal />
 
     <x-footer />
 </x-app-layout>

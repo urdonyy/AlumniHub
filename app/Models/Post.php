@@ -25,12 +25,15 @@ class Post extends Model
         'pinned',
         'published_at',
         'trashed_at',
+        'reports_count',
+        'flagged_at',
     ];
 
     protected $casts = [
         'pinned' => 'boolean',
         'published_at' => 'datetime',
         'trashed_at' => 'datetime',
+        'flagged_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -99,6 +102,14 @@ class Post extends Model
     public function likes(): HasMany
     {
         return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Get the abuse reports filed against this post.
+     */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(PostReport::class);
     }
 
     /**

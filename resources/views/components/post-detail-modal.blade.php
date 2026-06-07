@@ -57,6 +57,48 @@
                             </span>
                         </div>
                     </div>
+                    {{-- Post options (author: edit/delete · others: report) --}}
+                    <template x-if="isAuthor || canReportPost">
+                        <div class="relative shrink-0" x-data="{ menuOpen: false }" @click.outside="menuOpen = false">
+                            <button type="button" @click="menuOpen = !menuOpen"
+                                class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                                aria-label="Post options">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                                </svg>
+                            </button>
+                            <div x-show="menuOpen" x-cloak
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="opacity-100 scale-100"
+                                x-transition:leave-end="opacity-0 scale-95"
+                                class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1">
+                                <button type="button" x-show="isAuthor" @click="menuOpen = false; editPost()"
+                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit post
+                                </button>
+                                <button type="button" x-show="isAuthor" @click="menuOpen = false; trashPost()"
+                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    Delete post
+                                </button>
+                                <button type="button" x-show="canReportPost" @click="menuOpen = false; openReport()"
+                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                    </svg>
+                                    Report post
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                     <button type="button" @click="closeModal()"
                         class="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
                         aria-label="Close">
@@ -188,6 +230,48 @@
                                             </span>
                                         </div>
                                     </div>
+                                    {{-- Post options (author: edit/delete · others: report) --}}
+                                    <template x-if="isAuthor || canReportPost">
+                                        <div class="relative shrink-0" x-data="{ menuOpen: false }" @click.outside="menuOpen = false">
+                                            <button type="button" @click="menuOpen = !menuOpen"
+                                                class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                                                aria-label="Post options">
+                                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                                                </svg>
+                                            </button>
+                                            <div x-show="menuOpen" x-cloak
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1">
+                                                <button type="button" x-show="isAuthor" @click="menuOpen = false; editPost()"
+                                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                    Edit post
+                                                </button>
+                                                <button type="button" x-show="isAuthor" @click="menuOpen = false; trashPost()"
+                                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                    Delete post
+                                                </button>
+                                                <button type="button" x-show="canReportPost" @click="menuOpen = false; openReport()"
+                                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                                    </svg>
+                                                    Report post
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
                                     <button type="button" @click="closeModal()"
                                         class="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
                                         aria-label="Close">
@@ -362,6 +446,43 @@
 </div>
 
 <script>
+    // Shared, idempotent body scroll-lock used by the post-view modal and the
+    // edit composer. A single lock that survives the modal→composer hand-off
+    // (lock() while already locked is a no-op, so the page never snaps), and is
+    // released only when the last consumer closes. Defined once.
+    window.__bodyScrollLock = window.__bodyScrollLock || {
+        locked: false,
+        y: 0,
+        lock() {
+            if (this.locked) return;
+            this.locked = true;
+            this.y = window.scrollY;
+            const sbw = window.innerWidth - document.documentElement.clientWidth;
+            const b = document.body.style;
+            b.overflow = 'hidden';
+            b.position = 'fixed';
+            b.top = `-${this.y}px`;
+            b.left = '0';
+            b.right = '0';
+            b.width = '100%';
+            b.paddingRight = sbw > 0 ? `${sbw}px` : '';
+        },
+        unlock() {
+            if (!this.locked) return;
+            this.locked = false;
+            const b = document.body.style;
+            b.overflow = '';
+            b.position = '';
+            b.top = '';
+            b.left = '';
+            b.right = '';
+            b.width = '';
+            b.paddingRight = '';
+            window.scrollTo(0, this.y);
+            this.y = 0;
+        },
+    };
+
     function postDetailModal() {
         return {
             isOpen: false,
@@ -378,6 +499,87 @@
             likeUrl: null,
             canInteract: document.querySelector('meta[name="user-verified"]')?.content === '1',
             hasPendingDoc: document.querySelector('meta[name="user-pending-doc"]')?.content === '1',
+            currentUserId: Number(document.querySelector('meta[name="user-id"]')?.content) || null,
+
+            // The author can edit/delete their own post from here.
+            get isAuthor() {
+                return !!this.post?.user && this.post.user.id === this.currentUserId;
+            },
+
+            // A verified viewer who isn't the author can report the open post.
+            get canReportPost() {
+                return this.canInteract && !!this.post?.user && this.post.user.id !== this.currentUserId;
+            },
+
+            openReport() {
+                if (!this.canReportPost || !this.post) return;
+                window.dispatchEvent(new CustomEvent('open-report-modal', {
+                    detail: { reportUrl: `/posts/${this.post.id}/report` },
+                }));
+            },
+
+            editPost() {
+                if (!this.post || !this.isAuthor) return;
+                const p = this.post;
+                const detail = {
+                    postId: p.id,
+                    postType: p.post_type,
+                    title: p.title,
+                    body: p.body_markdown,
+                    visibility: p.visibility,
+                    communityId: p.community?.id ?? null,
+                    editUrl: `/posts/${p.id}`,
+                    flairs: (p.flairs || []).map(f => f.id),
+                    media: (p.media || []).map(m => ({ id: m.id, url: m.url })),
+                    // datetime-local inputs want 'YYYY-MM-DDTHH:mm' — trim the ISO string.
+                    event: p.event ? {
+                        event_type: p.event.event_type,
+                        starts_at: p.event.starts_at ? p.event.starts_at.slice(0, 16) : null,
+                        ends_at: p.event.ends_at ? p.event.ends_at.slice(0, 16) : null,
+                        external_link: p.event.external_link,
+                        address: p.event.address,
+                        venue: p.event.venue,
+                    } : null,
+                };
+
+                // Hand off to the edit composer with no scroll jump: keep the shared
+                // body lock engaged the whole time. Open the composer (its $watch
+                // calls lock() — a no-op since we're already locked) and hide this
+                // modal WITHOUT unlocking. The composer releases the lock when it
+                // closes, restoring the original scroll position.
+                window.dispatchEvent(new CustomEvent('open-edit-composer', { detail }));
+                this.isOpen = false;
+                this.post = null;
+                this.error = null;
+                this.isLoading = false;
+                this.lightboxOpen = false;
+                this.activeMediaIndex = 0;
+                this.isBodyExpanded = false;
+                this.isBodyOverflowing = false;
+                this.isLiked = false;
+                this.likeUrl = null;
+            },
+
+            trashPost() {
+                if (!this.post || !this.isAuthor) return;
+                if (!confirm('Move this post to trash?')) return;
+                const postId = this.post.id;
+                fetch(`/posts/${postId}/trash`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    },
+                })
+                .then(r => { if (!r.ok) throw new Error('Failed'); return r; })
+                .then(() => {
+                    window.dispatchEvent(new CustomEvent('post-trashed', { detail: { postId } }));
+                    this.closeModal();
+                    window.location.reload();
+                })
+                .catch(() => { alert('Failed to delete post. Please try again.'); });
+            },
 
             toggleLike() {
                 if (!this.canInteract) return;
@@ -439,27 +641,11 @@
             },
 
             lockScroll() {
-                this.scrollLockScrollY = window.scrollY;
-                const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-                document.body.style.overflow = 'hidden';
-                document.body.style.position = 'fixed';
-                document.body.style.top = `-${this.scrollLockScrollY}px`;
-                document.body.style.left = '0';
-                document.body.style.right = '0';
-                document.body.style.width = '100%';
-                document.body.style.paddingRight = scrollBarWidth > 0 ? `${scrollBarWidth}px` : '';
+                window.__bodyScrollLock.lock();
             },
 
             unlockScroll() {
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.top = '';
-                document.body.style.left = '';
-                document.body.style.right = '';
-                document.body.style.width = '';
-                document.body.style.paddingRight = '';
-                window.scrollTo(0, this.scrollLockScrollY);
-                this.scrollLockScrollY = 0;
+                window.__bodyScrollLock.unlock();
             },
 
             nextMedia() {

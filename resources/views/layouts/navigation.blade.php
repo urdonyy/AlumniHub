@@ -55,6 +55,12 @@
                             {{ __('Verification Queue') }}
                         </x-nav-link>
 
+                        <x-nav-link :href="route('admin.reports.index')"
+                            :active="request()->routeIs('admin.reports.*')">
+                            <i class="fa-solid fa-flag text-lg"></i>
+                            {{ __('Reported Posts') }}
+                        </x-nav-link>
+
                         <x-nav-link :href="route('admin.inbox')" :active="request()->routeIs('admin.inbox*')">
                             <span class="relative">
                                 <i class="fa-regular fa-bell text-lg"></i>
@@ -184,6 +190,12 @@
                     :active="request()->routeIs('admin.verifications.*')">
                     <i class="fa-solid fa-user-check"></i>
                     {{ __('Verification Queue') }}
+                </x-responsive-nav-link>
+
+                <x-responsive-nav-link :href="route('admin.reports.index')"
+                    :active="request()->routeIs('admin.reports.*')">
+                    <i class="fa-solid fa-flag"></i>
+                    {{ __('Reported Posts') }}
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.inbox')" :active="request()->routeIs('admin.inbox*')">

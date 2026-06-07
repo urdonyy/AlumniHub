@@ -11,6 +11,9 @@
         $isPostAuthor  = auth()->id() === $post->user_id;
         $isPostMod     = $post->community && auth()->user()->isModeratorOf($post->community);
         $canManagePost = $isPostAuthor || $isPostMod || auth()->user()->canManageCommunities();
+        // Any verified viewer who isn't the author can report a post they can see.
+        $canReportPost = ! $isPostAuthor && auth()->user()->isVerified();
+        $postReportUrl = route('posts.report', $post);
     @endphp
     <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }}, @js(['visibility' => $post->visibility, 'title' => $post->title, 'body' => strip_tags($post->body_html ?? $post->body_markdown)]))"
         @click="openPostModal($event)"
@@ -49,7 +52,7 @@
                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset"
                         :class="visibilityClass" x-text="visibilityLabel">
                     </span>
-                    @if ($canManagePost)
+                    @if ($canManagePost || $canReportPost)
                         <div class="relative" x-data="{ menuOpen: false }" @click.stop>
                             <button type="button" @click="menuOpen = !menuOpen"
                                 class="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
@@ -77,17 +80,29 @@
                                         Edit post
                                     </button>
                                 @endif
-                                <form method="POST" action="{{ $postTrashUrl }}" @submit.prevent="if(confirm('Move this post to trash?')) $el.submit()">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" @click="menuOpen = false"
-                                        class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                @if ($canManagePost)
+                                    <form method="POST" action="{{ $postTrashUrl }}" @submit.prevent="if(confirm('Move this post to trash?')) $el.submit()">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" @click="menuOpen = false"
+                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            Delete post
+                                        </button>
+                                    </form>
+                                @endif
+                                @if ($canReportPost)
+                                    <button type="button"
+                                        @click="menuOpen = false; $dispatch('open-report-modal', @js(['reportUrl' => $postReportUrl]))"
+                                        class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                        <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
                                         </svg>
-                                        Delete post
+                                        Report post
                                     </button>
-                                </form>
+                                @endif
                             </div>
                         </div>
                     @endif
