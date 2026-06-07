@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <div class="py-8">
+    <div class="pb-24">
         <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
 
             {{-- Existing conversations --}}
@@ -83,3 +83,4 @@
         </div>
     </div>
 </x-app-layout>
+<x-footer />
