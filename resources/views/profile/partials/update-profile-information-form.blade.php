@@ -247,7 +247,7 @@
                                     <x-text-input :id="'education_degree_' . $index"
                                         :name="'educations[' . $index . '][degree]'" type="text"
                                         class="mt-1 block w-full" :value="$education['degree'] ?? ''"
-                                        placeholder="{{ __('Bachelor of Science in Information Technology') }}" />
+                                        placeholder="{{ __('Diploma in Information Technology') }}" />
                                     <x-input-error class="mt-2" :messages="$errors->get('educations.' . $index . '.degree')" />
                                 </div>
                             </div>
