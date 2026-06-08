@@ -21,6 +21,7 @@
                 'name' => $p->name,
                 'program' => $p->program_course,
                 'batch' => $p->batch_year,
+                'is_institution' => $p->isInstitution(),
                 'avatar' => $p->profileAvatarUrl(),
                 'profile_url' => route('profiles.show', $p->id),
                 'invite_url' => route('connections.invite', $p->id),
@@ -72,7 +73,7 @@
                                         <div class="min-w-0">
                                             <p class="truncate text-sm font-semibold text-gray-900">{{ $invite->sender->name }}</p>
                                             <p class="truncate text-xs text-gray-600">
-                                                {{ $invite->sender->program_course ?? __('Program pending') }}
+                                                {{ $invite->sender->isInstitution() ? __('Official account') : ($invite->sender->program_course ?? __('Program pending')) }}
                                             </p>
                                         </div>
                                     </a>
@@ -194,7 +195,7 @@
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
                                             <div class="min-w-0">
                                                 <p class="truncate text-sm font-semibold text-gray-900">{{ $person->name }}</p>
-                                                <p class="truncate text-xs text-gray-600">{{ $person->program_course ?? __('Program pending') }}</p>
+                                                <p class="truncate text-xs text-gray-600">{{ $person->isInstitution() ? __('Official account') : ($person->program_course ?? __('Program pending')) }}</p>
                                             </div>
                                         </a>
                                         {{-- Three-dot menu --}}
@@ -279,8 +280,8 @@
                                             <div class="min-w-0">
                                                 <p class="truncate text-sm font-semibold text-gray-900" x-text="person.name"></p>
                                                 <p class="truncate text-xs text-gray-600">
-                                                    <span x-text="person.program || '{{ __('Program pending') }}'"></span>
-                                                    <template x-if="person.batch">
+                                                    <span x-text="person.is_institution ? '{{ __('Official account') }}' : (person.program || '{{ __('Program pending') }}')"></span>
+                                                    <template x-if="person.batch && ! person.is_institution">
                                                         <span> · Batch <span x-text="person.batch"></span></span>
                                                     </template>
                                                 </p>

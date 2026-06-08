@@ -18,6 +18,7 @@ use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\InstitutionSwitchController;
 use App\Http\Controllers\PostLikeController;
 use App\Http\Controllers\PostReportController;
 use App\Http\Controllers\PostTrashController;
@@ -70,6 +71,16 @@ Route::get('/', function (FeedService $feed) {
             ->orderBy('name')
             ->limit(5)
             ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
+
+        // Surface PUP-ITECH Official to verified members (skip if already connected/pending).
+        if ($user->isVerified() && ! $user->isInstitution()) {
+            $institutionSuggestion = User::query()->where('role', 'superadmin')
+                ->whereNotIn('id', $excludedIds)
+                ->first(['id', 'name', 'batch_year', 'program_course', 'account_status', 'role']);
+            if ($institutionSuggestion) {
+                $suggestedPeople = $suggestedPeople->prepend($institutionSuggestion);
+            }
+        }
 
         $joinedCommunities = $user->communities()
             ->orderBy('name')
@@ -139,6 +150,16 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         ->orderBy('name')
         ->limit(5)
         ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
+
+    // Surface PUP-ITECH Official to verified members (skip if already connected/pending).
+    if ($user->isVerified() && ! $user->isInstitution()) {
+        $institutionSuggestion = User::query()->where('role', 'superadmin')
+            ->whereNotIn('id', $excludedIds)
+            ->first(['id', 'name', 'batch_year', 'program_course', 'account_status', 'role']);
+        if ($institutionSuggestion) {
+            $suggestedPeople = $suggestedPeople->prepend($institutionSuggestion);
+        }
+    }
 
     $joinedCommunities = $user->communities()
         ->orderBy('name')
@@ -379,6 +400,12 @@ Route::middleware('auth')->group(function () {
     
 });
 
+// Exit the institution "act as" mode and return to the original admin. Only
+// usable while a switch is active (the controller checks the session marker);
+// not admin-gated because the institution account itself isn't an admin.
+Route::post('/exit-institution', [InstitutionSwitchController::class, 'exit'])
+    ->middleware('auth')->name('institution.exit');
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/inbox', [AdminInboxController::class, 'index'])->name('inbox');
     Route::get('/inbox/counts', [AdminInboxController::class, 'counts'])->name('inbox.counts');
@@ -398,6 +425,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
         ->name('community-requests.approve');
     Route::post('/community-requests/{communityRequest}/reject', [CommunityCreationRequestAdminController::class, 'reject'])
         ->name('community-requests.reject');
+
+    // Switch into the PUP-ITECH Official institution account ("act as")
+    Route::post('/act-as-institution', [InstitutionSwitchController::class, 'enter'])->name('institution.enter');
 
     // Reported posts review queue
     Route::get('/reports', [PostReportAdminController::class, 'index'])->name('reports.index');

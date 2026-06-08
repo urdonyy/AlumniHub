@@ -14,5 +14,6 @@ class DatabaseSeeder extends Seeder
         $this->call(BaselineCommunitySeeder::class);
         $this->call(BaselineFlairSeeder::class);
         $this->call(InitialUsersSeeder::class);
+        $this->call(InstitutionAccountSeeder::class);
     }
 }

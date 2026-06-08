@@ -12,7 +12,7 @@ class StoreCommunityCreationRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user !== null && $user->isVerified();
+        return $user !== null && $user->isVerified() && ! $user->isInstitution();
     }
 
     public function rules(): array

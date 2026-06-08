@@ -40,7 +40,26 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isVerified(): bool
     {
-        return $this->role === 'admin' || $this->account_status === 'approved';
+        return $this->role === 'admin' || $this->role === 'superadmin' || $this->account_status === 'approved';
+    }
+
+    /**
+     * The PUP-ITECH Official institution account — a single seeded user that
+     * admins can "act as". It behaves like a verified client (full dashboard /
+     * connections / communities / messages) but can't edit its profile, can't
+     * request batch communities, and can remove any community post.
+     */
+    public function isInstitution(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
+    /**
+     * Resolve the single institution account, if it exists.
+     */
+    public static function institution(): ?self
+    {
+        return static::query()->where('role', 'superadmin')->first();
     }
 
     public function canInteractInCommunities(): bool

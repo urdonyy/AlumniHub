@@ -10,9 +10,13 @@
         $postEditUrl   = route('posts.update', $post);
         $isPostAuthor  = auth()->id() === $post->user_id;
         $isPostMod     = $post->community && auth()->user()->isModeratorOf($post->community);
-        $canManagePost = $isPostAuthor || $isPostMod || auth()->user()->canManageCommunities();
-        // Any verified viewer who isn't the author can report a post they can see.
-        $canReportPost = ! $isPostAuthor && auth()->user()->isVerified();
+        // The institution moderates only the system communities it belongs to
+        // (General + program). In batch communities it's a regular non-member.
+        $isPostInstitutionMod = $post->community && $post->community->is_system && auth()->user()->isInstitution();
+        $canManagePost = $isPostAuthor || $isPostMod || $isPostInstitutionMod || auth()->user()->canManageCommunities();
+        // Any verified non-author who can't moderate the post can report it.
+        // (In system communities the institution removes posts directly instead.)
+        $canReportPost = ! $isPostAuthor && auth()->user()->isVerified() && ! $isPostInstitutionMod;
         $postReportUrl = route('posts.report', $post);
     @endphp
     <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }}, @js(['visibility' => $post->visibility, 'title' => $post->title, 'body' => strip_tags($post->body_html ?? $post->body_markdown)]))"

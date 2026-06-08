@@ -105,6 +105,29 @@ class ProfileController extends Controller
 
         $connectionCount = $user->connections()->count();
 
+        // Composer config for editing own posts from the profile (same audience
+        // logic as the dashboard: General Hub → Everyone; program/batch →
+        // public/connections/community). Only needed on the viewer's own profile.
+        $joinedCommunities = collect();
+        $flairsByCommunity = collect();
+        if ($viewer->is($user)) {
+            $joinedCommunities = $viewer->communities()
+                ->orderBy('name')
+                ->get(['communities.id', 'communities.name', 'communities.system_key']);
+
+            $availableFlairs = \App\Models\Flair::query()
+                ->whereNull('community_id')
+                ->orWhereIn('community_id', $joinedCommunities->pluck('id'))
+                ->get();
+
+            $flairsByCommunity = $availableFlairs
+                ->where('is_system', false)
+                ->groupBy(fn ($f) => $f->community_id ?? 'global')
+                ->map(fn ($group) => $group->values()->map(fn ($f) => [
+                    'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
+                ]));
+        }
+
         return view('profile.show', [
             'profileUser' => $user,
             'viewer' => $viewer,
@@ -113,6 +136,8 @@ class ProfileController extends Controller
             'activeConnection' => $activeConnection,
             'activityPosts' => $activityPosts,
             'connectionCount' => $connectionCount,
+            'joinedCommunities' => $joinedCommunities,
+            'flairsByCommunity' => $flairsByCommunity,
         ]);
     }
 
@@ -121,6 +146,9 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        // The institution account has no editable profile/career information.
+        abort_if($request->user()->isInstitution(), 403);
+
         $request->user()->load(['profileExperiences', 'profileEducations']);
 
         return view('profile.edit', [
@@ -135,6 +163,34 @@ class ProfileController extends Controller
     {
         $validated = $request->validated();
         $user = $request->user();
+
+        // The institution account can update only its avatar/banner (branding) —
+        // never the name/program/career profile information.
+        if ($user->isInstitution()) {
+            if ($request->hasFile('avatar')) {
+                $oldAvatarPath = $user->avatar_path;
+                $user->avatar_path = $this->storeOptimizedImage($request->file('avatar'), 'avatars/user_' . $user->id, 512);
+                $user->avatar_uploaded_at = now();
+                if ($oldAvatarPath && Storage::exists($oldAvatarPath)) {
+                    Storage::delete($oldAvatarPath);
+                }
+            }
+
+            if ($request->hasFile('banner')) {
+                $oldBannerPath = $user->banner_path;
+                $user->banner_path = $this->storeOptimizedImage($request->file('banner'), 'banners/user_' . $user->id, 1600);
+                $user->banner_uploaded_at = now();
+                if ($oldBannerPath && Storage::exists($oldBannerPath)) {
+                    Storage::delete($oldBannerPath);
+                }
+            }
+
+            $user->save();
+
+            return $request->input('redirect_to') === 'profile_show'
+                ? Redirect::route('profiles.show', $user)->with('status', 'profile-updated')
+                : Redirect::to('/profile')->with('status', 'profile-updated');
+        }
 
         $firstName = Str::of($validated['first_name'])->trim()->value();
         $lastName = Str::of($validated['last_name'])->trim()->value();
@@ -324,6 +380,8 @@ class ProfileController extends Controller
 
     public function onboardingStep(Request $request): JsonResponse
     {
+        abort_if($request->user()->isInstitution(), 403);
+
         $user = $request->user();
         $step = (int) $request->input('step', 0);
 

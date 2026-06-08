@@ -73,6 +73,13 @@ class PostPolicy
             return true;
         }
 
+        // The institution account moderates only the system communities it belongs
+        // to (General Alumni Hub + program communities). In batch communities it is
+        // a regular non-member: view/like/comment on public posts, but no moderation.
+        if ($user->isInstitution() && $post->community?->is_system) {
+            return true;
+        }
+
         return $this->isModeratorOrAdmin($user, $post->community);
     }
 
@@ -82,6 +89,10 @@ class PostPolicy
     public function delete(User $user, Post $post): bool
     {
         if ($user->id === $post->user_id) {
+            return true;
+        }
+
+        if ($user->isInstitution() && $post->community?->is_system) {
             return true;
         }
 

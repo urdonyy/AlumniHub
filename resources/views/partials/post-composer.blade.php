@@ -1,10 +1,13 @@
-                        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
+                        <div class="{{ ($composerEditOnly ?? false) ? '' : 'rounded-2xl border border-gray-200 bg-white p-5 shadow-sm' }}"
                             x-data="postComposer(@js($flairsByCommunity ?? []), {{ $defaultCommunityId ?? 'null' }}, @js(['lockedCommunityId' => $composerLockedCommunityId ?? null, 'allowedVisibilities' => $composerVisibilities ?? ['public', 'connections', 'members'], 'generalHubId' => $composerGeneralHubId ?? null]))">
+                            {{-- Edit-only mode (e.g. profile page) renders just the modal, no create card. --}}
+                            @unless ($composerEditOnly ?? false)
                             <button type="button"
                                 @click="open = true"
                                 class="w-full rounded-full border border-gray-300 bg-gray-50 px-5 py-3 text-left text-sm text-gray-500 transition hover:bg-gray-100">
                                 What's on your mind, {{ auth()->user()->name }}?
                             </button>
+                            @endunless
 
                             <div x-show="open"
                                 x-transition.opacity

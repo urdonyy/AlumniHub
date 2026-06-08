@@ -177,7 +177,7 @@ class CommunityController extends Controller
 
         $members = $community->members()
             ->orderBy('name')
-            ->get(['users.id', 'users.name', 'users.program_course', 'users.batch_year', 'users.avatar_path']);
+            ->get(['users.id', 'users.name', 'users.program_course', 'users.batch_year', 'users.avatar_path', 'users.role']);
 
         $modRoles = $community->moderators()->pluck('role', 'user_id');
 

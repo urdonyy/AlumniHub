@@ -15,7 +15,13 @@
             {{-- Access badge --}}
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-sm text-gray-600">
-                    {{ __('Browse assigned communities before verification and join the rest once your account is approved.') }}
+                    @if ($user->isInstitution())
+                        {{ __('You moderate the General Hub and all program communities, and can request to join any batch community.') }}
+                    @elseif ($user->canInteractInCommunities())
+                        {{ __('You\'re auto-joined to the General Hub and your program community, and can request your batch\'s community.') }}
+                    @else
+                        {{ __('Browse your assigned communities now. Verify your account to interact and to request your batch\'s community.') }}
+                    @endif
                 </p>
                 <span class="inline-flex shrink-0 items-center rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset {{ $user->communityAccessBadgeClass() }}">
                     {{ $user->communityAccessLabel() }}
@@ -37,7 +43,7 @@
             @endif
 
             {{-- Request CTA --}}
-            @if ($user->isVerified() && ! $user->canManageCommunities())
+            @if ($user->isVerified() && ! $user->canManageCommunities() && ! $user->isInstitution())
                 @if ($activeCreationRequest ?? null)
                     <div class="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <p class="text-sm text-amber-900">
@@ -242,7 +248,7 @@
                         @empty
                             <div class="px-6 py-10 text-center text-sm text-gray-500">
                                 <p>{{ __('No batch communities yet.') }}</p>
-                                @if ($user->isVerified() && ! $user->canManageCommunities() && ! ($activeCreationRequest ?? null))
+                                @if ($user->isVerified() && ! $user->canManageCommunities() && ! $user->isInstitution() && ! ($activeCreationRequest ?? null))
                                     <p class="mt-1">
                                         {{ __('Be the first to') }}
                                         <a href="{{ route('communities.requests.create') }}" class="font-semibold text-red-900 hover:underline">{{ __('request one') }}</a>.

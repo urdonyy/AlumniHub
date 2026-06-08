@@ -166,6 +166,7 @@ class CommentController extends Controller
                 'community' => $postModel->community ? [
                     'id' => $postModel->community->id,
                     'name' => $postModel->community->name,
+                    'is_system' => (bool) $postModel->community->is_system,
                 ] : null,
                 'flairs' => $postModel->flairs->map(function ($flair) {
                     return [

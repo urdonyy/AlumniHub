@@ -49,6 +49,9 @@ class CommunityAdminController extends Controller
             ]);
         }
 
+        // Admin-created communities are non-system (batch) communities, so the
+        // PUP-ITECH Official account is not auto-joined here.
+
         return back()->with('status', 'community-created');
     }
 

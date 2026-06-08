@@ -16,7 +16,9 @@
             <img src="{{ $member->profileAvatarUrl() }}" alt="{{ $member->name }}"
                 class="h-9 w-9 rounded-full border border-gray-200 object-cover"
                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';">
-            @if ($modRole === 'senior_moderator')
+            @if ($member->role === 'superadmin')
+                <i class="fa-solid fa-crown absolute -top-2 -right-1.5 text-xs text-blue-600 drop-shadow-sm" title="{{ __('PUP-ITECH Official') }}"></i>
+            @elseif ($modRole === 'senior_moderator')
                 <i class="fa-solid fa-crown absolute -top-2 -right-1.5 text-xs text-red-600 drop-shadow-sm" title="{{ __('Senior Moderator') }}"></i>
             @elseif ($modRole === 'moderator')
                 <i class="fa-solid fa-crown absolute -top-2 -right-1.5 text-xs text-yellow-400 drop-shadow-sm" title="{{ __('Moderator') }}"></i>
