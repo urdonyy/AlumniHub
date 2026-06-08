@@ -46,7 +46,12 @@ class InstitutionSwitchController extends Controller
     {
         $adminId = $request->session()->get(self::SESSION_KEY);
 
-        if (! $adminId) {
+        // Only honor the switch-back if we're genuinely acting as the institution
+        // right now. A stale flag carried into another account's session must
+        // never log that account in as the stored admin (privilege escalation).
+        if (! $adminId || ! $request->user()?->isInstitution()) {
+            $request->session()->forget(self::SESSION_KEY);
+
             return redirect()->route('dashboard');
         }
 

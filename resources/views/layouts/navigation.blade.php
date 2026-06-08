@@ -136,7 +136,7 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
-                        @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY))
+                        @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
                             {{-- Acting as PUP-ITECH Official: offer a way back to the admin --}}
                             <form method="POST" action="{{ route('institution.exit') }}">
                                 @csrf
@@ -267,7 +267,7 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
-                @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY))
+                @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
                     <form method="POST" action="{{ route('institution.exit') }}">
                         @csrf
                         <x-responsive-nav-link :href="route('institution.exit')" onclick="event.preventDefault(); this.closest('form').submit();">
@@ -347,7 +347,7 @@
 
 {{-- Persistent banner while acting as the institution account — fixed to the
      bottom so it never overlaps the nav on scroll. --}}
-@if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY))
+@if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
     <div class="fixed inset-x-0 bottom-0 z-[60] flex items-center justify-center gap-3 bg-blue-700 px-4 py-2 text-center text-xs font-medium text-white shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
         <span>
             <i class="fa-solid fa-user-shield me-1"></i>
