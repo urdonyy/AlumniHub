@@ -345,7 +345,8 @@ class ProfileController extends Controller
             return Redirect::route('profiles.show', $user)->with('status', 'profile-updated');
         }
 
-        return Redirect::to('/profile')->with('status', 'profile-updated');
+        return Redirect::route('profile.edit', ['section' => 'profile-information'])
+            ->with('status', 'profile-updated');
     }
 
     private function normalizeExperienceMonth(?string $month): ?string
