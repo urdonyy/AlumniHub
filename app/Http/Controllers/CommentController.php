@@ -44,25 +44,29 @@ class CommentController extends Controller
             'parent_comment_id' => 'sometimes|integer|exists:comments,id',
         ]);
 
-        // Validate nesting depth: only allow replies up to 2-3 levels deep
+        // Resolve the reply target. Threads are capped at 3 visual levels: a reply
+        // to a level-3 (depth-2) comment is re-parented to its level-2 ancestor so
+        // it appears as another level-3 reply rather than nesting deeper. We still
+        // notify the person actually replied to ($repliedToComment).
+        $repliedToComment = null;
         $parentComment = null;
         if ($request->has('parent_comment_id')) {
-            $parentComment = Comment::find($request->parent_comment_id);
+            $repliedToComment = Comment::find($request->parent_comment_id);
 
-            if (!$parentComment || $parentComment->post_id !== $postModel->id) {
+            if (!$repliedToComment || $repliedToComment->post_id !== $postModel->id) {
                 return response()->json(['error' => 'Invalid parent comment'], 422);
             }
 
-            // Check depth limit (max 3 levels: level 0 = top, level 1 = reply to top, level 2 = reply to reply)
-            if ($parentComment->getDepth() >= 2) {
-                return response()->json(['error' => 'Cannot reply to this comment (max 3 levels deep)'], 422);
+            $parentComment = $repliedToComment;
+            while ($parentComment->getDepth() >= 2 && $parentComment->parentComment) {
+                $parentComment = $parentComment->parentComment;
             }
         }
 
         $comment = $postModel->comments()->create([
             'user_id' => $request->user()->id,
             'body' => $validated['body'],
-            'parent_comment_id' => $validated['parent_comment_id'] ?? null,
+            'parent_comment_id' => $parentComment?->id,
         ]);
 
         $comment->load('user');
@@ -78,9 +82,10 @@ class CommentController extends Controller
             ));
         }
 
-        // Notify the parent comment author when their comment receives a reply (skip notifying self)
-        if ($parentComment && (int) $parentComment->user_id !== (int) $request->user()->id) {
-            $parentComment->user->notify(new CommentRepliedNotification(
+        // Notify the person actually replied to (the target comment's author),
+        // even when the reply was re-parented to flatten the thread.
+        if ($repliedToComment && (int) $repliedToComment->user_id !== (int) $request->user()->id) {
+            $repliedToComment->user->notify(new CommentRepliedNotification(
                 post: $postModel,
                 comment: $comment,
                 actor: $request->user(),

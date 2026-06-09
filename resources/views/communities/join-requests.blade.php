@@ -29,7 +29,8 @@
                             @php($otherPb = $jr->user?->programBatchCommunity())
                             <li class="flex flex-col gap-2 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <p class="text-sm font-semibold text-gray-900">{{ $jr->user->name }}</p>
+                                    <a href="{{ route('profiles.show', $jr->user) }}"
+                                        class="text-sm font-semibold text-gray-900 transition hover:text-red-900 hover:underline">{{ $jr->user->name }}</a>
                                     <p class="text-xs text-gray-500">{{ $jr->created_at->diffForHumans() }}</p>
                                     @if ($otherPb && $otherPb->id !== $community->id)
                                         <p class="mt-1 text-xs font-medium text-amber-800">
