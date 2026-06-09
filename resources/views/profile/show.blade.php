@@ -537,8 +537,8 @@
                                                             <h4 class="text-base font-semibold text-gray-900 line-clamp-2">{{ $post->title }}</h4>
                                                         @endif
 
-                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words">
-                                                            {{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 220) }}
+                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words whitespace-pre-line">
+                                                            {{ \Illuminate\Support\Str::limit($post->body_markdown ?? '', 220) }}
                                                         </p>
 
                                                             @if ($post->media->count() > 0)

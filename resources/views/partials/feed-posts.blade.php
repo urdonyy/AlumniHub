@@ -20,7 +20,7 @@
         $postReportUrl = route('posts.report', $post);
         $postModerateRemoveUrl = route('posts.moderate-remove', $post);
     @endphp
-    <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }}, @js(['visibility' => $post->visibility, 'title' => $post->title, 'body' => strip_tags($post->body_html ?? $post->body_markdown)]))"
+    <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }}, @js(['visibility' => $post->visibility, 'title' => $post->title, 'body' => $post->body_markdown ?? '']))"
         @click="openPostModal($event)"
         class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm cursor-pointer transition hover:shadow-md hover:border-gray-300 min-w-0">
 
@@ -141,7 +141,7 @@
 
             <template x-if="bodyText">
                 <div>
-                    <p class="mt-2 text-sm leading-6 text-gray-700 break-words"
+                    <p class="mt-2 text-sm leading-6 text-gray-700 break-words whitespace-pre-line"
                         x-ref="postBody"
                         x-text="bodyText"
                         :class="isBodyExpanded ? '' : 'line-clamp-3'"></p>
