@@ -342,10 +342,10 @@
                     </template>
 
                     {{-- Body --}}
-                    <div class="px-4 pt-3 pb-2" x-show="post.body_html">
+                    <div class="px-4 pt-3 pb-2" x-show="post.body_markdown">
                         <div x-ref="postBody"
-                            x-html="post.body_html"
-                            class="prose prose-sm max-w-none text-gray-800 break-words"
+                            x-text="post.body_markdown"
+                            class="text-sm leading-6 text-gray-800 break-words whitespace-pre-line"
                             :class="isBodyExpanded ? '' : 'line-clamp-5'">
                         </div>
                         <button x-show="isBodyOverflowing" type="button"
@@ -712,7 +712,7 @@
                                 postId: data.post.id,
                                 visibility: data.post.visibility,
                                 title: data.post.title ?? '',
-                                body: (data.post.body_html ?? '').replace(/<[^>]*>/g, '').trim(),
+                                body: data.post.body_markdown ?? '',
                             }
                         }));
                         this.$nextTick(() => {
