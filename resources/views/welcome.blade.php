@@ -389,7 +389,7 @@
                     <div class="flex flex-col items-center text-center col-span-2 w-full sm:w-40">
                         <div
                             class="dev relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-100 border-2 border-[#0a0a0a] flex items-center justify-center mb-3 overflow-hidden">
-                            <img src="{{ asset('images/sajo.jpg') }}" alt="Yngwie Johanne M. Punsalan">
+                            <img src="{{ asset('images/winterrr.jpg') }}" alt="Yngwie Johanne M. Punsalan" class="w-full h-full object-cover bg-cover bg-center rounded-full">
                         </div>
                         <h3 class="font-semibold text-[#1b1b18] text-sm">Yngwie Johanne M. Punsalan</h3>
                         <span
