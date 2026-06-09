@@ -89,7 +89,10 @@
                             <div class="mt-3 space-y-2 text-sm">
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('communities.index') }}">{{ __('My Communities') }}</a>
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('connections.index') }}">{{ __('My Connections') }}</a>
-                                <a class="block text-gray-700 hover:text-gray-900" href="{{ route('profile.edit', ['section' => 'account-status']) }}">{{ __('Account Settings') }}</a>
+                                {{-- The institution account has no editable profile/settings. --}}
+                                @unless (auth()->user()->isInstitution())
+                                    <a class="block text-gray-700 hover:text-gray-900" href="{{ route('profile.edit', ['section' => 'account-status']) }}">{{ __('Account Settings') }}</a>
+                                @endunless
                             </div>
                         </section>
                     </aside>
