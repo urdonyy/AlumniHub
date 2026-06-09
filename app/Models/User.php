@@ -225,6 +225,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return $community->moderators()->where('user_id', $this->id)->exists();
     }
 
+    /**
+     * True if the user already moderates (as moderator OR co-moderator) any
+     * existing batch (program_batch) community. Such users may not request a new
+     * batch community, nor be invited as a co-moderator to another one.
+     */
+    public function moderatesAnyBatchCommunity(): bool
+    {
+        return $this->moderatedCommunities()
+            ->where('communities.type', Community::TYPE_PROGRAM_BATCH)
+            ->exists();
+    }
+
     public function sentConnections(): HasMany
     {
         return $this->hasMany(Connection::class, 'sender_id');

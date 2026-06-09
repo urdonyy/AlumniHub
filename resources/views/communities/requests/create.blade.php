@@ -207,7 +207,7 @@
             <h2 class="mt-3 text-base font-semibold text-gray-900">{{ __('How does this work?') }}</h2>
 
             <p class="mt-1.5 text-sm leading-6 text-gray-600">
-                {{ __('Submit a program-batch community for admin review. Two co-moderators from your connections must accept first (must be same batch and program).') }}
+                {{ __('Two co-moderators from your connections must accept first (must be the same batch and program). Must not be a moderator or a co-moderator from an existing community.') }}
             </p>
 
             <x-tertiary-button x-on:click="$dispatch('close')" class="mt-5">{{ __('Got it') }}</x-tertiary-button>

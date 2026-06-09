@@ -81,6 +81,11 @@ class StoreCommunityCreationRequest extends FormRequest
                 $v->errors()->add('year_section', 'You already have an active or approved community for your batch/program.');
             }
 
+            // A user who already moderates a batch community can't request another.
+            if ($user->moderatesAnyBatchCommunity()) {
+                $v->errors()->add('year_section', 'You already moderate a batch community, so you cannot request another one.');
+            }
+
             $this->merge([
                 '_resolved_name' => $name,
                 '_resolved_program_course' => $user->program_course,
@@ -106,6 +111,9 @@ class StoreCommunityCreationRequest extends FormRequest
                 }
                 if ($coMod->batch_year !== $user->batch_year || $coMod->program_course !== $user->program_course) {
                     $v->errors()->add("co_moderator_ids.$idx", $coMod->name . ' is not in your program/batch.');
+                }
+                if ($coMod->moderatesAnyBatchCommunity()) {
+                    $v->errors()->add("co_moderator_ids.$idx", $coMod->name . ' already moderates a batch community.');
                 }
             }
         });

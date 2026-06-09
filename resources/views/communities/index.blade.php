@@ -58,6 +58,8 @@
                         </a>
                     </div>
                 @else
+                    {{-- Hidden for users who already moderate a batch community. --}}
+                    @unless (auth()->user()->moderatesAnyBatchCommunity())
                     <div class="flex flex-col gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
                         <p class="text-sm text-emerald-900">
                             {{ __("Don't see your batch's community? Request one — your two co-moderator picks will be notified, then admins review.") }}
@@ -67,6 +69,7 @@
                             {{ __('Request a community') }}
                         </a>
                     </div>
+                    @endunless
                 @endif
             @endif
 
