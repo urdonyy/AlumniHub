@@ -40,6 +40,9 @@ class PostLikeController extends Controller
     {
         $postModel = Post::findOrFail($post);
 
+        // A removed/trashed post can't be liked.
+        abort_if($postModel->trashed_at !== null, 404);
+
         // Verify user can view this post
         $this->authorize('view', $postModel);
 

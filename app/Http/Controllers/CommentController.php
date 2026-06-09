@@ -30,6 +30,9 @@ class CommentController extends Controller
         // Fetch the post model
         $postModel = Post::findOrFail($post);
 
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
+
         // Verify user can view this post
         $this->authorize('view', $postModel);
 
@@ -107,6 +110,9 @@ class CommentController extends Controller
     public function destroy($community = null, $post = null, $comment = null)
     {
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
         $commentModel = Comment::findOrFail($comment);
 
         // Verify comment belongs to this post
@@ -129,6 +135,9 @@ class CommentController extends Controller
     public function getPostDetails($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
         $this->authorize('view', $postModel);
 
         $postModel->load(['user', 'community', 'flairs', 'media', 'event']);
@@ -220,6 +229,9 @@ class CommentController extends Controller
     public function index($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
         $this->authorize('view', $postModel);
 
         $comments = $postModel->comments()

@@ -20,6 +20,7 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\InstitutionSwitchController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostModerationController;
 use App\Http\Controllers\PostReportController;
 use App\Http\Controllers\PostTrashController;
 use App\Http\Controllers\NotificationController;
@@ -289,9 +290,13 @@ Route::middleware('auth')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/posts/{post}/api', [CommentController::class, 'getPostDetails'])
             ->name('communities.posts.api');
-        Route::get('/communities/{community}/posts/{post}/open', function (Community $community, Post $post, Request $request) {
-            if ((int) $post->community_id !== (int) $community->id) {
-                abort(404);
+        Route::get('/communities/{community}/posts/{post}/open', function (Community $community, $post, Request $request) {
+            // Resolve manually so a hard-deleted (missing) or trashed post shows a
+            // graceful "no longer available" notice instead of a 404 / a removed
+            // post opening as if it were live.
+            $post = Post::find($post);
+            if (! $post || $post->trashed_at || (int) $post->community_id !== (int) $community->id) {
+                return redirect()->route('dashboard')->with('error', 'This post is no longer available.');
             }
 
             $request->user()?->can('view', $post) ?: abort(403);
@@ -310,7 +315,12 @@ Route::middleware('auth')->group(function () {
             ->name('communities.posts.comments.destroy');
 
         // Community-less (connections-only) posts: same actions without a community scope.
-        Route::get('/posts/{post}/open', function (Post $post, Request $request) {
+        Route::get('/posts/{post}/open', function ($post, Request $request) {
+            $post = Post::find($post);
+            if (! $post || $post->trashed_at) {
+                return redirect()->route('dashboard')->with('error', 'This post is no longer available.');
+            }
+
             $request->user()?->can('view', $post) ?: abort(403);
 
             return redirect()->route('dashboard')->with('openPostModal', [
@@ -343,6 +353,10 @@ Route::middleware('auth')->group(function () {
             ->name('posts.update');
         Route::delete('/posts/{post}/trash', [PostTrashController::class, 'destroy'])
             ->name('posts.trash');
+        // Moderator/superadmin removes someone else's post with a reason (soft,
+        // non-restorable by the author) and notifies them.
+        Route::post('/posts/{post}/remove', [PostModerationController::class, 'remove'])
+            ->name('posts.moderate-remove');
         Route::post('/posts/{post}/restore', [PostTrashController::class, 'restore'])
             ->name('posts.restore');
         Route::delete('/posts/{post}/force', [PostTrashController::class, 'forceDelete'])

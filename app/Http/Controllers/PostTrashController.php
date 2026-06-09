@@ -17,6 +17,9 @@ class PostTrashController extends Controller
     {
         $posts = Post::with(['community', 'flairs', 'media', 'event'])
             ->where('user_id', $request->user()->id)
+            // Only the author's OWN trash — never posts a moderator removed (those
+            // aren't restorable and shouldn't clutter the author's trash bin).
+            ->whereNull('removed_by_user_id')
             ->trashed()
             ->orderByDesc('trashed_at')
             ->paginate(15);

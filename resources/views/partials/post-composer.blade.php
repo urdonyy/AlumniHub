@@ -172,8 +172,9 @@
 
                                         <!-- Community selector (hidden when connections-only or community is locked) -->
                                         <div x-show="!isConnectionsOnly && !lockedCommunityId" class="px-5 pb-3">
-                                            <select name="community_selector" x-model="communityId" aria-placeholder="Select a community"
-                                                class="w-full rounded-md border border-gray-300 bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-gray-700 shadow-sm focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
+                                            <select name="community_selector" x-model="communityId" @change="communityError = false" aria-placeholder="Select a community"
+                                                :class="communityError ? 'border-red-400 ring-1 ring-red-400' : 'border-gray-300'"
+                                                class="w-full rounded-md bg-white py-1.5 pl-3 pr-8 text-xs font-medium text-gray-700 shadow-sm focus:border-red-900 focus:outline-none focus:ring-1 focus:ring-red-900">
                                                 <option value="" disabled selected hidden>Select a community</option>
                                                 @foreach (($joinedCommunitiesCollection ?? collect()) as $joinedCommunity)
                                                     <option value="{{ $joinedCommunity->id }}"
@@ -181,6 +182,7 @@
                                                         {{ $joinedCommunity->name }}</option>
                                                 @endforeach
                                             </select>
+                                            <p x-show="communityError" x-cloak class="mt-1.5 text-xs text-red-600">{{ __('Please select a community for this post.') }}</p>
                                         </div>
 
                                         <!-- Connections-only info banner -->

@@ -18,6 +18,7 @@
                 selectedFlairs: [],
                 flairsExpanded: false,
                 flairError: false,
+                communityError: false,
                 eventDateError: false,
                 isSubmitting: false,
 
@@ -183,10 +184,11 @@
                 onVisibilityChange(newVisibility) {
                     this.visibility = newVisibility;
                     this.audienceOpen = false;
-                    if (newVisibility === 'connections') {
-                        this.communityId = '';
-                        this.selectedFlairs = [];
-                    }
+                    this.communityError = false;
+                    // Don't wipe the selected community/flairs when switching to
+                    // connections — the hidden inputs already omit them for
+                    // connections, and preserving them lets the user switch back
+                    // to Public/Community without the dropdown going blank.
                 },
 
                 handleImageUpload(event) {
@@ -254,6 +256,14 @@
                         }
                         this.eventDateError = false;
                     }
+
+                    // Non-connections posts must have a community selected, or the
+                    // server silently rejects them. Block + flag instead of failing.
+                    if (!this.editMode && !this.isConnectionsOnly && !this.communityId) {
+                        this.communityError = true;
+                        return;
+                    }
+                    this.communityError = false;
 
                     // Flairs aren't edited via the composer, so skip the requirement in edit mode.
                     if (!this.editMode && !this.isEvent && this.filteredFlairs.length > 0 && !this.isConnectionsOnly && this.selectedFlairs.length === 0) {

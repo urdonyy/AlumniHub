@@ -147,6 +147,7 @@
 
                         <x-post-detail-modal />
                         <x-report-post-modal />
+                        <x-remove-post-modal />
                     </section>
 
                     <aside class="space-y-3 min-w-0 md:col-span-1 lg:col-span-3 md:sticky md:top-6 md:self-start">

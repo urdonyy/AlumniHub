@@ -27,6 +27,9 @@ class Post extends Model
         'trashed_at',
         'reports_count',
         'flagged_at',
+        'removed_by_user_id',
+        'removal_reason',
+        'removal_note',
     ];
 
     protected $casts = [

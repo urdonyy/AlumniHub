@@ -82,12 +82,12 @@
                                     </svg>
                                     Edit post
                                 </button>
-                                <button type="button" x-show="isAuthor || canModeratePost" @click="menuOpen = false; trashPost()"
+                                <button type="button" x-show="isAuthor || canModeratePost" @click="menuOpen = false; isAuthor ? trashPost() : openRemove()"
                                     class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                     </svg>
-                                    Delete post
+                                    <span x-text="isAuthor ? 'Delete post' : 'Remove post'"></span>
                                 </button>
                                 <button type="button" x-show="canReportPost" @click="menuOpen = false; openReport()"
                                     class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -255,12 +255,12 @@
                                                     </svg>
                                                     Edit post
                                                 </button>
-                                                <button type="button" x-show="isAuthor || canModeratePost" @click="menuOpen = false; trashPost()"
+                                                <button type="button" x-show="isAuthor || canModeratePost" @click="menuOpen = false; isAuthor ? trashPost() : openRemove()"
                                                     class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
                                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                     </svg>
-                                                    Delete post
+                                                    <span x-text="isAuthor ? 'Delete post' : 'Remove post'"></span>
                                                 </button>
                                                 <button type="button" x-show="canReportPost" @click="menuOpen = false; openReport()"
                                                     class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -528,6 +528,15 @@
                 }));
             },
 
+            // Moderator removes someone else's post with a reason (opens the shared
+            // remove modal, which submits to posts.moderate-remove and notifies the author).
+            openRemove() {
+                if (!this.canModeratePost || !this.post) return;
+                window.dispatchEvent(new CustomEvent('open-remove-modal', {
+                    detail: { removeUrl: `/posts/${this.post.id}/remove` },
+                }));
+            },
+
             editPost() {
                 if (!this.post || !this.isAuthor) return;
                 const p = this.post;
@@ -571,7 +580,8 @@
             },
 
             trashPost() {
-                if (!this.post || (!this.isAuthor && !this.canModeratePost)) return;
+                // Author-only self-trash; moderators use openRemove() instead.
+                if (!this.post || !this.isAuthor) return;
                 if (!confirm('Move this post to trash?')) return;
                 const postId = this.post.id;
                 fetch(`/posts/${postId}/trash`, {

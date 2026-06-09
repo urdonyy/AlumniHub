@@ -409,7 +409,13 @@
                                                 $carouselTrashUrl = route('posts.trash', $post);
                                                 $carouselEditUrl  = route('posts.update', $post);
                                                 $carouselReportUrl = route('posts.report', $post);
+                                                $carouselRemoveUrl = route('posts.moderate-remove', $post);
                                                 $isCarouselAuthor = auth()->id() === $post->user_id;
+                                                $canModerateCarousel = ! $isCarouselAuthor && (
+                                                    ($post->community && auth()->user()->isModeratorOf($post->community))
+                                                    || ($post->community && $post->community->is_system && auth()->user()->isInstitution())
+                                                    || auth()->user()->canManageCommunities()
+                                                );
                                                 $canReportCarousel = ! $isCarouselAuthor && auth()->user()->isVerified();
                                             @endphp
                                             <div class="{{ $profileUser->isInstitution() ? 'w-full sm:w-1/2 lg:w-1/3 px-1.5' : 'w-full' }} shrink-0 min-w-0">
@@ -440,7 +446,7 @@
                                                                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
                                                                 {{ $visibilityConfig[1] }}
                                                             </span>
-                                                            @if ($isCarouselAuthor || $canReportCarousel)
+                                                            @if ($isCarouselAuthor || $canModerateCarousel || $canReportCarousel)
                                                                 <div class="relative" x-data="{ menuOpen: false }">
                                                                     <button type="button" @click.stop="menuOpen = !menuOpen"
                                                                         class="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
@@ -478,6 +484,16 @@
                                                                                 Delete post
                                                                             </button>
                                                                         </form>
+                                                                        @endif
+                                                                        @if ($canModerateCarousel)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-remove-modal', @js(['removeUrl' => $carouselRemoveUrl]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                            </svg>
+                                                                            Remove post
+                                                                        </button>
                                                                         @endif
                                                                         @if ($canReportCarousel)
                                                                         <button type="button"
@@ -965,6 +981,7 @@
 
     <x-post-detail-modal />
     <x-report-post-modal />
+    <x-remove-post-modal />
 
     <x-footer />
 </x-app-layout>

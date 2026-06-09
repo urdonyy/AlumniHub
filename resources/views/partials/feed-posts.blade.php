@@ -18,6 +18,7 @@
         // (In system communities the institution removes posts directly instead.)
         $canReportPost = ! $isPostAuthor && auth()->user()->isVerified() && ! $isPostInstitutionMod;
         $postReportUrl = route('posts.report', $post);
+        $postModerateRemoveUrl = route('posts.moderate-remove', $post);
     @endphp
     <article x-data="postCard({{ $post->id }}, {{ $post->like_count }}, {{ $post->comments_count ?? 0 }}, '{{ $postApiUrl }}', '{{ $postLikeUrl }}', {{ $post->isLikedByAuthUser() ? 'true' : 'false' }}, @js(['visibility' => $post->visibility, 'title' => $post->title, 'body' => strip_tags($post->body_html ?? $post->body_markdown)]))"
         @click="openPostModal($event)"
@@ -84,7 +85,8 @@
                                         Edit post
                                     </button>
                                 @endif
-                                @if ($canManagePost)
+                                @if ($isPostAuthor)
+                                    {{-- Author trashes their own post (restorable from their trash bin). --}}
                                     <form method="POST" action="{{ $postTrashUrl }}" @submit.prevent="if(confirm('Move this post to trash?')) $el.submit()">
                                         @csrf
                                         @method('DELETE')
@@ -96,6 +98,16 @@
                                             Delete post
                                         </button>
                                     </form>
+                                @elseif ($canManagePost)
+                                    {{-- Moderator removes someone else's post with a reason; the author is notified. --}}
+                                    <button type="button"
+                                        @click="menuOpen = false; $dispatch('open-remove-modal', @js(['removeUrl' => $postModerateRemoveUrl]))"
+                                        class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Remove post
+                                    </button>
                                 @endif
                                 @if ($canReportPost)
                                     <button type="button"
