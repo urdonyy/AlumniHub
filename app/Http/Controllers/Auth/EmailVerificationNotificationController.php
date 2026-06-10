@@ -17,7 +17,15 @@ class EmailVerificationNotificationController extends Controller
             return redirect()->intended(route('dashboard', absolute: false));
         }
 
-        $request->user()->sendEmailVerificationNotification();
+        // Don't 500 the user if mail delivery fails (e.g. provider send cap).
+        // Surface a friendly status so they can retry instead of seeing an error.
+        try {
+            $request->user()->sendEmailVerificationNotification();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('status', 'verification-link-failed');
+        }
 
         return back()->with('status', 'verification-link-sent');
     }

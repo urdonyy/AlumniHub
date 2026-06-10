@@ -65,7 +65,15 @@ class RegisteredUserController extends Controller
             ]);
         });
 
-        event(new Registered($user));
+        // Send the verification email, but never let an SMTP failure (e.g. a
+        // provider daily-send cap) hard-block registration. The account is
+        // already created; if mail fails the user still reaches the verification
+        // notice page and can use "Resend" once the provider recovers.
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         Auth::login($user);
 
