@@ -5,7 +5,7 @@
             <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
                 {{ auth()->user()->canManageCommunities() ? __('Admin Home') : __('Home') }}
             </h2>
-            <p class="text-sm text-red-900">{{ __('AlumniHub social experience (beta)') }}</p>
+            <p class="text-sm text-red-900">{{ auth()->user()->canManageCommunities() ? __('AlumniHub user management') : __('AlumniHub social experience (beta)') }}</p>
         </div>
     </x-slot>
 
@@ -24,10 +24,6 @@
             @endif
 
             @if (auth()->user()->canManageCommunities())
-                <div class="mb-2">
-                    <h3 class="text-base font-semibold text-gray-900">{{ __('User Management') }}</h3>
-                    <p class="mt-1 text-sm text-gray-600">{{ __('View and manage registered users.') }}</p>
-                </div>
                 @include('admin.users._table')
             @else
                 @php

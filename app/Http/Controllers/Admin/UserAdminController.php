@@ -37,6 +37,15 @@ class UserAdminController extends Controller
     }
 
     /**
+     * Live user stats for the dashboard polling (online/offline counts, etc.).
+     * Mirrors the admin inbox-counts polling pattern.
+     */
+    public function stats(): JsonResponse
+    {
+        return response()->json(self::userStats());
+    }
+
+    /**
      * Build the data the user-management table needs (list + filters). Shared by
      * the standalone admin.users.index page and the inline table on the admin
      * dashboard home, so both stay in sync.
@@ -64,9 +73,10 @@ class UserAdminController extends Controller
             ->when(in_array($status, self::ACCOUNT_STATUSES, true), function ($query) use ($status) {
                 $query->where('account_status', $status);
             })
+            // Surface privileged accounts first: superadmin, then admin, then the rest.
+            ->orderByRaw("CASE role WHEN 'superadmin' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END")
             ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString();
+            ->get();
 
         return [
             'users' => $users,

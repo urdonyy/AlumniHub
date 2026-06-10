@@ -15,6 +15,18 @@
         forms: {},
         views: {},
         updateUrls: {},
+        stats: @js($userStats ?? null),
+        startStatsPolling() {
+            if (!this.stats) return;
+            setInterval(async () => {
+                try {
+                    const r = await fetch('{{ route('admin.users.stats') }}', {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    });
+                    if (r.ok) this.stats = await r.json();
+                } catch (e) {}
+            }, 30000);
+        },
         register(id, data, url) { this.views[id] = { ...data }; this.updateUrls[id] = url; },
         rowVisible(el) {
             if (!this.matches(el.dataset.search)) return false;
@@ -71,7 +83,8 @@
             return Array.from(this.$root.querySelectorAll('tr[data-main]'))
                 .filter(r => this.rowVisible(r)).length;
         },
-    }">
+    }"
+    x-init="startStatsPolling()">
 
     {{-- Analytics: most active communities (by non-trashed post count) --}}
     @isset($communityActivity)
@@ -119,11 +132,11 @@
         <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             @php
                 $cards = [
-                    ['label' => __('All Users'), 'value' => $userStats['all'], 'icon' => 'fa-users', 'accent' => 'bg-red-900', 'chip' => 'bg-red-900/10 text-red-900'],
-                    ['label' => __('Online'), 'value' => $userStats['online'], 'icon' => 'fa-circle-dot', 'accent' => 'bg-emerald-500', 'chip' => 'bg-emerald-100 text-emerald-600'],
-                    ['label' => __('Offline'), 'value' => $userStats['offline'], 'icon' => 'fa-moon', 'accent' => 'bg-gray-400', 'chip' => 'bg-gray-100 text-gray-500'],
-                    ['label' => __('Pending'), 'value' => $userStats['pending'], 'icon' => 'fa-hourglass-half', 'accent' => 'bg-[#FFC107]', 'chip' => 'bg-amber-100 text-amber-700'],
-                    ['label' => __('Approved'), 'value' => $userStats['approved'], 'icon' => 'fa-circle-check', 'accent' => 'bg-teal-500', 'chip' => 'bg-teal-100 text-teal-600'],
+                    ['key' => 'all', 'label' => __('All Users'), 'icon' => 'fa-users', 'accent' => 'bg-red-900', 'chip' => 'bg-red-900/10 text-red-900'],
+                    ['key' => 'online', 'label' => __('Online'), 'icon' => 'fa-circle-dot', 'accent' => 'bg-emerald-500', 'chip' => 'bg-emerald-100 text-emerald-600'],
+                    ['key' => 'offline', 'label' => __('Offline'), 'icon' => 'fa-moon', 'accent' => 'bg-gray-400', 'chip' => 'bg-gray-100 text-gray-500'],
+                    ['key' => 'pending', 'label' => __('Pending'), 'icon' => 'fa-hourglass-half', 'accent' => 'bg-[#FFC107]', 'chip' => 'bg-amber-100 text-amber-700'],
+                    ['key' => 'approved', 'label' => __('Approved'), 'icon' => 'fa-circle-check', 'accent' => 'bg-teal-500', 'chip' => 'bg-teal-100 text-teal-600'],
                 ];
             @endphp
             @foreach ($cards as $card)
@@ -134,7 +147,8 @@
                             <i class="fa-solid {{ $card['icon'] }} text-lg"></i>
                         </span>
                         <div class="min-w-0">
-                            <p class="text-2xl font-extrabold leading-none text-gray-900">{{ number_format($card['value']) }}</p>
+                            <p class="text-2xl font-extrabold leading-none text-gray-900"
+                                x-text="Number(stats.{{ $card['key'] }} ?? 0).toLocaleString()"></p>
                             <p class="mt-1 truncate text-xs font-semibold uppercase tracking-wide text-gray-500">{{ $card['label'] }}</p>
                         </div>
                     </div>
@@ -165,7 +179,7 @@
                 </div>
                 {{-- Absolutely positioned so it never shifts the row alignment --}}
                 <p class="absolute left-0 top-full mt-1 text-xs text-gray-500" x-show="filtersActive"
-                    x-text="visibleCount + ' result' + (visibleCount === 1 ? '' : 's') + ' on this page'"></p>
+                    x-text="visibleCount + ' result' + (visibleCount === 1 ? '' : 's')"></p>
             </div>
 
             {{-- Role/Status filters (live, client-side — no navigation) --}}
@@ -376,18 +390,12 @@
                     @if ($users->count() > 0)
                         <tr x-show="filtersActive && visibleCount === 0">
                             <td colspan="9" class="px-4 py-6 text-center text-gray-500">
-                                {{ __('No matches for') }} "<span x-text="query"></span>" {{ __('on this page.') }}
+                                {{ __('No matches for') }} "<span x-text="query"></span>".
                             </td>
                         </tr>
                     @endif
                 </tbody>
             </table>
         </div>
-
-        @if ($users->hasPages())
-            <div class="border-t border-gray-100 px-6 py-4">
-                {{ $users->links() }}
-            </div>
-        @endif
     </div>
 </div>

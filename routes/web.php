@@ -462,6 +462,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/verifications/{verificationDocument}/reject', [VerificationAdminController::class, 'reject'])->name('verifications.reject');
 
     Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+    Route::get('/users/stats', [UserAdminController::class, 'stats'])->name('users.stats');
     Route::patch('/users/{user}', [UserAdminController::class, 'update'])->name('users.update');
 });
 
