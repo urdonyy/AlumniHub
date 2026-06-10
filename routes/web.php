@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\AdminInboxController;
 use App\Http\Controllers\Admin\PostReportAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityCreationRequestController;
 use App\Http\Controllers\CommunityJoinRequestController;
@@ -179,7 +180,7 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
             'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
         ]));
 
-    return view('dashboard', [
+    $viewData = [
         'posts' => $posts,
         'selectedFlairIds' => $selectedFlairIds,
         'featuredCommunities' => $featuredCommunities,
@@ -187,7 +188,14 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         'joinedCommunities' => $joinedCommunities,
         'availableFlairs' => $availableFlairs,
         'flairsByCommunity' => $flairsByCommunity,
-    ]);
+    ];
+
+    // Admins get the User Management table rendered inline on their home.
+    if ($user->canManageCommunities()) {
+        $viewData = array_merge($viewData, UserAdminController::listData($request));
+    }
+
+    return view('dashboard', $viewData);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/feed/posts', function (Request $request, FeedService $feed) {
@@ -452,6 +460,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');
     Route::patch('/verifications/{verificationDocument}/approve', [VerificationAdminController::class, 'approve'])->name('verifications.approve');
     Route::patch('/verifications/{verificationDocument}/reject', [VerificationAdminController::class, 'reject'])->name('verifications.reject');
+
+    Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+    Route::patch('/users/{user}', [UserAdminController::class, 'update'])->name('users.update');
 });
 
 require __DIR__ . '/auth.php';

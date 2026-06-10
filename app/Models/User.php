@@ -16,7 +16,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 
-#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'profile_setup_completed_at', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'password'])]
+#[Fillable(['name', 'first_name', 'last_name', 'role', 'account_status', 'batch_year', 'program_course', 'skills', 'profile_setup_completed_at', 'avatar_path', 'banner_path', 'avatar_uploaded_at', 'banner_uploaded_at', 'email', 'last_seen_at', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -331,7 +331,21 @@ class User extends Authenticatable implements MustVerifyEmail
             'banner_uploaded_at' => 'datetime',
             'email_verified_at' => 'datetime',
             'profile_setup_completed_at' => 'datetime',
+            'last_seen_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Minutes of inactivity after which a user is considered offline. A
+     * lightweight middleware refreshes last_seen_at (throttled) on each
+     * authenticated request, so "online" means active within this window.
+     */
+    public const ONLINE_THRESHOLD_MINUTES = 5;
+
+    public function isOnline(): bool
+    {
+        return $this->last_seen_at !== null
+            && $this->last_seen_at->gt(now()->subMinutes(self::ONLINE_THRESHOLD_MINUTES));
     }
 }
