@@ -79,7 +79,7 @@
                 <x-input-label for="batch_year" :value="__('Batch Year')" />
                 <x-text-input id="batch_year" class="block mt-1 w-full" type="number" name="batch_year"
                     :value="old('batch_year')" min="2000" max="{{ now()->format('Y') }}" required
-                    placeholder="{{ now()->format('Y') }}" />
+                    placeholder="Year started" />
                 <x-input-error :messages="$errors->get('batch_year')" class="mt-1" />
             </div>
             <!-- Student Number -->
