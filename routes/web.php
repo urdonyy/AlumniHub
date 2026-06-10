@@ -102,7 +102,7 @@ Route::get('/', function (FeedService $feed) {
                 'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
             ]));
 
-        return view('dashboard', [
+        $viewData = [
             'posts' => $posts,
             'selectedFlairIds' => $selectedFlairIds,
             'featuredCommunities' => $featuredCommunities,
@@ -110,7 +110,14 @@ Route::get('/', function (FeedService $feed) {
             'joinedCommunities' => $joinedCommunities,
             'availableFlairs' => $availableFlairs,
             'flairsByCommunity' => $flairsByCommunity,
-        ]);
+        ];
+
+        // Admins get the User Management table rendered inline on their home.
+        if ($user->canManageCommunities()) {
+            $viewData = array_merge($viewData, UserAdminController::listData(request()));
+        }
+
+        return view('dashboard', $viewData);
     }
 
     return view('welcome');
