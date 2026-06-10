@@ -257,7 +257,7 @@
                     </div>
                 </section>
 
-                <section class="!mt-3 grid gap-3 lg:grid-cols-3">
+                <section class="!mt-3 grid gap-3 lg:grid-cols-3 lg:items-start">
                     {{-- The institution account has no career profile. --}}
                     @unless ($profileUser->isInstitution())
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 max-w-full overflow-hidden">
