@@ -68,18 +68,21 @@ class VerificationAdminController extends Controller
         return back()->with('status', 'verification-approved');
     }
 
-    public function viewDocument(VerificationDocument $verificationDocument): StreamedResponse
+    public function viewDocument(Request $request, VerificationDocument $verificationDocument): StreamedResponse
     {
         abort_unless(Storage::exists($verificationDocument->document_path), 404, 'Document not found.');
 
         $filename = basename($verificationDocument->document_path);
         $mimeType = Storage::mimeType($verificationDocument->document_path) ?: 'application/octet-stream';
 
+        // inline by default (powers the in-queue preview); ?download=1 forces a download.
+        $disposition = $request->boolean('download') ? 'attachment' : 'inline';
+
         return response()->streamDownload(function () use ($verificationDocument) {
             echo Storage::get($verificationDocument->document_path);
         }, $filename, [
             'Content-Type' => $mimeType,
-            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+            'Content-Disposition' => $disposition . '; filename="' . $filename . '"',
         ]);
     }
 
