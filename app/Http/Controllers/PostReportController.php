@@ -44,8 +44,13 @@ class PostReportController extends Controller
             'details' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // One report per user per post — silently treat a repeat as already done.
-        $alreadyReported = $post->reports()->where('user_id', $user->id)->exists();
+        // One *open* report per user per post: block only while a previous report
+        // is still unresolved. Once an admin has reviewed it (kept or removed),
+        // the user may report again if the post re-offends.
+        $alreadyReported = $post->reports()
+            ->where('user_id', $user->id)
+            ->pending()
+            ->exists();
         if ($alreadyReported) {
             return response()->json([
                 'success' => true,
@@ -54,11 +59,19 @@ class PostReportController extends Controller
             ]);
         }
 
-        $post->reports()->create([
-            'user_id' => $user->id,
-            'reason' => $validated['reason'],
-            'details' => $validated['details'] ?? null,
-        ]);
+        // A UNIQUE(post_id, user_id) constraint means each user has at most one
+        // report row per post. Re-reporting after an admin resolution reopens
+        // that same row (rather than inserting a duplicate, which would violate
+        // the constraint): clear the resolution and apply the new reason/details.
+        $post->reports()->updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'reason' => $validated['reason'],
+                'details' => $validated['details'] ?? null,
+                'resolved_at' => null,
+                'resolution' => null,
+            ]
+        );
 
         // Refresh the denormalized pending count and flag for review at threshold.
         $pendingCount = $post->reports()->pending()->count();
