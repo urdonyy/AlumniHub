@@ -145,14 +145,14 @@
                                 @csrf
                                 <x-dropdown-link :href="route('institution.exit')" onclick="event.preventDefault(); this.closest('form').submit();">
                                     <i class="fa-solid fa-arrow-rotate-left"></i>
-                                    {{ __('Exit Superadmin') }}
+                                    {{ __('Exit Acting Mode') }}
                                 </x-dropdown-link>
                             </form>
                         @elseif ($navUser?->role === 'admin')
                             <button type="button" @click="$dispatch('open-institution-confirm')"
                                 class="inline-flex items-center gap-[6px] md:gap-2 w-full px-4 py-2 text-start text-sm leading-5 text-gray-600 hover:bg-red-900 hover:text-white focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
                                 <i class="fa-solid fa-user-shield"></i>
-                                {{ __('Enable Superadmin') }}
+                                {{ __('Enable Acting Mode') }}
                             </button>
                         @else
                             <x-dropdown-link :href="route('profile.edit', ['section' => 'account-status'])">
