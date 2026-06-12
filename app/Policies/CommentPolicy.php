@@ -33,6 +33,13 @@ class CommentPolicy
             return false;
         }
 
+        // Post authors can always comment on their own posts. This also covers
+        // community-less connections posts, where there is no community
+        // membership to fall back on and you are not connected to yourself.
+        if ($user->id === $post->user_id) {
+            return true;
+        }
+
         // Public posts can be commented on by any verified user
         if ($post->visibility === 'public') {
             return true;

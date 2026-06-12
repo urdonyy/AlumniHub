@@ -13,6 +13,9 @@ class Community extends Model
 {
     use HasFactory;
 
+    public const TYPE_PROGRAM_BATCH = 'program_batch';
+    public const TYPE_TOPIC = 'topic';
+
     protected $fillable = [
         'name',
         'slug',
@@ -20,13 +23,34 @@ class Community extends Model
         'created_by',
         'is_system',
         'system_key',
+        'type',
+        'batch_year',
+        'program_course',
+        'year_section',
+        'purpose',
     ];
 
     protected function casts(): array
     {
         return [
             'is_system' => 'boolean',
+            'batch_year' => 'integer',
         ];
+    }
+
+    public function isProgramBatch(): bool
+    {
+        return $this->type === self::TYPE_PROGRAM_BATCH;
+    }
+
+    public function scopeProgramBatch($query)
+    {
+        return $query->where('type', self::TYPE_PROGRAM_BATCH);
+    }
+
+    public function joinRequests(): HasMany
+    {
+        return $this->hasMany(CommunityJoinRequest::class);
     }
 
     public function creator(): BelongsTo
@@ -49,7 +73,7 @@ class Community extends Model
         return $this->hasMany(Post::class);
     }
 
-    public function moderators(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function moderators(): HasMany
     {
         return $this->hasMany(CommunityModerator::class);
     }

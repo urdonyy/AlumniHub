@@ -16,25 +16,12 @@ class InitialUsersSeeder extends Seeder
                 'first_name' => 'Site',
                 'last_name' => 'Admin',
                 'email' => 'admin@example.com',
-                'password' => 'password',
+                'password' => env('ADMIN_INITIAL_PASSWORD', 'password'),
                 'role' => 'admin',
                 'account_status' => 'approved',
+                'email_verified_at' => now(),
             ]
         );
 
-        User::updateOrCreate(
-            ['email' => 'alumni@example.com'],
-            [
-                'name' => 'Test Alumni',
-                'first_name' => 'Test',
-                'last_name' => 'Alumni',
-                'email' => 'alumni@example.com',
-                'password' => 'password',
-                'role' => 'alumni',
-                'account_status' => 'approved',
-                'batch_year' => 2020,
-                'program_course' => 'Diploma in Computer Engineering Technology (DCET)',
-            ]
-        );
     }
 }

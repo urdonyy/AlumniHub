@@ -1,4 +1,5 @@
 <x-auth-layout>
+    <x-slot name="title">Verify Email</x-slot>
 
     <h1 class="text-2xl font-bold text-gray-900 mb-1">Check your inbox</h1>
     <p class="text-sm text-gray-500 mb-6">Step 2 of 3 — verify your email address.</p>
@@ -43,9 +44,19 @@
         Click the link in that email to continue.
     </p>
 
+    @if (session('status') == 'verification-link-expired')
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 text-center">
+            That verification link has expired. Please request a new one below.
+        </div>
+    @endif
+
     @if (session('status') == 'verification-link-sent')
         <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 text-center">
             A new verification link has been sent to your email address.
+        </div>
+    @elseif (session('status') == 'verification-link-failed')
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 text-center">
+            We couldn't send the verification email right now. Please wait a moment and tap "Resend Verification Email" again.
         </div>
     @endif
 
@@ -57,7 +68,7 @@
             </x-primary-button>
         </form>
 
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('register.discard') }}">
             @csrf
             <button type="submit"
                 class="w-full text-center text-sm text-gray-500 underline hover:text-gray-700 focus:outline-none">

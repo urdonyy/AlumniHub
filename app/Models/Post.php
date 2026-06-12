@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
@@ -18,14 +20,23 @@ class Post extends Model
         'body_markdown',
         'body_html',
         'status',
+        'post_type',
         'visibility',
         'pinned',
         'published_at',
+        'trashed_at',
+        'reports_count',
+        'flagged_at',
+        'removed_by_user_id',
+        'removal_reason',
+        'removal_note',
     ];
 
     protected $casts = [
         'pinned' => 'boolean',
         'published_at' => 'datetime',
+        'trashed_at' => 'datetime',
+        'flagged_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -63,6 +74,14 @@ class Post extends Model
     }
 
     /**
+     * Get the event details for this post (only present when post_type = 'event').
+     */
+    public function event(): HasOne
+    {
+        return $this->hasOne(PostEvent::class);
+    }
+
+    /**
      * Get the comments on this post.
      */
     public function comments(): HasMany
@@ -89,6 +108,14 @@ class Post extends Model
     }
 
     /**
+     * Get the abuse reports filed against this post.
+     */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(PostReport::class);
+    }
+
+    /**
      * Boot the model.
      */
     protected static function boot()
@@ -98,12 +125,27 @@ class Post extends Model
         // Auto-convert markdown to HTML on save
         static::saving(function ($post) {
             if ($post->isDirty('body_markdown')) {
-                $post->body_html = self::markdownToHtml($post->body_markdown);
+                $post->body_html = filled($post->body_markdown)
+                    ? self::markdownToHtml($post->body_markdown)
+                    : null;
             }
 
             // Auto-set published_at if transitioning to published
             if ($post->isDirty('status') && $post->status === 'published' && is_null($post->published_at)) {
                 $post->published_at = now();
+            }
+        });
+
+        // On PERMANENT deletion, remove the post's media files from storage so
+        // they don't orphan and waste the storage quota. This only fires on a
+        // real delete() (force-delete / hard-delete) — trashing uses an update
+        // to `trashed_at`, so a trashed post keeps its files until purged.
+        static::deleting(function ($post) {
+            foreach ($post->media as $media) {
+                if ($media->file_path) {
+                    Storage::delete($media->file_path);
+                }
+                $media->delete();
             }
         });
     }
@@ -117,6 +159,11 @@ class Post extends Model
             $converter = new \League\CommonMark\GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
+                // Honor single line breaks the author typed (render as <br>),
+                // so a one-Enter line break shows up instead of being collapsed.
+                'renderer' => [
+                    'soft_break' => "<br>\n",
+                ],
             ]);
             return $converter->convert($markdown)->getContent();
         } catch (\Throwable $e) {
@@ -130,7 +177,17 @@ class Post extends Model
      */
     public function scopePublished($query)
     {
-        return $query->where('status', 'published');
+        return $query->where('status', 'published')->whereNull('trashed_at');
+    }
+
+    public function scopeTrashed($query)
+    {
+        return $query->whereNotNull('trashed_at');
+    }
+
+    public function isTrashed(): bool
+    {
+        return $this->trashed_at !== null;
     }
 
     /**

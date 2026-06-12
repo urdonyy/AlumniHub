@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">{{ $post->title }}</x-slot>
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight truncate">
@@ -68,11 +69,42 @@
                 </div>
             </div>
 
-            <!-- Post Content -->
-            <div class="mt-6 rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm">
-                <div class="prose prose-sm max-w-none text-gray-700">
-                    {!! $post->body_html !!}
+            <!-- Event details -->
+            @if ($post->post_type === 'event' && $post->event)
+                @php $ev = $post->event; @endphp
+                <div class="mt-6 rounded-lg border border-indigo-100 bg-indigo-50/60 px-6 py-4">
+                    <div class="flex items-start gap-3">
+                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-700 ring-1 ring-indigo-100">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 text-sm">
+                            <p class="font-semibold text-indigo-900">{{ $ev->isOnline() ? 'Online event' : 'In-person event' }}</p>
+                            <p class="text-gray-700">
+                                {{ $ev->starts_at?->format('M j, Y · g:i A') }}
+                                @if ($ev->ends_at) <span class="text-gray-400">–</span> {{ $ev->ends_at->format('M j, Y · g:i A') }} @endif
+                            </p>
+                            @unless ($ev->isOnline())
+                                <p class="mt-0.5 text-gray-700">📍 {{ $ev->address }}@if ($ev->venue) <span class="text-gray-400">·</span> {{ $ev->venue }}@endif</p>
+                            @endunless
+                            @if ($ev->external_link)
+                                <a href="{{ $ev->external_link }}" target="_blank" rel="noopener"
+                                    class="mt-0.5 inline-block break-all text-indigo-700 hover:underline">{{ $ev->external_link }}</a>
+                            @endif
+                        </div>
+                    </div>
                 </div>
+            @endif
+
+            <!-- Post Content -->
+            @if (filled($post->body_html) || $post->media->count() > 0)
+            <div class="mt-6 rounded-lg border border-gray-200 bg-white px-6 py-6 shadow-sm">
+                @if (filled($post->body_html))
+                    <div class="prose prose-sm max-w-none text-gray-700">
+                        {!! $post->body_html !!}
+                    </div>
+                @endif
 
                 <!-- Media/Attachments -->
                 @if ($post->media->count() > 0)
@@ -96,10 +128,11 @@
                     </div>
                 @endif
             </div>
+            @endif
 
             <!-- Back Link -->
             <div class="mt-6">
-                <a href="{{ route('communities.posts.index', $community) }}"
+                <a href="{{ route('communities.show', $community) }}"
                     class="text-indigo-600 hover:text-indigo-700 font-semibold">
                     ← Back to Posts
                 </a>

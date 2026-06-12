@@ -1,4 +1,5 @@
 <x-auth-layout>
+    <x-slot name="title">Register</x-slot>
 
     <h1 class="text-2xl font-bold text-gray-900 mb-1">Create your account</h1>
     <p class="text-sm text-gray-500 mb-2">Step 1 of 3 — enter your email and a secure password.</p>

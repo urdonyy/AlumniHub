@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">{{ $profileUser->name }}</x-slot>
     <div class="bg-cover bg-center w-full transition-opacity opacity-100 duration-750 lg:grow starting:opacity-0"
         style="background-image: url('{{ asset('images/element.png') }}');">
         <x-slot name="header">
@@ -70,7 +71,7 @@
                                         {{ $profileUser->name }}
                                     </h3>
                                     <p class="mt-1 text-sm text-gray-600 sm:text-base">
-                                        {{ $profileUser->program_course ?? __('Program not yet provided') }}
+                                        {{ $profileUser->isInstitution() ? __('Official account') : ($profileUser->program_course ?? __('Program not yet provided')) }}
                                     </p>
                                     <div class="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                                         <span
@@ -85,15 +86,36 @@
                                 </div>
 
                                 @if ($isOwnProfile)
-                                    <a href="{{ route('profile.edit', ['section' => 'account-status']) }}"
-                                        class="inline-flex self-end items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0 lg:self-auto">
-                                        <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
-                                        <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
-                                        <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
-                                    </a>
-                                @elseif ($viewer->canSendConnectionRequests())
+                                    <div class="flex items-center gap-2 self-end lg:self-auto">
+                                        {{-- Deleted posts bin --}}
+                                        <a href="{{ route('profile.post-trash') }}"
+                                            class="inline-flex items-center justify-center px-3 py-1 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase whitespace-nowrap tracking-widest hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0">
+                                            <svg class="h-4 w-4 min-[1025px]:mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                            </svg>
+                                            <span class="sr-only min-[1025px]:not-sr-only hidden min-[1025px]:inline">{{ __('Deleted Posts') }}</span>
+                                        </a>
+                                        {{-- Edit profile settings (not for the institution account) --}}
+                                        @unless ($profileUser->isInstitution())
+                                        <a href="{{ route('profile.edit', ['section' => 'account-status']) }}"
+                                            class="inline-flex items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0">
+                                            <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
+                                            <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
+                                            <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
+                                        </a>
+                                        @endunless
+                                    </div>
+                                @elseif ($viewer->canSendConnectionRequests() && $profileUser->isVerified())
                                     @if ($connectionState === 'connected')
-                                        <div class="relative" x-data="{ open: false }" @click.away="open = false">
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('messages.show', $profileUser) }}"
+                                                class="inline-flex items-center gap-1.5 rounded-md bg-red-900 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-white hover:bg-red-800 transition">
+                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                                </svg>
+                                                {{ __('Message') }}
+                                            </a>
+                                            <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
                                                 class="inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 sm:px-5 sm:py-1.5 text-xs font-semibold tracking-widest text-emerald-700 hover:bg-emerald-100 transition">
                                                 {{ __('Connected') }}
@@ -119,7 +141,8 @@
                                                     </button>
                                                 </form>
                                             </div>
-                                        </div>
+                                            </div>{{-- end Connected dropdown --}}
+                                        </div>{{-- end message + connected row --}}
                                     @elseif ($connectionState === 'invite_sent' && $activeConnection)
                                         <div class="relative" x-data="{ open: false }" @click.away="open = false">
                                             <button type="button" @click="open = !open"
@@ -178,7 +201,8 @@
                             </div>
 
                             <div
-                                class="grid gap-1 sm:gap-3 grid-cols-2 sm:grid-cols-3 sm:border sm:border-gray-200 sm:bg-gray-50 sm:rounded-lg">
+                                class="grid gap-1 sm:gap-3 grid-cols-2 {{ $profileUser->isInstitution() ? 'sm:grid-cols-2' : 'sm:grid-cols-3' }} sm:border sm:border-gray-200 sm:bg-gray-50 sm:rounded-lg">
+                                @unless ($profileUser->isInstitution())
                                 <div
                                     class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0">
                                     <div class="flex items-center justify-center gap-1">
@@ -196,8 +220,9 @@
                                         class="border border-red-900 absolute h-[50%] right-0 hidden sm:flex flex-col items-center">
                                     </div>
                                 </div>
+                                @endunless
                                 <div
-                                    class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0 border-l border-red-900/30 sm:border-l-0">
+                                    class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0 {{ $profileUser->isInstitution() ? '' : 'border-l border-red-900/30 sm:border-l-0' }}">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-circle-nodes text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -214,7 +239,7 @@
                                     </div>
                                 </div>
                                 <div
-                                    class="col-span-2 sm:col-span-1 p-0 pt-2 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center min-w-0 border-t border-red-900/30 sm:border-t-0">
+                                    class="{{ $profileUser->isInstitution() ? 'p-0 sm:p-4 border-l border-red-900/30 sm:border-l-0' : 'col-span-2 sm:col-span-1 p-0 pt-2 sm:p-4 border-t border-red-900/30 sm:border-t-0' }} flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center min-w-0">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-pen-to-square text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -232,7 +257,9 @@
                     </div>
                 </section>
 
-                <section class="!mt-3 grid gap-3 lg:grid-cols-3">
+                <section class="!mt-3 grid gap-3 lg:grid-cols-3 lg:items-start">
+                    {{-- The institution account has no career profile. --}}
+                    @unless ($profileUser->isInstitution())
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 max-w-full overflow-hidden">
                         <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-900">{{ __('Career Profile') }}
                         </h3>
@@ -333,8 +360,9 @@
                             </div>
                         @endif -->
                     </article>
+                    @endunless
 
-                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm max-w-full overflow-hidden">
+                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm max-w-full overflow-hidden {{ $profileUser->isInstitution() ? 'lg:col-span-3' : '' }}">
                         @php
                             $activityPostsForCarousel = $activityPosts
                                 ->where('user_id', $profileUser->id)
@@ -361,8 +389,8 @@
                                 {{ __('No posts yet.') }}
                             </div>
                         @else
-                            <div class="mt-4" x-data="postCardsCarousel(@js($activityPostsCounts))">
-                                    <div class="relative overflow-hidden" style="touch-action: pan-y;">
+                            <div class="mt-4" x-data="postCardsCarousel(@js($activityPostsCounts), {{ $profileUser->isInstitution() ? 'true' : 'false' }})">
+                                    <div class="relative overflow-hidden {{ $profileUser->isInstitution() ? '-mx-1.5' : '' }}" style="touch-action: pan-y;">
                                     <div class="flex transition-transform duration-300 ease-out min-w-0 js-post-cards-track"
                                         :style="`transform: translateX(-${activeIndex * 100}%);`">
                                         @foreach ($activityPostsForCarousel as $post)
@@ -372,11 +400,28 @@
                                                     'connections' => ['bg-blue-50 text-blue-700 ring-blue-200', __('Connections')],
                                                     default       => ['bg-gray-100 text-gray-600 ring-gray-200', __('Members')],
                                                 };
+                                                $profilePostApiUrl = $post->community
+                                                    ? route('communities.posts.api', ['community' => $post->community, 'post' => $post])
+                                                    : route('posts.api', ['post' => $post]);
+                                                $profilePostCommentsUrl = $post->community
+                                                    ? route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post])
+                                                    : route('posts.comments.index', ['post' => $post]);
+                                                $carouselTrashUrl = route('posts.trash', $post);
+                                                $carouselEditUrl  = route('posts.update', $post);
+                                                $carouselReportUrl = route('posts.report', $post);
+                                                $carouselRemoveUrl = route('posts.moderate-remove', $post);
+                                                $isCarouselAuthor = auth()->id() === $post->user_id;
+                                                $canModerateCarousel = ! $isCarouselAuthor && (
+                                                    ($post->community && auth()->user()->isModeratorOf($post->community))
+                                                    || ($post->community && $post->community->is_system && auth()->user()->isInstitution())
+                                                    || auth()->user()->canManageCommunities()
+                                                );
+                                                $canReportCarousel = ! $isCarouselAuthor && auth()->user()->isVerified();
                                             @endphp
-                                            <div class="w-full shrink-0 min-w-0">
+                                            <div class="{{ $profileUser->isInstitution() ? 'w-full sm:w-1/2 lg:w-1/3 px-1.5' : 'w-full' }} shrink-0 min-w-0">
                                                 <article
                                                     class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md"
-                                                    @click="openPostModal($event, {{ $post->id }}, '{{ route('communities.posts.api', ['community' => $post->community, 'post' => $post]) }}', '{{ route('communities.posts.comments.index', ['community' => $post->community, 'post' => $post]) }}')">
+                                                    @click="openPostModal($event, {{ $post->id }}, '{{ $profilePostApiUrl }}', '{{ $profilePostCommentsUrl }}')">
 
                                                     <!-- Top section -->
                                                     <div class="p-4 pb-3">
@@ -396,11 +441,75 @@
                                                                 </div>
                                                             </div>
 
+                                                            <div class="flex items-center gap-1.5 shrink-0" @click.stop>
                                                             <span
-                                                                class="shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
+                                                                class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
                                                                 {{ $visibilityConfig[1] }}
                                                             </span>
-                                                        </div>
+                                                            @if ($isCarouselAuthor || $canModerateCarousel || $canReportCarousel)
+                                                                <div class="relative" x-data="{ menuOpen: false }">
+                                                                    <button type="button" @click.stop="menuOpen = !menuOpen"
+                                                                        class="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                                                                        aria-label="Post options">
+                                                                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                                                            <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                                                                        </svg>
+                                                                    </button>
+                                                                    <div x-show="menuOpen" @click.away="menuOpen = false"
+                                                                        x-transition:enter="transition ease-out duration-100"
+                                                                        x-transition:enter-start="opacity-0 scale-95"
+                                                                        x-transition:enter-end="opacity-100 scale-100"
+                                                                        x-transition:leave="transition ease-in duration-75"
+                                                                        x-transition:leave-start="opacity-100 scale-100"
+                                                                        x-transition:leave-end="opacity-0 scale-95"
+                                                                        class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1"
+                                                                        style="display:none">
+                                                                        @if ($isCarouselAuthor)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-edit-composer', @js(['postId' => $post->id, 'postType' => $post->post_type, 'title' => $post->title, 'body' => $post->body_markdown, 'visibility' => $post->visibility, 'communityId' => $post->community_id, 'editUrl' => $carouselEditUrl, 'flairs' => $post->flairs->pluck('id'), 'media' => $post->media->map(fn($m) => ['id' => $m->id, 'url' => $m->url]), 'event' => $post->event ? ['event_type' => $post->event->event_type, 'starts_at' => $post->event->starts_at?->format('Y-m-d\TH:i'), 'ends_at' => $post->event->ends_at?->format('Y-m-d\TH:i'), 'external_link' => $post->event->external_link, 'address' => $post->event->address, 'venue' => $post->event->venue] : null]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                                            </svg>
+                                                                            Edit post
+                                                                        </button>
+                                                                        <form method="POST" action="{{ $carouselTrashUrl }}" @submit.prevent="if(confirm('Move this post to trash?')) $el.submit()">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button type="submit" @click.stop="menuOpen = false"
+                                                                                class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                                </svg>
+                                                                                Delete post
+                                                                            </button>
+                                                                        </form>
+                                                                        @endif
+                                                                        @if ($canModerateCarousel)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-remove-modal', @js(['removeUrl' => $carouselRemoveUrl]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                            </svg>
+                                                                            Remove post
+                                                                        </button>
+                                                                        @endif
+                                                                        @if ($canReportCarousel)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-report-modal', @js(['reportUrl' => $carouselReportUrl]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                                            <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                                                            </svg>
+                                                                            Report post
+                                                                        </button>
+                                                                        @endif
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+                                                            </div>{{-- end pill+menu wrapper --}}
+                                                        </div>{{-- end header row --}}
 
                                                         @if ($post->flairs->count() > 0)
                                                             <div class="mt-3 flex flex-wrap gap-1.5">
@@ -428,8 +537,8 @@
                                                             <h4 class="text-base font-semibold text-gray-900 line-clamp-2">{{ $post->title }}</h4>
                                                         @endif
 
-                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words">
-                                                            {{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 220) }}
+                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words whitespace-pre-line">
+                                                            {{ \Illuminate\Support\Str::limit($post->body_markdown ?? '', 220) }}
                                                         </p>
 
                                                             @if ($post->media->count() > 0)
@@ -543,7 +652,7 @@
                                             <img id="banner-preview" src="{{ $profileUser->profileBannerUrl() }}" alt="{{ __('Current banner preview') }}"
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-banner.svg') }}';"
                                                 class="mt-2 h-32 w-full rounded-lg border border-gray-200 object-cover sm:h-40" />
-                                            <input id="banner" name="banner" type="file" accept="image/jpeg,image/png,image/webp"
+                                            <input id="banner" name="banner" type="file" accept="image/*"
                                                 class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer" />
                                             <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 5MB.') }}</p>
                                             <x-input-error class="mt-2" :messages="$errors->get('banner')" />
@@ -554,7 +663,7 @@
                                             <img id="avatar-preview" src="{{ $profileUser->profileAvatarUrl() }}" alt="{{ __('Current avatar preview') }}"
                                                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.svg') }}';"
                                                 class="mt-2 h-28 w-28 rounded-full border border-gray-200 object-cover" />
-                                            <input id="avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp"
+                                            <input id="avatar" name="avatar" type="file" accept="image/*"
                                                 class="mt-3 block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-red-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-red-700 file:cursor-pointer" />
                                             <p class="mt-1 text-xs text-gray-500">{{ __('Accepted: JPG, PNG, WEBP. Max 3MB.') }}</p>
                                             <p id="avatar-crop-message" class="mt-2 text-xs text-emerald-700"></p>
@@ -569,16 +678,20 @@
                                         <div class="flex items-start justify-between gap-3">
                                             <div>
                                                 <h4 id="avatar-crop-title" class="text-base font-semibold text-gray-900">{{ __('Adjust profile photo') }}</h4>
-                                                <p class="mt-1 text-xs text-gray-600">{{ __('Drag the zoom and apply when ready.') }}</p>
+                                                <p class="mt-1 text-xs text-gray-600">{{ __('Drag the photo to reposition, use the slider to zoom, then apply.') }}</p>
                                             </div>
                                             <button id="close-avatar-crop-modal" type="button"
-                                                class="rounded-md p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                                                aria-label="{{ __('Close crop dialog') }}">&times;</button>
+                                                class="-mt-1 rounded-md p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+                                                aria-label="{{ __('Close crop dialog') }}">
+                                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                </svg>
+                                            </button>
                                         </div>
 
                                         <div class="mt-4 flex items-center justify-center">
                                             <canvas id="avatar-crop-canvas" width="320" height="320"
-                                                class="h-56 w-56 rounded-full border border-gray-200 bg-gray-100"></canvas>
+                                                class="h-56 w-56 touch-none select-none rounded-full border border-gray-200 bg-gray-100"></canvas>
                                         </div>
 
                                         <div class="mt-4">
@@ -589,11 +702,11 @@
 
                                         <div class="mt-5 flex items-center justify-end gap-3">
                                             <button id="cancel-avatar-crop" type="button"
-                                                class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-700 transition hover:bg-gray-100">
+                                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
                                                 {{ __('Cancel') }}
                                             </button>
                                             <button id="apply-avatar-crop" type="button"
-                                                class="inline-flex items-center rounded-md border border-gray-900 bg-gray-900 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-white hover:text-gray-900">
+                                                class="rounded-lg bg-red-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
                                                 {{ __('Apply Crop') }}
                                             </button>
                                         </div>
@@ -613,7 +726,7 @@
     </div>
 
     <script>
-        function postCardsCarousel(initialPosts) {
+        function postCardsCarousel(initialPosts, multiItem = false) {
             const items = Array.isArray(initialPosts) ? initialPosts : [];
             const initialById = {};
             for (const item of items) {
@@ -625,9 +738,25 @@
             }
 
             return {
-                count: items.length,
+                totalItems: items.length,
+                multiItem: !!multiItem,
+                windowWidth: window.innerWidth,
                 activeIndex: 0,
                 countsByPostId: initialById,
+
+                // Cards shown per page: 3 desktop / 2 tablet / 1 mobile for the
+                // institution's full-width activity; always 1 elsewhere.
+                get perView() {
+                    if (!this.multiItem) return 1;
+                    if (this.windowWidth >= 1024) return 3;
+                    if (this.windowWidth >= 640) return 2;
+                    return 1;
+                },
+
+                // Number of pages (the pager/controls operate on pages).
+                get count() {
+                    return Math.max(1, Math.ceil(this.totalItems / this.perView));
+                },
 
                 init() {
                     window.addEventListener('post-like-count-changed', (event) => {
@@ -645,17 +774,15 @@
                         if (!this.countsByPostId[postId]) this.countsByPostId[postId] = { like_count: 0, comment_count: 0 };
                         this.countsByPostId[postId].comment_count = count;
                     });
-                    // ensure carousel track recalculates transform on resize
-                    const track = this.$el?.querySelector('.js-post-cards-track');
-                    if (track) {
-                        const update = () => {
-                            // force re-apply transform to account for layout changes
-                            track.style.transform = `translateX(-${this.activeIndex * 100}%)`;
-                        };
-                        window.addEventListener('resize', update);
-                        // run once after init
-                        setTimeout(update, 50);
-                    }
+                    // Recompute pages/transform on resize (perView is breakpoint-based).
+                    const update = () => {
+                        this.windowWidth = window.innerWidth;
+                        if (this.activeIndex > this.count - 1) {
+                            this.activeIndex = this.count - 1;
+                        }
+                    };
+                    window.addEventListener('resize', update);
+                    setTimeout(update, 50);
                 },
 
                 getLikeCount(postId, fallback = 0) {
@@ -707,8 +834,7 @@
                 return;
             }
 
-            const context = cropCanvas.getContext('2d');
-            let sourceImage = null;
+            const cropper = window.createAvatarCropper({ canvas: cropCanvas, zoomInput: cropZoom, outputSize: 512 });
             let sourceUrl = null;
 
             const syncBodyScroll = () => {
@@ -769,21 +895,6 @@
                 openProfileMediaModal();
             @endif
 
-            const renderCrop = () => {
-                if (!sourceImage || !context) {
-                    return;
-                }
-
-                const zoom = Number(cropZoom.value) / 100;
-                const base = Math.min(sourceImage.naturalWidth, sourceImage.naturalHeight);
-                const sampleSize = Math.max(1, Math.floor(base / zoom));
-                const sx = Math.floor((sourceImage.naturalWidth - sampleSize) / 2);
-                const sy = Math.floor((sourceImage.naturalHeight - sampleSize) / 2);
-
-                context.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
-                context.drawImage(sourceImage, sx, sy, sampleSize, sampleSize, 0, 0, cropCanvas.width, cropCanvas.height);
-            };
-
             bannerInput.addEventListener('change', () => {
                 const file = bannerInput.files && bannerInput.files[0];
 
@@ -813,25 +924,10 @@
                 }
 
                 sourceUrl = URL.createObjectURL(file);
-                cropZoom.value = '100';
-
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    if (event.target && typeof event.target.result === 'string') {
-                        avatarPreview.src = event.target.result;
-                    }
-                };
-                reader.readAsDataURL(file);
-
-                sourceImage = new Image();
-                sourceImage.onload = () => {
-                    renderCrop();
-                    openCropModal();
-                };
-                sourceImage.src = sourceUrl;
+                cropper.reset();
+                cropper.setImage(sourceUrl);
+                openCropModal();
             });
-
-            cropZoom.addEventListener('input', renderCrop);
 
             cropModal.addEventListener('click', (event) => {
                 if (event.target === cropModal) {
@@ -843,13 +939,7 @@
             cancelCropBtn.addEventListener('click', closeCropModal);
 
             applyCropBtn.addEventListener('click', () => {
-                if (!context || !sourceImage) {
-                    return;
-                }
-
-                renderCrop();
-
-                cropCanvas.toBlob((blob) => {
+                cropper.toBlob((blob) => {
                     if (!blob) {
                         return;
                     }
@@ -862,15 +952,36 @@
                     transfer.items.add(croppedFile);
                     avatarInput.files = transfer.files;
 
-                    avatarPreview.src = cropCanvas.toDataURL('image/png');
+                    avatarPreview.src = URL.createObjectURL(blob);
                     cropMessage.textContent = 'Crop applied. Save to upload this avatar.';
                     closeCropModal();
-                }, 'image/png', 0.92);
+                });
             });
         });
     </script>
 
+    @if ($isOwnProfile)
+        {{-- Edit composer for the viewer's own posts (opened from the activity
+             carousel via the open-edit-composer event). Edit-only: no create card.
+             Same audience config as the dashboard so the audience picker works:
+             General Hub → Everyone; program/batch → public/connections/community. --}}
+        @php
+            $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
+            $composerGeneralHubId = $joinedCommunitiesCollection->firstWhere('system_key', 'general-alumni-hub')->id ?? null;
+            $defaultCommunityId = $composerGeneralHubId;
+        @endphp
+        @include('partials.post-composer', [
+            'flairsByCommunity' => $flairsByCommunity ?? collect(),
+            'defaultCommunityId' => $defaultCommunityId,
+            'composerGeneralHubId' => $composerGeneralHubId,
+            'composerEditOnly' => true,
+        ])
+        @include('partials.feed-scripts')
+    @endif
+
     <x-post-detail-modal />
+    <x-report-post-modal />
+    <x-remove-post-modal />
 
     <x-footer />
 </x-app-layout>

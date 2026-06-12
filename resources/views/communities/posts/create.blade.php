@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">New Post</x-slot>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             Create Post - {{ $community->name }}
@@ -51,7 +52,7 @@
                         <!-- Buttons -->
                         <div class="flex gap-4">
                             <x-primary-button>{{ __('Post') }}</x-primary-button>
-                            <a href="{{ route('communities.posts.index', $community) }}"
+                            <a href="{{ route('communities.show', $community) }}"
                                 class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
                                 Cancel
                             </a>

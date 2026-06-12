@@ -96,7 +96,7 @@
                             </div>
                         </template>
 
-                        <!-- Nested replies -->
+                        <!-- Nested replies (depth 1) -->
                         <template x-if="comment.replies && comment.replies.length > 0">
                             <div class="mt-4 space-y-3 border-l-2 border-gray-200 pl-4">
                                 <template x-for="reply in comment.replies" :key="reply.id">
@@ -116,6 +116,12 @@
                                                     <span x-text="reply.body"></span>
                                                 </p>
                                                 <div class="mt-2 flex gap-3 text-xs">
+                                                    <template x-if="canComment">
+                                                        <button type="button" @click="toggleReplyForm(reply.id)"
+                                                            class="text-blue-600 hover:text-blue-700">
+                                                            Reply
+                                                        </button>
+                                                    </template>
                                                     <template x-if="reply.can_delete">
                                                         <button type="button" @click="deleteComment(reply.id)"
                                                             class="text-red-600 hover:text-red-700">
@@ -123,6 +129,82 @@
                                                         </button>
                                                     </template>
                                                 </div>
+
+                                                <!-- Reply form for this sub-comment (if toggled) -->
+                                                <template x-if="replyingTo === reply.id">
+                                                    <div class="mt-3 space-y-3 rounded-lg border border-gray-200 bg-white p-3">
+                                                        <textarea x-model="replyComment.body" placeholder="Write a reply..." rows="2"
+                                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
+                                                        </textarea>
+                                                        <div class="flex justify-end gap-2">
+                                                            <button type="button" @click="toggleReplyForm(null)"
+                                                                class="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100">
+                                                                Cancel
+                                                            </button>
+                                                            <button type="button" @click="submitReply(reply.id)"
+                                                                :disabled="!replyComment.body.trim() || isSubmitting"
+                                                                class="rounded-lg bg-red-900 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:bg-gray-300">
+                                                                Reply
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Sub-replies (depth 2 — max depth, no further replies) -->
+                                                <template x-if="reply.replies && reply.replies.length > 0">
+                                                    <div class="mt-3 space-y-2 border-l-2 border-gray-200 pl-4">
+                                                        <template x-for="subReply in reply.replies" :key="subReply.id">
+                                                            <div class="rounded-lg border border-gray-100 bg-white p-3">
+                                                                <div class="flex items-baseline gap-2">
+                                                                    <p class="font-semibold text-sm text-gray-900">
+                                                                        <span x-text="subReply.user?.name"></span>
+                                                                    </p>
+                                                                    <p class="text-xs text-gray-500">
+                                                                        <span x-text="subReply.created_at"></span>
+                                                                    </p>
+                                                                </div>
+                                                                <p class="flex w-full text-left mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+                                                                    <span x-text="subReply.body"></span>
+                                                                </p>
+                                                                <div class="mt-2 flex gap-3 text-xs">
+                                                                    <template x-if="canComment">
+                                                                        <button type="button" @click="toggleReplyForm(subReply.id)"
+                                                                            class="text-blue-600 hover:text-blue-700">
+                                                                            Reply
+                                                                        </button>
+                                                                    </template>
+                                                                    <template x-if="subReply.can_delete">
+                                                                        <button type="button" @click="deleteComment(subReply.id)"
+                                                                            class="text-red-600 hover:text-red-700">
+                                                                            Delete
+                                                                        </button>
+                                                                    </template>
+                                                                </div>
+
+                                                                <!-- Reply form for a level-3 comment. The reply is re-parented
+                                                                     server-side so it stays at level 3 (flattened thread). -->
+                                                                <template x-if="replyingTo === subReply.id">
+                                                                    <div class="mt-3 space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                                                        <textarea x-model="replyComment.body" placeholder="Write a reply..." rows="2"
+                                                                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-900 focus:ring-1 focus:ring-red-900">
+                                                                        </textarea>
+                                                                        <div class="flex justify-end gap-2">
+                                                                            <button type="button" @click="toggleReplyForm(null)"
+                                                                                class="rounded-lg border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-100">
+                                                                                Cancel
+                                                                            </button>
+                                                                            <button type="button" @click="submitReply(subReply.id)"
+                                                                                :disabled="!replyComment.body.trim() || isSubmitting"
+                                                                                class="rounded-lg bg-red-900 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:bg-gray-300">
+                                                                                Reply
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </template>
                                             </div>
                                         </div>
                                     </div>
@@ -194,6 +276,21 @@
                         ...item,
                         replies: this.removeFromTree(item?.replies || [], targetId),
                     }));
+            },
+
+            // Attach a new reply under its parent anywhere in the comment tree
+            // (top-level comment or a nested sub-comment). Returns true if placed.
+            addReplyToTree(items, parentId, reply) {
+                if (!Array.isArray(items)) return false;
+                for (const item of items) {
+                    if (item?.id === parentId) {
+                        if (!item.replies) item.replies = [];
+                        item.replies.push(reply);
+                        return true;
+                    }
+                    if (this.addReplyToTree(item?.replies || [], parentId, reply)) return true;
+                }
+                return false;
             },
 
             loadComments(postId, commentsUrl) {
@@ -313,12 +410,10 @@
                         if (!data.success) {
                             throw new Error(data.error || 'Reply posted but response was invalid');
                         }
-                        // Add reply to the parent comment
-                        const parentComment = this.comments.find(c => c.id === parentCommentId);
-                        if (parentComment) {
-                            if (!parentComment.replies) parentComment.replies = [];
-                            parentComment.replies.push(data.comment);
-                        }
+                        // Attach the reply under its ACTUAL parent from the server.
+                        // For a reply to a level-3 comment the server re-parents it to
+                        // the level-2 ancestor, so it lands as another level-3 reply.
+                        this.addReplyToTree(this.comments, data.comment.parent_comment_id ?? parentCommentId, data.comment);
                         this.replyComment.body = '';
                         this.replyingTo = null;
                         this.successMessage = 'Reply posted!';

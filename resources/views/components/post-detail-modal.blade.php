@@ -57,6 +57,48 @@
                             </span>
                         </div>
                     </div>
+                    {{-- Post options (author: edit/delete · others: report) --}}
+                    <template x-if="isAuthor || canModeratePost || canReportPost">
+                        <div class="relative shrink-0" x-data="{ menuOpen: false }" @click.outside="menuOpen = false">
+                            <button type="button" @click="menuOpen = !menuOpen"
+                                class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                                aria-label="Post options">
+                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                                </svg>
+                            </button>
+                            <div x-show="menuOpen" x-cloak
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="opacity-0 scale-95"
+                                x-transition:enter-end="opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="opacity-100 scale-100"
+                                x-transition:leave-end="opacity-0 scale-95"
+                                class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1">
+                                <button type="button" x-show="isAuthor" @click="menuOpen = false; editPost()"
+                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                    Edit post
+                                </button>
+                                <button type="button" x-show="isAuthor || canModeratePost" @click="menuOpen = false; isAuthor ? trashPost() : openRemove()"
+                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                    <span x-text="isAuthor ? 'Delete post' : 'Remove post'"></span>
+                                </button>
+                                <button type="button" x-show="canReportPost" @click="menuOpen = false; openReport()"
+                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                    </svg>
+                                    Report post
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                     <button type="button" @click="closeModal()"
                         class="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
                         aria-label="Close">
@@ -188,6 +230,48 @@
                                             </span>
                                         </div>
                                     </div>
+                                    {{-- Post options (author: edit/delete · others: report) --}}
+                                    <template x-if="isAuthor || canModeratePost || canReportPost">
+                                        <div class="relative shrink-0" x-data="{ menuOpen: false }" @click.outside="menuOpen = false">
+                                            <button type="button" @click="menuOpen = !menuOpen"
+                                                class="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+                                                aria-label="Post options">
+                                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                                                </svg>
+                                            </button>
+                                            <div x-show="menuOpen" x-cloak
+                                                x-transition:enter="transition ease-out duration-100"
+                                                x-transition:enter-start="opacity-0 scale-95"
+                                                x-transition:enter-end="opacity-100 scale-100"
+                                                x-transition:leave="transition ease-in duration-75"
+                                                x-transition:leave-start="opacity-100 scale-100"
+                                                x-transition:leave-end="opacity-0 scale-95"
+                                                class="absolute right-0 top-full mt-1 z-30 w-44 rounded-xl border border-gray-200 bg-white shadow-lg py-1">
+                                                <button type="button" x-show="isAuthor" @click="menuOpen = false; editPost()"
+                                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                    Edit post
+                                                </button>
+                                                <button type="button" x-show="isAuthor || canModeratePost" @click="menuOpen = false; isAuthor ? trashPost() : openRemove()"
+                                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                    <span x-text="isAuthor ? 'Delete post' : 'Remove post'"></span>
+                                                </button>
+                                                <button type="button" x-show="canReportPost" @click="menuOpen = false; openReport()"
+                                                    class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
+                                                    <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 2H21l-3 6 3 6h-8.5l-1-2H5a2 2 0 00-2 2z"/>
+                                                    </svg>
+                                                    Report post
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
                                     <button type="button" @click="closeModal()"
                                         class="shrink-0 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-lg leading-none hover:bg-gray-200 transition"
                                         aria-label="Close">
@@ -201,17 +285,20 @@
                             :class="(post.media && post.media.length > 0) ? 'sm:flex-1 sm:min-h-0 sm:overflow-y-auto' : ''">
                             {{-- Community + Flair badges together --}}
                             <div class="flex flex-wrap items-center gap-1.5 px-4 pt-4 pb-1">
-                        <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200">
-                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                            </svg>
-                            <span x-text="post.community?.name"></span>
-                        </span>
+                        <template x-if="post.community">
+                            <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-900 ring-1 ring-inset ring-red-200">
+                                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span x-text="post.community?.name"></span>
+                            </span>
+                        </template>
                         <template x-if="post.flairs && post.flairs.length > 0">
                             <template x-for="flair in post.flairs" :key="flair.id">
                                 <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
                                     :style="`background-color:${flair.color ? flair.color + '20' : '#f3f4f6'};color:${flair.color || '#374151'};border:1px solid ${flair.color || '#e5e7eb'}`">
+                                    <span x-show="flair.icon" x-text="flair.icon"></span>
                                     <span x-text="flair.name"></span>
                                 </span>
                             </template>
@@ -220,14 +307,45 @@
 
                     {{-- Title --}}
                     <template x-if="post.title">
-                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug" x-text="post.title"></h2>
+                        <h2 class="px-4 pt-2 text-lg font-bold text-gray-900 leading-snug">
+                            <span x-text="post.title"></span>
+                        </h2>
+                    </template>
+
+                    {{-- Event details --}}
+                    <template x-if="post.event">
+                        <div class="mx-4 mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3.5 py-3">
+                            <div class="flex items-start gap-3">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-700 ring-1 ring-indigo-100">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0 text-sm">
+                                    <p class="font-semibold text-indigo-900" x-text="post.event.event_type === 'online' ? 'Online event' : 'In-person event'"></p>
+                                    <p class="text-gray-700">
+                                        <span x-text="post.event.starts_at_human"></span>
+                                        <template x-if="post.event.ends_at_human">
+                                            <span><span class="text-gray-400"> – </span><span x-text="post.event.ends_at_human"></span></span>
+                                        </template>
+                                    </p>
+                                    <template x-if="post.event.event_type !== 'online' && post.event.address">
+                                        <p class="mt-0.5 text-gray-700">📍 <span x-text="post.event.address"></span><template x-if="post.event.venue"><span> · <span x-text="post.event.venue"></span></span></template></p>
+                                    </template>
+                                    <template x-if="post.event.external_link">
+                                        <a :href="post.event.external_link" target="_blank" rel="noopener"
+                                            class="mt-0.5 inline-block break-all text-indigo-700 hover:underline" x-text="post.event.external_link"></a>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
                     </template>
 
                     {{-- Body --}}
-                    <div class="px-4 pt-3 pb-2">
+                    <div class="px-4 pt-3 pb-2" x-show="post.body_markdown">
                         <div x-ref="postBody"
-                            x-html="post.body_html"
-                            class="prose prose-sm max-w-none text-gray-800 break-words"
+                            x-text="post.body_markdown"
+                            class="text-sm leading-6 text-gray-800 break-words whitespace-pre-line"
                             :class="isBodyExpanded ? '' : 'line-clamp-5'">
                         </div>
                         <button x-show="isBodyOverflowing" type="button"
@@ -328,6 +446,43 @@
 </div>
 
 <script>
+    // Shared, idempotent body scroll-lock used by the post-view modal and the
+    // edit composer. A single lock that survives the modal→composer hand-off
+    // (lock() while already locked is a no-op, so the page never snaps), and is
+    // released only when the last consumer closes. Defined once.
+    window.__bodyScrollLock = window.__bodyScrollLock || {
+        locked: false,
+        y: 0,
+        lock() {
+            if (this.locked) return;
+            this.locked = true;
+            this.y = window.scrollY;
+            const sbw = window.innerWidth - document.documentElement.clientWidth;
+            const b = document.body.style;
+            b.overflow = 'hidden';
+            b.position = 'fixed';
+            b.top = `-${this.y}px`;
+            b.left = '0';
+            b.right = '0';
+            b.width = '100%';
+            b.paddingRight = sbw > 0 ? `${sbw}px` : '';
+        },
+        unlock() {
+            if (!this.locked) return;
+            this.locked = false;
+            const b = document.body.style;
+            b.overflow = '';
+            b.position = '';
+            b.top = '';
+            b.left = '';
+            b.right = '';
+            b.width = '';
+            b.paddingRight = '';
+            window.scrollTo(0, this.y);
+            this.y = 0;
+        },
+    };
+
     function postDetailModal() {
         return {
             isOpen: false,
@@ -344,6 +499,107 @@
             likeUrl: null,
             canInteract: document.querySelector('meta[name="user-verified"]')?.content === '1',
             hasPendingDoc: document.querySelector('meta[name="user-pending-doc"]')?.content === '1',
+            currentUserId: Number(document.querySelector('meta[name="user-id"]')?.content) || null,
+            isInstitution: document.querySelector('meta[name="user-institution"]')?.content === '1',
+
+            // The author can edit/delete their own post from here.
+            get isAuthor() {
+                return !!this.post?.user && this.post.user.id === this.currentUserId;
+            },
+
+            // The institution moderates only the system communities it belongs to
+            // (General + program). In batch communities it's a regular non-member.
+            get canModeratePost() {
+                return this.isInstitution && !this.isAuthor && !!this.post?.community?.is_system;
+            },
+
+            // A verified viewer who isn't the author and can't moderate the post can
+            // report it. (In system communities the institution removes posts
+            // directly; in batch communities it can report like any non-member.)
+            get canReportPost() {
+                return this.canInteract && !this.canModeratePost
+                    && !!this.post?.user && this.post.user.id !== this.currentUserId;
+            },
+
+            openReport() {
+                if (!this.canReportPost || !this.post) return;
+                window.dispatchEvent(new CustomEvent('open-report-modal', {
+                    detail: { reportUrl: `/posts/${this.post.id}/report` },
+                }));
+            },
+
+            // Moderator removes someone else's post with a reason (opens the shared
+            // remove modal, which submits to posts.moderate-remove and notifies the author).
+            openRemove() {
+                if (!this.canModeratePost || !this.post) return;
+                window.dispatchEvent(new CustomEvent('open-remove-modal', {
+                    detail: { removeUrl: `/posts/${this.post.id}/remove` },
+                }));
+            },
+
+            editPost() {
+                if (!this.post || !this.isAuthor) return;
+                const p = this.post;
+                const detail = {
+                    postId: p.id,
+                    postType: p.post_type,
+                    title: p.title,
+                    body: p.body_markdown,
+                    visibility: p.visibility,
+                    communityId: p.community?.id ?? null,
+                    editUrl: `/posts/${p.id}`,
+                    flairs: (p.flairs || []).map(f => f.id),
+                    media: (p.media || []).map(m => ({ id: m.id, url: m.url })),
+                    // datetime-local inputs want 'YYYY-MM-DDTHH:mm' — trim the ISO string.
+                    event: p.event ? {
+                        event_type: p.event.event_type,
+                        starts_at: p.event.starts_at ? p.event.starts_at.slice(0, 16) : null,
+                        ends_at: p.event.ends_at ? p.event.ends_at.slice(0, 16) : null,
+                        external_link: p.event.external_link,
+                        address: p.event.address,
+                        venue: p.event.venue,
+                    } : null,
+                };
+
+                // Hand off to the edit composer with no scroll jump: keep the shared
+                // body lock engaged the whole time. Open the composer (its $watch
+                // calls lock() — a no-op since we're already locked) and hide this
+                // modal WITHOUT unlocking. The composer releases the lock when it
+                // closes, restoring the original scroll position.
+                window.dispatchEvent(new CustomEvent('open-edit-composer', { detail }));
+                this.isOpen = false;
+                this.post = null;
+                this.error = null;
+                this.isLoading = false;
+                this.lightboxOpen = false;
+                this.activeMediaIndex = 0;
+                this.isBodyExpanded = false;
+                this.isBodyOverflowing = false;
+                this.isLiked = false;
+                this.likeUrl = null;
+            },
+
+            trashPost() {
+                // Author-only self-trash; moderators use openRemove() instead.
+                if (!this.post || !this.isAuthor) return;
+                if (!confirm('Move this post to trash?')) return;
+                const postId = this.post.id;
+                fetch(`/posts/${postId}/trash`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    },
+                })
+                .then(r => { if (!r.ok) throw new Error('Failed'); return r; })
+                .then(() => {
+                    window.dispatchEvent(new CustomEvent('post-trashed', { detail: { postId } }));
+                    this.closeModal();
+                    window.location.reload();
+                })
+                .catch(() => { alert('Failed to delete post. Please try again.'); });
+            },
 
             toggleLike() {
                 if (!this.canInteract) return;
@@ -405,27 +661,11 @@
             },
 
             lockScroll() {
-                this.scrollLockScrollY = window.scrollY;
-                const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
-                document.body.style.overflow = 'hidden';
-                document.body.style.position = 'fixed';
-                document.body.style.top = `-${this.scrollLockScrollY}px`;
-                document.body.style.left = '0';
-                document.body.style.right = '0';
-                document.body.style.width = '100%';
-                document.body.style.paddingRight = scrollBarWidth > 0 ? `${scrollBarWidth}px` : '';
+                window.__bodyScrollLock.lock();
             },
 
             unlockScroll() {
-                document.body.style.overflow = '';
-                document.body.style.position = '';
-                document.body.style.top = '';
-                document.body.style.left = '';
-                document.body.style.right = '';
-                document.body.style.width = '';
-                document.body.style.paddingRight = '';
-                window.scrollTo(0, this.scrollLockScrollY);
-                this.scrollLockScrollY = 0;
+                window.__bodyScrollLock.unlock();
             },
 
             nextMedia() {
@@ -462,6 +702,19 @@
                         this.post = data.post;
                         this.isLiked = data.post.is_liked ?? false;
                         this.isLoading = false;
+                        // Broadcast the freshly-loaded state so feed cards that were
+                        // rendered before an edit update to the true values.
+                        window.dispatchEvent(new CustomEvent('post-like-count-changed', {
+                            detail: { postId: data.post.id, count: data.post.like_count ?? 0, liked: this.isLiked }
+                        }));
+                        window.dispatchEvent(new CustomEvent('post-updated', {
+                            detail: {
+                                postId: data.post.id,
+                                visibility: data.post.visibility,
+                                title: data.post.title ?? '',
+                                body: data.post.body_markdown ?? '',
+                            }
+                        }));
                         this.$nextTick(() => {
                             this.refreshBodyOverflow();
                             const scrollEl = this.$refs?.rightScrollBody || this.$refs?.scrollBody;

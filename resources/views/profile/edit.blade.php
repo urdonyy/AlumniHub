@@ -1,4 +1,5 @@
 <x-app-layout>
+    <x-slot name="title">Edit Profile</x-slot>
     @php
         $sections = [
             'account-status' => [
@@ -11,7 +12,7 @@
             ],
             'verification-document' => [
                 'label' => __('Verification Document'),
-                'description' => __('Upload your alumni verification document.'),
+                'description' => __('Upload your alumni or student verification document.'),
             ],
             'password' => [
                 'label' => __('Password'),

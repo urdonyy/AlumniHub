@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\InstitutionSwitchController;
 use App\Models\User;
 use App\Models\VerificationDocument;
 use App\Services\CommunityAutoJoinService;
@@ -64,9 +65,21 @@ class RegisteredUserController extends Controller
             ]);
         });
 
-        event(new Registered($user));
+        // Send the verification email, but never let an SMTP failure (e.g. a
+        // provider daily-send cap) hard-block registration. The account is
+        // already created; if mail fails the user still reaches the verification
+        // notice page and can use "Resend" once the provider recovers.
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         Auth::login($user);
+
+        // Never let a newly registered account inherit a stale "acting as
+        // institution" flag left in the browser's cookie session.
+        $request->session()->forget(InstitutionSwitchController::SESSION_KEY);
 
         return redirect()->route('verification.notice');
     }

@@ -44,7 +44,21 @@ class ConnectionController extends Controller
             ->whereNotIn('id', $excludedIds)
             ->orderBy('name')
             ->limit(50)
-            ->get(['id', 'name', 'batch_year', 'program_course', 'avatar_path']);
+            ->get(['id', 'name', 'batch_year', 'program_course', 'avatar_path', 'role']);
+
+        // Surface the PUP-ITECH Official account to verified members (so they can
+        // connect with the institution), unless it's already connected/pending or
+        // the viewer *is* the institution.
+        if ($user->isVerified() && ! $user->isInstitution()) {
+            $institution = User::query()
+                ->where('role', 'superadmin')
+                ->whereNotIn('id', $excludedIds)
+                ->first(['id', 'name', 'batch_year', 'program_course', 'avatar_path', 'role']);
+
+            if ($institution) {
+                $suggestedPeople = $suggestedPeople->prepend($institution);
+            }
+        }
 
         return view('connections.index', [
             'pendingReceived' => $pendingReceived,

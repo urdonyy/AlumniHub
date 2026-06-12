@@ -25,10 +25,13 @@ class CommentController extends Controller
     /**
      * Store a newly created comment in storage.
      */
-    public function store(Request $request, $community, $post)
+    public function store(Request $request, $community = null, $post = null)
     {
         // Fetch the post model
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
 
         // Verify user can view this post
         $this->authorize('view', $postModel);
@@ -41,25 +44,29 @@ class CommentController extends Controller
             'parent_comment_id' => 'sometimes|integer|exists:comments,id',
         ]);
 
-        // Validate nesting depth: only allow replies up to 2-3 levels deep
+        // Resolve the reply target. Threads are capped at 3 visual levels: a reply
+        // to a level-3 (depth-2) comment is re-parented to its level-2 ancestor so
+        // it appears as another level-3 reply rather than nesting deeper. We still
+        // notify the person actually replied to ($repliedToComment).
+        $repliedToComment = null;
         $parentComment = null;
         if ($request->has('parent_comment_id')) {
-            $parentComment = Comment::find($request->parent_comment_id);
+            $repliedToComment = Comment::find($request->parent_comment_id);
 
-            if (!$parentComment || $parentComment->post_id !== $postModel->id) {
+            if (!$repliedToComment || $repliedToComment->post_id !== $postModel->id) {
                 return response()->json(['error' => 'Invalid parent comment'], 422);
             }
 
-            // Check depth limit (max 3 levels: level 0 = top, level 1 = reply to top, level 2 = reply to reply)
-            if ($parentComment->getDepth() >= 2) {
-                return response()->json(['error' => 'Cannot reply to this comment (max 3 levels deep)'], 422);
+            $parentComment = $repliedToComment;
+            while ($parentComment->getDepth() >= 2 && $parentComment->parentComment) {
+                $parentComment = $parentComment->parentComment;
             }
         }
 
         $comment = $postModel->comments()->create([
             'user_id' => $request->user()->id,
             'body' => $validated['body'],
-            'parent_comment_id' => $validated['parent_comment_id'] ?? null,
+            'parent_comment_id' => $parentComment?->id,
         ]);
 
         $comment->load('user');
@@ -75,9 +82,10 @@ class CommentController extends Controller
             ));
         }
 
-        // Notify the parent comment author when their comment receives a reply (skip notifying self)
-        if ($parentComment && (int) $parentComment->user_id !== (int) $request->user()->id) {
-            $parentComment->user->notify(new CommentRepliedNotification(
+        // Notify the person actually replied to (the target comment's author),
+        // even when the reply was re-parented to flatten the thread.
+        if ($repliedToComment && (int) $repliedToComment->user_id !== (int) $request->user()->id) {
+            $repliedToComment->user->notify(new CommentRepliedNotification(
                 post: $postModel,
                 comment: $comment,
                 actor: $request->user(),
@@ -104,9 +112,12 @@ class CommentController extends Controller
     /**
      * Delete a comment.
      */
-    public function destroy($community, $post, $comment)
+    public function destroy($community = null, $post = null, $comment = null)
     {
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
         $commentModel = Comment::findOrFail($comment);
 
         // Verify comment belongs to this post
@@ -126,12 +137,15 @@ class CommentController extends Controller
     /**
      * Get post details with comments (JSON response).
      */
-    public function getPostDetails($community, $post)
+    public function getPostDetails($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
         $this->authorize('view', $postModel);
 
-        $postModel->load(['user', 'community', 'flairs', 'media']);
+        $postModel->load(['user', 'community', 'flairs', 'media', 'event']);
 
         return response()->json([
             'success' => true,
@@ -141,7 +155,19 @@ class CommentController extends Controller
                 'body_markdown' => $postModel->body_markdown,
                 'body_html' => $postModel->body_html,
                 'visibility' => $postModel->visibility,
+                'post_type' => $postModel->post_type,
+                'event' => $postModel->event ? [
+                    'event_type' => $postModel->event->event_type,
+                    'starts_at' => $postModel->event->starts_at?->toIso8601String(),
+                    'starts_at_human' => $postModel->event->starts_at?->format('M j, Y · g:i A'),
+                    'ends_at' => $postModel->event->ends_at?->toIso8601String(),
+                    'ends_at_human' => $postModel->event->ends_at?->format('M j, Y · g:i A'),
+                    'external_link' => $postModel->event->external_link,
+                    'address' => $postModel->event->address,
+                    'venue' => $postModel->event->venue,
+                ] : null,
                 'like_count' => $postModel->like_count,
+                'is_liked' => $postModel->isLikedByAuthUser(),
                 'comment_count' => $postModel->comment_count,
                 'created_at' => $postModel->created_at->diffForHumans(),
                 'user' => [
@@ -151,15 +177,17 @@ class CommentController extends Controller
                     'program_course' => $postModel->user->program_course,
                     'avatar_url' => $postModel->user->profileAvatarUrl(),
                 ],
-                'community' => [
+                'community' => $postModel->community ? [
                     'id' => $postModel->community->id,
                     'name' => $postModel->community->name,
-                ],
+                    'is_system' => (bool) $postModel->community->is_system,
+                ] : null,
                 'flairs' => $postModel->flairs->map(function ($flair) {
                     return [
                         'id' => $flair->id,
                         'name' => $flair->name,
                         'color' => $flair->color,
+                        'icon' => $flair->icon,
                     ];
                 })->toArray(),
                 'media' => $postModel->media->map(function ($media) {
@@ -174,11 +202,41 @@ class CommentController extends Controller
     }
 
     /**
+     * Personal (community-less) post variants.
+     *
+     * Connections-only posts have no community segment in their URL, so route
+     * params bind positionally to a single {post}. These thin wrappers forward
+     * to the shared handlers with a null community.
+     */
+    public function getPostDetailsForPost($post)
+    {
+        return $this->getPostDetails(null, $post);
+    }
+
+    public function indexForPost($post)
+    {
+        return $this->index(null, $post);
+    }
+
+    public function storeForPost(Request $request, $post)
+    {
+        return $this->store($request, null, $post);
+    }
+
+    public function destroyForPost($post, $comment)
+    {
+        return $this->destroy(null, $post, $comment);
+    }
+
+    /**
      * Get comments for a post (JSON response).
      */
-    public function index($community, $post)
+    public function index($community = null, $post = null)
     {
         $postModel = Post::findOrFail($post);
+
+        // A removed/trashed post is unavailable to view or interact with.
+        abort_if($postModel->trashed_at !== null, 404);
         $this->authorize('view', $postModel);
 
         $comments = $postModel->comments()

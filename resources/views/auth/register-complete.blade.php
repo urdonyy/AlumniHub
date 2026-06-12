@@ -1,4 +1,5 @@
 <x-auth-layout>
+    <x-slot name="title">Registration Complete</x-slot>
 
     <h1 class="text-2xl font-bold text-gray-900 mb-1">Complete your profile</h1>
     <p class="text-sm text-gray-500 mb-6">Step 3 of 3 — tell us about yourself and verify your identity.</p>
@@ -78,7 +79,7 @@
                 <x-input-label for="batch_year" :value="__('Batch Year')" />
                 <x-text-input id="batch_year" class="block mt-1 w-full" type="number" name="batch_year"
                     :value="old('batch_year')" min="2000" max="{{ now()->format('Y') }}" required
-                    placeholder="{{ now()->format('Y') }}" />
+                    placeholder="Year started" />
                 <x-input-error :messages="$errors->get('batch_year')" class="mt-1" />
             </div>
             <!-- Student Number -->
