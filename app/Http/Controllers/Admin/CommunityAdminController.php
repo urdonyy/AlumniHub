@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Community;
+use App\Models\CommunityCreationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,7 @@ class CommunityAdminController extends Controller
 
         return view('admin.communities.index', [
             'communities' => $communities,
+            'pendingRequestCount' => CommunityCreationRequest::query()->pendingAdmin()->count(),
         ]);
     }
 

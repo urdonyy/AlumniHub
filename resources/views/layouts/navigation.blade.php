@@ -44,7 +44,7 @@
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.communities.index')"
-                            :active="request()->routeIs('admin.communities.*')">
+                            :active="request()->routeIs('admin.communities.*') || request()->routeIs('admin.community-requests.*')">
                             <i class="fa-solid fa-group-arrows-rotate text-lg"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
@@ -131,10 +131,13 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profiles.show', Auth::id())">
-                            <i class="fa-solid fa-circle-user"></i>
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                        {{-- Admin accounts have no public alumni profile, so hide the link for them. --}}
+                        @if ($navUser?->role !== 'admin')
+                            <x-dropdown-link :href="route('profiles.show', Auth::id())">
+                                <i class="fa-solid fa-circle-user"></i>
+                                {{ __('Profile') }}
+                            </x-dropdown-link>
+                        @endif
 
                         @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
                             {{-- Acting as PUP-ITECH Official: offer a way back to the admin --}}
@@ -142,14 +145,14 @@
                                 @csrf
                                 <x-dropdown-link :href="route('institution.exit')" onclick="event.preventDefault(); this.closest('form').submit();">
                                     <i class="fa-solid fa-arrow-rotate-left"></i>
-                                    {{ __('Exit Superadmin') }}
+                                    {{ __('Exit Acting Mode') }}
                                 </x-dropdown-link>
                             </form>
                         @elseif ($navUser?->role === 'admin')
                             <button type="button" @click="$dispatch('open-institution-confirm')"
                                 class="inline-flex items-center gap-[6px] md:gap-2 w-full px-4 py-2 text-start text-sm leading-5 text-gray-600 hover:bg-red-900 hover:text-white focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
                                 <i class="fa-solid fa-user-shield"></i>
-                                {{ __('Enable Superadmin') }}
+                                {{ __('Enable Acting Mode') }}
                             </button>
                         @else
                             <x-dropdown-link :href="route('profile.edit', ['section' => 'account-status'])">
@@ -198,7 +201,7 @@
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.communities.index')"
-                    :active="request()->routeIs('admin.communities.*')">
+                    :active="request()->routeIs('admin.communities.*') || request()->routeIs('admin.community-requests.*')">
                     <i class="fa-solid fa-group-arrows-rotate"></i>
                     {{ __('Communities') }}
                 </x-responsive-nav-link>
