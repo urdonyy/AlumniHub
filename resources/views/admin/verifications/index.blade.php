@@ -26,20 +26,23 @@
                 </div>
             @endif
 
-            {{-- Filter --}}
+            {{-- Heading + auto-filter --}}
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h3 class="text-lg font-bold text-gray-900">{{ __('Verification Documents') }}</h3>
-                <form method="get" class="flex items-center gap-2">
-                    <select id="status" name="status"
+                <div class="flex items-center gap-3">
+                    <h3 class="text-lg font-bold text-gray-900">{{ __('Verification Documents') }}</h3>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-red-900/10 px-3 py-1 text-sm font-semibold text-red-900">
+                        <i class="fa-solid fa-id-card"></i>
+                        {{ $documents->total() }} {{ Str::plural('document', $documents->total()) }}
+                    </span>
+                </div>
+                <form method="get">
+                    <select id="status" name="status" onchange="this.form.submit()"
                         class="h-[38px] rounded-md border-gray-300 text-sm shadow-sm focus:border-yellow-500 focus:ring-yellow-500">
+                        <option value="all" @selected($status === 'all')>{{ __('All') }}</option>
                         <option value="pending" @selected($status === 'pending')>{{ __('Pending') }}</option>
                         <option value="approved" @selected($status === 'approved')>{{ __('Approved') }}</option>
                         <option value="rejected" @selected($status === 'rejected')>{{ __('Rejected') }}</option>
                     </select>
-                    <button type="submit"
-                        class="inline-flex h-[38px] items-center rounded-md bg-red-900 px-4 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
-                        {{ __('Filter') }}
-                    </button>
                 </form>
             </div>
 

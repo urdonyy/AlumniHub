@@ -203,6 +203,30 @@
                     </div>
                 @endforelse
             </div>
+
+            {{-- Community creation requests entry point --}}
+            <a href="{{ route('admin.community-requests.index') }}"
+                class="group flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm transition hover:border-red-900/30 hover:shadow-md">
+                <div class="flex items-center gap-4">
+                    <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-900/10 text-red-900">
+                        <i class="fa-solid fa-clipboard-check text-lg"></i>
+                    </span>
+                    <div>
+                        <p class="text-sm font-bold text-gray-900">{{ __('Community Creation Requests') }}</p>
+                        <p class="mt-0.5 text-sm text-gray-500">{{ __('Review batch-community requests from alumni awaiting your decision.') }}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    @if (($pendingRequestCount ?? 0) > 0)
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-[#FFC107] px-3 py-1 text-sm font-bold text-red-900">
+                            {{ $pendingRequestCount }} {{ __('pending') }}
+                        </span>
+                    @else
+                        <span class="text-xs font-medium text-gray-400">{{ __('None pending') }}</span>
+                    @endif
+                    <i class="fa-solid fa-chevron-right text-gray-300 transition group-hover:text-red-900"></i>
+                </div>
+            </a>
         </div>
     </div>
 </x-app-layout>

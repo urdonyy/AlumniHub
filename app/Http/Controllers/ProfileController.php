@@ -42,6 +42,11 @@ class ProfileController extends Controller
 
     public function show(Request $request, User $user): View
     {
+        // Admin accounts are staff, not alumni — they have no public profile
+        // (no career profile, activity, etc.), so block direct access to them.
+        // Superadmin/institution profiles remain public (official account).
+        abort_if($user->role === 'admin', 404);
+
         $viewer = $request->user();
         $user->load(['profileExperiences', 'profileEducations']);
 

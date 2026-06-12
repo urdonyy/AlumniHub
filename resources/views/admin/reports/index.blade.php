@@ -1,43 +1,59 @@
 <x-app-layout>
     <x-slot name="title">Reported Posts</x-slot>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Reported Posts') }}</h2>
-        <p class="text-sm text-gray-600">{{ __('Posts flagged by the community. Keep the post or remove it with a reason.') }}</p>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">{{ __('Reported Posts') }}</h2>
+            <p class="text-sm text-red-900">{{ __('Review community-flagged posts — keep or remove with a reason') }}</p>
+        </div>
     </x-slot>
 
-    <div class="py-12">
+    <div class="pb-24">
         <div class="mx-auto max-w-4xl space-y-6 px-4 sm:px-6 lg:px-8">
 
             @if (session('success'))
-                <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                     {{ session('success') }}
                 </div>
             @endif
+
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <h3 class="text-lg font-bold text-gray-900">{{ __('Flagged Posts') }}</h3>
+                <span class="inline-flex items-center gap-2 rounded-full bg-red-900/10 px-3 py-1 text-sm font-semibold text-red-900">
+                    <i class="fa-solid fa-flag"></i>
+                    {{ $flaggedPosts->count() }} {{ Str::plural('post', $flaggedPosts->count()) }}
+                </span>
+            </div>
 
             @forelse ($flaggedPosts as $post)
                 @php
                     $reasonCounts = $post->reports->groupBy('reason')->map->count();
                     $bodyPreview = \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 280);
                 @endphp
-                <div class="rounded-2xl border border-gray-200 bg-white shadow-sm"
+                <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
                     x-data="{ confirming: false, reason: '', note: '', viewing: false }">
 
-                    {{-- Post header --}}
-                    <div class="flex items-start justify-between gap-3 border-b border-gray-100 px-6 py-4">
-                        <div class="min-w-0">
-                            <p class="text-sm font-semibold text-gray-900">
-                                {{ $post->user->name }}
-                                @if ($post->community)
-                                    <span class="text-gray-400">·</span>
-                                    <span class="font-normal text-gray-500">{{ $post->community->name }}</span>
-                                @endif
-                            </p>
-                            <p class="mt-0.5 text-xs text-gray-500">
-                                {{ __('Flagged') }} {{ $post->flagged_at?->diffForHumans() }}
-                                · {{ $post->published_at?->diffForHumans() }}
-                            </p>
+                    {{-- Brand header strip --}}
+                    <div class="flex items-center justify-between gap-3 bg-gradient-to-r from-red-900 to-red-800 px-6 py-4 text-white">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/15 text-[#FFC107]">
+                                <i class="fa-solid fa-flag"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <p class="truncate text-sm font-semibold">
+                                    {{ $post->user->name }}
+                                    @if ($post->community)
+                                        <span class="text-red-200/70">·</span>
+                                        <span class="font-normal text-red-100/90">{{ $post->community->name }}</span>
+                                    @endif
+                                </p>
+                                <p class="mt-0.5 text-xs text-red-100/70">
+                                    {{ __('Flagged') }} {{ $post->flagged_at?->diffForHumans() }}
+                                    · {{ $post->published_at?->diffForHumans() }}
+                                </p>
+                            </div>
                         </div>
-                        <span class="inline-flex shrink-0 items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800 ring-1 ring-inset ring-rose-200">
+                        <span class="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#FFC107] px-2.5 py-1 text-xs font-bold text-red-900">
+                            <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
                             {{ $post->reports_count }} {{ __('reports') }}
                         </span>
                     </div>
@@ -52,7 +68,7 @@
                         @endif
 
                         <button type="button" @click="viewing = true"
-                            class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-indigo-700 hover:underline">
+                            class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red-900 hover:underline">
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
@@ -92,12 +108,12 @@
                             <form method="POST" action="{{ route('admin.reports.keep', $post) }}">
                                 @csrf
                                 <button type="submit"
-                                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+                                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                                     {{ __('Keep post') }}
                                 </button>
                             </form>
                             <button type="button" @click="confirming = true"
-                                class="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-600">
+                                class="rounded-lg bg-red-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-800">
                                 {{ __('Remove post') }}
                             </button>
                         </div>
@@ -121,11 +137,11 @@
                                 class="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-rose-700 focus:ring-1 focus:ring-rose-700"></textarea>
                             <div class="mt-3 flex justify-end gap-2">
                                 <button type="button" @click="confirming = false"
-                                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100">
+                                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50">
                                     {{ __('Cancel') }}
                                 </button>
                                 <button type="submit" :disabled="!reason"
-                                    class="rounded-lg bg-rose-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-rose-600 disabled:bg-gray-300">
+                                    class="rounded-lg bg-red-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-800 disabled:bg-gray-300">
                                     {{ __('Remove') }}
                                 </button>
                             </div>
@@ -190,7 +206,7 @@
                                 @endif
 
                                 @if ($post->event)
-                                    <div class="mt-2 rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs text-indigo-800">
+                                    <div class="mt-2 rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
                                         <p class="font-semibold">{{ ucfirst($post->event->event_type) }} {{ __('event') }}</p>
                                         @if ($post->event->starts_at)
                                             <p>{{ $post->event->starts_at->format('M j, Y · g:i A') }}@if ($post->event->ends_at) – {{ $post->event->ends_at->format('M j, Y · g:i A') }}@endif</p>

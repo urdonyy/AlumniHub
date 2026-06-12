@@ -60,6 +60,13 @@ class StoreCommunityCreationRequest extends FormRequest
                     CommunityCreationRequest::STATUS_REJECTED,
                     CommunityCreationRequest::STATUS_CANCELLED,
                 ])
+                // An approved request whose community was later deleted (community_id
+                // nulled on delete) no longer represents a live community, so it must
+                // not block a fresh request.
+                ->where(function ($q) {
+                    $q->where('status', '!=', CommunityCreationRequest::STATUS_APPROVED)
+                        ->orWhereNotNull('community_id');
+                })
                 ->exists();
 
             if ($duplicate) {
@@ -73,6 +80,11 @@ class StoreCommunityCreationRequest extends FormRequest
                     CommunityCreationRequest::STATUS_PENDING_ADMIN,
                     CommunityCreationRequest::STATUS_APPROVED,
                 ])
+                // Ignore an approved request whose community was since deleted.
+                ->where(function ($q) {
+                    $q->where('status', '!=', CommunityCreationRequest::STATUS_APPROVED)
+                        ->orWhereNotNull('community_id');
+                })
                 ->where('batch_year', (int) $user->batch_year)
                 ->where('program_course', $user->program_course)
                 ->exists();

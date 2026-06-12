@@ -10,12 +10,13 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\Response;
 
 class VerificationAdminController extends Controller
 {
     public function index(Request $request): View
     {
+        // 'all' (or any unknown value) shows every document; otherwise filter by status.
         $status = $request->query('status', 'pending');
 
         $documents = VerificationDocument::query()
@@ -68,21 +69,35 @@ class VerificationAdminController extends Controller
         return back()->with('status', 'verification-approved');
     }
 
-    public function viewDocument(Request $request, VerificationDocument $verificationDocument): StreamedResponse
+    public function viewDocument(Request $request, VerificationDocument $verificationDocument): Response
     {
         abort_unless(Storage::exists($verificationDocument->document_path), 404, 'Document not found.');
 
-        $filename = basename($verificationDocument->document_path);
-        $mimeType = Storage::mimeType($verificationDocument->document_path) ?: 'application/octet-stream';
+        $path = $verificationDocument->document_path;
+        $filename = basename($path);
 
-        // inline by default (powers the in-queue preview); ?download=1 forces a download.
+        // Resolve a correct MIME type. Storage::mimeType can be unreliable for
+        // remote disks, so fall back to the file extension for the common types.
+        $mimeType = Storage::mimeType($path) ?: null;
+        if (! $mimeType || $mimeType === 'application/octet-stream') {
+            $mimeType = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+                'pdf' => 'application/pdf',
+                'png' => 'image/png',
+                'jpg', 'jpeg' => 'image/jpeg',
+                default => 'application/octet-stream',
+            };
+        }
+
+        // inline (default) powers the in-queue preview; ?download=1 forces a download.
         $disposition = $request->boolean('download') ? 'attachment' : 'inline';
 
-        return response()->streamDownload(function () use ($verificationDocument) {
-            echo Storage::get($verificationDocument->document_path);
-        }, $filename, [
+        // A plain response with explicit headers renders inline reliably (PDFs in
+        // an <iframe>, images in <img>), unlike streamDownload() which tends to
+        // force a download regardless of the disposition.
+        return response(Storage::get($path), 200, [
             'Content-Type' => $mimeType,
             'Content-Disposition' => $disposition . '; filename="' . $filename . '"',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 

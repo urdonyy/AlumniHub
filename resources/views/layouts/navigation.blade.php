@@ -44,7 +44,7 @@
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.communities.index')"
-                            :active="request()->routeIs('admin.communities.*')">
+                            :active="request()->routeIs('admin.communities.*') || request()->routeIs('admin.community-requests.*')">
                             <i class="fa-solid fa-group-arrows-rotate text-lg"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
@@ -131,10 +131,13 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profiles.show', Auth::id())">
-                            <i class="fa-solid fa-circle-user"></i>
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                        {{-- Admin accounts have no public alumni profile, so hide the link for them. --}}
+                        @if ($navUser?->role !== 'admin')
+                            <x-dropdown-link :href="route('profiles.show', Auth::id())">
+                                <i class="fa-solid fa-circle-user"></i>
+                                {{ __('Profile') }}
+                            </x-dropdown-link>
+                        @endif
 
                         @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
                             {{-- Acting as PUP-ITECH Official: offer a way back to the admin --}}
@@ -198,7 +201,7 @@
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.communities.index')"
-                    :active="request()->routeIs('admin.communities.*')">
+                    :active="request()->routeIs('admin.communities.*') || request()->routeIs('admin.community-requests.*')">
                     <i class="fa-solid fa-group-arrows-rotate"></i>
                     {{ __('Communities') }}
                 </x-responsive-nav-link>
