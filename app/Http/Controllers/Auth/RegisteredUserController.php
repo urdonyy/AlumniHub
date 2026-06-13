@@ -50,9 +50,11 @@ class RegisteredUserController extends Controller
                     }
                 },
             ],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            // No spaces anywhere in the password.
+            'password' => ['required', 'confirmed', 'regex:/^\S+$/', Rules\Password::defaults()],
         ], [
             'email.regex' => 'Please use a real @gmail.com or @iskolarngbayan.pup.edu.ph email address (no spaces).',
+            'password.regex' => 'Password must not contain spaces.',
         ]);
 
         $email = $request->string('email')->value();
