@@ -29,7 +29,9 @@
         <div>
             <x-input-label for="email" :value="__('Email Address')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email"
-                :value="old('email')" required autofocus autocomplete="username" />
+                :value="old('email')" required autofocus autocomplete="username"
+                x-on:keydown.space.prevent
+                x-on:input="$event.target.value = $event.target.value.replace(/\s/g, '')" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
