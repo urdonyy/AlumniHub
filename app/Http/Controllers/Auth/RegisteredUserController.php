@@ -38,6 +38,10 @@ class RegisteredUserController extends Controller
         $request->validate([
             'email'    => [
                 'required', 'string', 'lowercase', 'email', 'max:255',
+                // No spaces anywhere in the email.
+                'regex:/^\S+$/',
+                // Only PUP-ITECH alumni/student addresses (Gmail or the school domain).
+                'regex:/@(gmail\.com|iskolarngbayan\.pup\.edu\.ph)$/i',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $existing = User::where('email', $value)->first();
 
@@ -47,6 +51,8 @@ class RegisteredUserController extends Controller
                 },
             ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'email.regex' => 'Please use a real @gmail.com or @iskolarngbayan.pup.edu.ph email address (no spaces).',
         ]);
 
         $email = $request->string('email')->value();
