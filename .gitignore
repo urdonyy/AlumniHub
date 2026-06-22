@@ -25,3 +25,6 @@ Thumbs.db
 
 # ERD diagrams
 /docs
+
+# Local DB backup
+backup.sql
