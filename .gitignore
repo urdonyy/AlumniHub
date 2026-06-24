@@ -28,3 +28,5 @@ Thumbs.db
 
 # Local DB backup
 backup.sql
+backup_utf8.sql
+backup_fixed.sql
