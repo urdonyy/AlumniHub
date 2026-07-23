@@ -118,7 +118,9 @@ class PostController extends Controller
             $this->postService->addAttachments($post, $request->user(), $request->file('attachments'));
         }
 
-        return redirect()->route('dashboard')->with('success', 'Post updated.');
+        // Stay on the page the edit was launched from (community page, profile,
+        // or dashboard) instead of always bouncing to the dashboard.
+        return redirect()->back(fallback: route('dashboard'))->with('success', 'Post updated.');
     }
 
     /**

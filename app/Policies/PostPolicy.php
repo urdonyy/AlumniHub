@@ -73,6 +73,13 @@ class PostPolicy
             return true;
         }
 
+        // The institution account moderates only the system communities it belongs
+        // to (General Alumni Hub + program communities). In batch communities it is
+        // a regular non-member: view/like/comment on public posts, but no moderation.
+        if ($user->isInstitution() && $post->community?->is_system) {
+            return true;
+        }
+
         return $this->isModeratorOrAdmin($user, $post->community);
     }
 
@@ -85,15 +92,22 @@ class PostPolicy
             return true;
         }
 
+        if ($user->isInstitution() && $post->community?->is_system) {
+            return true;
+        }
+
         return $this->isModeratorOrAdmin($user, $post->community);
     }
 
     /**
      * Determine if the user can restore a trashed post.
+     *
+     * Authors may restore their OWN trash, but never a post a moderator removed
+     * (those carry removed_by_user_id) — that would let a violator undo moderation.
      */
     public function restore(User $user, Post $post): bool
     {
-        return $user->id === $post->user_id;
+        return $user->id === $post->user_id && $post->removed_by_user_id === null;
     }
 
     /**
@@ -101,7 +115,7 @@ class PostPolicy
      */
     public function forceDelete(User $user, Post $post): bool
     {
-        return $user->id === $post->user_id;
+        return $user->id === $post->user_id && $post->removed_by_user_id === null;
     }
 
     /**

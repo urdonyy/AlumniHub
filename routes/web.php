@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\FlairAdminController;
 use App\Http\Controllers\Admin\AdminInboxController;
 use App\Http\Controllers\Admin\PostReportAdminController;
 use App\Http\Controllers\Admin\VerificationAdminController;
+use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\CommunityCreationRequestController;
 use App\Http\Controllers\CommunityJoinRequestController;
@@ -18,7 +19,9 @@ use App\Http\Controllers\CoModeratorInviteController;
 use App\Http\Controllers\MembershipController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\InstitutionSwitchController;
 use App\Http\Controllers\PostLikeController;
+use App\Http\Controllers\PostModerationController;
 use App\Http\Controllers\PostReportController;
 use App\Http\Controllers\PostTrashController;
 use App\Http\Controllers\NotificationController;
@@ -71,6 +74,16 @@ Route::get('/', function (FeedService $feed) {
             ->limit(5)
             ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
 
+        // Surface PUP-ITECH Official to verified members (skip if already connected/pending).
+        if ($user->isVerified() && ! $user->isInstitution()) {
+            $institutionSuggestion = User::query()->where('role', 'superadmin')
+                ->whereNotIn('id', $excludedIds)
+                ->first(['id', 'name', 'batch_year', 'program_course', 'account_status', 'role']);
+            if ($institutionSuggestion) {
+                $suggestedPeople = $suggestedPeople->prepend($institutionSuggestion);
+            }
+        }
+
         $joinedCommunities = $user->communities()
             ->orderBy('name')
             ->get(['communities.id', 'communities.name', 'communities.system_key']);
@@ -89,7 +102,7 @@ Route::get('/', function (FeedService $feed) {
                 'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
             ]));
 
-        return view('dashboard', [
+        $viewData = [
             'posts' => $posts,
             'selectedFlairIds' => $selectedFlairIds,
             'featuredCommunities' => $featuredCommunities,
@@ -97,7 +110,14 @@ Route::get('/', function (FeedService $feed) {
             'joinedCommunities' => $joinedCommunities,
             'availableFlairs' => $availableFlairs,
             'flairsByCommunity' => $flairsByCommunity,
-        ]);
+        ];
+
+        // Admins get the User Management table rendered inline on their home.
+        if ($user->canManageCommunities()) {
+            $viewData = array_merge($viewData, UserAdminController::listData(request()));
+        }
+
+        return view('dashboard', $viewData);
     }
 
     return view('welcome');
@@ -140,6 +160,16 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         ->limit(5)
         ->get(['id', 'name', 'batch_year', 'program_course', 'account_status']);
 
+    // Surface PUP-ITECH Official to verified members (skip if already connected/pending).
+    if ($user->isVerified() && ! $user->isInstitution()) {
+        $institutionSuggestion = User::query()->where('role', 'superadmin')
+            ->whereNotIn('id', $excludedIds)
+            ->first(['id', 'name', 'batch_year', 'program_course', 'account_status', 'role']);
+        if ($institutionSuggestion) {
+            $suggestedPeople = $suggestedPeople->prepend($institutionSuggestion);
+        }
+    }
+
     $joinedCommunities = $user->communities()
         ->orderBy('name')
         ->get(['communities.id', 'communities.name', 'communities.system_key']);
@@ -157,7 +187,7 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
             'id' => $f->id, 'name' => $f->name, 'color' => $f->color, 'icon' => $f->icon,
         ]));
 
-    return view('dashboard', [
+    $viewData = [
         'posts' => $posts,
         'selectedFlairIds' => $selectedFlairIds,
         'featuredCommunities' => $featuredCommunities,
@@ -165,7 +195,14 @@ Route::get('/dashboard', function (Request $request, FeedService $feed) {
         'joinedCommunities' => $joinedCommunities,
         'availableFlairs' => $availableFlairs,
         'flairsByCommunity' => $flairsByCommunity,
-    ]);
+    ];
+
+    // Admins get the User Management table rendered inline on their home.
+    if ($user->canManageCommunities()) {
+        $viewData = array_merge($viewData, UserAdminController::listData($request));
+    }
+
+    return view('dashboard', $viewData);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/feed/posts', function (Request $request, FeedService $feed) {
@@ -268,9 +305,13 @@ Route::middleware('auth')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::get('/communities/{community}/posts/{post}/api', [CommentController::class, 'getPostDetails'])
             ->name('communities.posts.api');
-        Route::get('/communities/{community}/posts/{post}/open', function (Community $community, Post $post, Request $request) {
-            if ((int) $post->community_id !== (int) $community->id) {
-                abort(404);
+        Route::get('/communities/{community}/posts/{post}/open', function (Community $community, $post, Request $request) {
+            // Resolve manually so a hard-deleted (missing) or trashed post shows a
+            // graceful "no longer available" notice instead of a 404 / a removed
+            // post opening as if it were live.
+            $post = Post::find($post);
+            if (! $post || $post->trashed_at || (int) $post->community_id !== (int) $community->id) {
+                return redirect()->route('dashboard')->with('error', 'This post is no longer available.');
             }
 
             $request->user()?->can('view', $post) ?: abort(403);
@@ -289,7 +330,12 @@ Route::middleware('auth')->group(function () {
             ->name('communities.posts.comments.destroy');
 
         // Community-less (connections-only) posts: same actions without a community scope.
-        Route::get('/posts/{post}/open', function (Post $post, Request $request) {
+        Route::get('/posts/{post}/open', function ($post, Request $request) {
+            $post = Post::find($post);
+            if (! $post || $post->trashed_at) {
+                return redirect()->route('dashboard')->with('error', 'This post is no longer available.');
+            }
+
             $request->user()?->can('view', $post) ?: abort(403);
 
             return redirect()->route('dashboard')->with('openPostModal', [
@@ -322,6 +368,10 @@ Route::middleware('auth')->group(function () {
             ->name('posts.update');
         Route::delete('/posts/{post}/trash', [PostTrashController::class, 'destroy'])
             ->name('posts.trash');
+        // Moderator/superadmin removes someone else's post with a reason (soft,
+        // non-restorable by the author) and notifies them.
+        Route::post('/posts/{post}/remove', [PostModerationController::class, 'remove'])
+            ->name('posts.moderate-remove');
         Route::post('/posts/{post}/restore', [PostTrashController::class, 'restore'])
             ->name('posts.restore');
         Route::delete('/posts/{post}/force', [PostTrashController::class, 'forceDelete'])
@@ -379,6 +429,12 @@ Route::middleware('auth')->group(function () {
     
 });
 
+// Exit the institution "act as" mode and return to the original admin. Only
+// usable while a switch is active (the controller checks the session marker);
+// not admin-gated because the institution account itself isn't an admin.
+Route::post('/exit-institution', [InstitutionSwitchController::class, 'exit'])
+    ->middleware('auth')->name('institution.exit');
+
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/inbox', [AdminInboxController::class, 'index'])->name('inbox');
     Route::get('/inbox/counts', [AdminInboxController::class, 'counts'])->name('inbox.counts');
@@ -399,6 +455,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/community-requests/{communityRequest}/reject', [CommunityCreationRequestAdminController::class, 'reject'])
         ->name('community-requests.reject');
 
+    // Switch into the PUP-ITECH Official institution account ("act as")
+    Route::post('/act-as-institution', [InstitutionSwitchController::class, 'enter'])->name('institution.enter');
+
     // Reported posts review queue
     Route::get('/reports', [PostReportAdminController::class, 'index'])->name('reports.index');
     Route::post('/reports/{post}/keep', [PostReportAdminController::class, 'keep'])->name('reports.keep');
@@ -408,6 +467,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/verifications/{verificationDocument}/document', [VerificationAdminController::class, 'viewDocument'])->name('verifications.document');
     Route::patch('/verifications/{verificationDocument}/approve', [VerificationAdminController::class, 'approve'])->name('verifications.approve');
     Route::patch('/verifications/{verificationDocument}/reject', [VerificationAdminController::class, 'reject'])->name('verifications.reject');
+
+    Route::get('/users', [UserAdminController::class, 'index'])->name('users.index');
+    Route::get('/users/stats', [UserAdminController::class, 'stats'])->name('users.stats');
+    Route::patch('/users/{user}', [UserAdminController::class, 'update'])->name('users.update');
 });
 
 require __DIR__ . '/auth.php';

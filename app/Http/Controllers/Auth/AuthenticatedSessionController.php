@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\InstitutionSwitchController;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,11 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        // A fresh login must never inherit a stale "acting as institution" flag
+        // from a previous session (cookie sessions persist in the browser, so a
+        // DB wipe doesn't clear them).
+        $request->session()->forget(InstitutionSwitchController::SESSION_KEY);
 
         // Discard a stashed "intended" URL pointing at a JSON-only endpoint
         // (e.g. /notifications/unread-count caught from a background poll).

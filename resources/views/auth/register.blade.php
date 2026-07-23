@@ -29,7 +29,9 @@
         <div>
             <x-input-label for="email" :value="__('Email Address')" />
             <x-text-input id="email" class="block mt-1 w-full" type="email" name="email"
-                :value="old('email')" required autofocus autocomplete="username" />
+                :value="old('email')" required autofocus autocomplete="username"
+                x-on:keydown.space.prevent
+                x-on:input="$event.target.value = $event.target.value.replace(/\s/g, '')" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
@@ -41,7 +43,8 @@
                     x-bind:type="show ? 'text' : 'password'"
                     required autocomplete="new-password"
                     class="block w-full rounded-md border-gray-300 pr-10 shadow-sm focus:border-none focus:ring-yellow-500"
-                    x-on:input="check($event.target.value)" />
+                    x-on:keydown.space.prevent
+                    x-on:input="$event.target.value = $event.target.value.replace(/\s/g, ''); check($event.target.value)" />
                 <button type="button" @click="show = !show" tabindex="-1"
                     class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none">
                     <svg x-show="!show" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,6 +109,8 @@
                 <input id="password_confirmation" name="password_confirmation"
                     x-bind:type="show ? 'text' : 'password'"
                     required autocomplete="new-password"
+                    x-on:keydown.space.prevent
+                    x-on:input="$event.target.value = $event.target.value.replace(/\s/g, '')"
                     class="block w-full rounded-md border-gray-300 pr-10 shadow-sm focus:border-none focus:ring-yellow-500" />
                 <button type="button" @click="show = !show" tabindex="-1"
                     class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none">

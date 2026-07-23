@@ -59,17 +59,25 @@
                 </div>
 
                 {{-- Composer --}}
-                <form @submit.prevent="send()" class="flex items-end gap-2 border-t border-gray-100 px-4 py-3">
-                    <textarea x-model="draft" x-ref="input" rows="1" maxlength="5000"
-                        @keydown.enter.prevent="if (!$event.shiftKey) send()"
-                        placeholder="{{ __('Write a message…') }}"
-                        class="flex-1 resize-none rounded-xl border border-gray-200 px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-red-900 focus:ring-0"></textarea>
-                    <button type="submit" :disabled="sending || draft.trim() === ''"
-                        :class="(sending || draft.trim() === '') ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-800'"
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-900 text-white transition">
-                        <i class="fa-solid fa-paper-plane text-sm"></i>
-                    </button>
-                </form>
+                @if ($canSend)
+                    <form @submit.prevent="send()" class="flex items-end gap-2 border-t border-gray-100 px-4 py-3">
+                        <textarea x-model="draft" x-ref="input" rows="1" maxlength="5000"
+                            @keydown.enter.prevent="if (!$event.shiftKey) send()"
+                            placeholder="{{ __('Write a message…') }}"
+                            class="flex-1 resize-none rounded-xl border border-gray-200 px-3.5 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:border-red-900 focus:ring-0"></textarea>
+                        <button type="submit" :disabled="sending || draft.trim() === ''"
+                            :class="(sending || draft.trim() === '') ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-800'"
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-900 text-white transition">
+                            <i class="fa-solid fa-paper-plane text-sm"></i>
+                        </button>
+                    </form>
+                @else
+                    {{-- Disconnected: read-only history, no composer. --}}
+                    <div class="border-t border-gray-100 px-5 py-4 text-center text-sm text-gray-500">
+                        <i class="fa-regular fa-circle-xmark me-1 text-gray-400"></i>
+                        {{ __("You're no longer connected with this person. You can view past messages but can't send new ones.") }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>

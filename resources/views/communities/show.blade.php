@@ -357,6 +357,7 @@
 
     <x-post-detail-modal />
     <x-report-post-modal />
+    <x-remove-post-modal />
 
     @include('partials.feed-scripts')
 

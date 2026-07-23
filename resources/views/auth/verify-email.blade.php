@@ -54,6 +54,10 @@
         <div class="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 text-center">
             A new verification link has been sent to your email address.
         </div>
+    @elseif (session('status') == 'verification-link-failed')
+        <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 text-center">
+            We couldn't send the verification email right now. Please wait a moment and tap "Resend Verification Email" again.
+        </div>
     @endif
 
     <div class="flex flex-col gap-3 mt-4">

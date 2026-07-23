@@ -71,7 +71,7 @@
                                         {{ $profileUser->name }}
                                     </h3>
                                     <p class="mt-1 text-sm text-gray-600 sm:text-base">
-                                        {{ $profileUser->program_course ?? __('Program not yet provided') }}
+                                        {{ $profileUser->isInstitution() ? __('Official account') : ($profileUser->program_course ?? __('Program not yet provided')) }}
                                     </p>
                                     <div class="mt-3 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
                                         <span
@@ -95,13 +95,15 @@
                                             </svg>
                                             <span class="sr-only min-[1025px]:not-sr-only hidden min-[1025px]:inline">{{ __('Deleted Posts') }}</span>
                                         </a>
-                                        {{-- Edit profile settings --}}
+                                        {{-- Edit profile settings (not for the institution account) --}}
+                                        @unless ($profileUser->isInstitution())
                                         <a href="{{ route('profile.edit', ['section' => 'account-status']) }}"
                                             class="inline-flex items-center justify-center px-3 py-1 bg-red-900 border border-transparent rounded-md font-semibold text-xs text-white uppercase whitespace-nowrap tracking-widest hover:bg-white hover:text-red-900 hover:border-red-900 focus:bg-white focus:text-red-900 focus:border-red-900 active:bg-white focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2 transition ease-in-out duration-150 max-[1024px]:h-8 max-[1024px]:w-8 max-[1024px]:rounded-full max-[1024px]:px-0 max-[1024px]:py-0">
                                             <i class="fa-solid fa-user-pen text-sm min-[1025px]:hidden" aria-hidden="true"></i>
                                             <span class="sr-only">{{ __('Edit Profile Settings') }}</span>
                                             <span class="hidden min-[1025px]:inline">{{ __('Edit Profile Settings') }}</span>
                                         </a>
+                                        @endunless
                                     </div>
                                 @elseif ($viewer->canSendConnectionRequests() && $profileUser->isVerified())
                                     @if ($connectionState === 'connected')
@@ -199,7 +201,8 @@
                             </div>
 
                             <div
-                                class="grid gap-1 sm:gap-3 grid-cols-2 sm:grid-cols-3 sm:border sm:border-gray-200 sm:bg-gray-50 sm:rounded-lg">
+                                class="grid gap-1 sm:gap-3 grid-cols-2 {{ $profileUser->isInstitution() ? 'sm:grid-cols-2' : 'sm:grid-cols-3' }} sm:border sm:border-gray-200 sm:bg-gray-50 sm:rounded-lg">
+                                @unless ($profileUser->isInstitution())
                                 <div
                                     class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0">
                                     <div class="flex items-center justify-center gap-1">
@@ -217,8 +220,9 @@
                                         class="border border-red-900 absolute h-[50%] right-0 hidden sm:flex flex-col items-center">
                                     </div>
                                 </div>
+                                @endunless
                                 <div
-                                    class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0 border-l border-red-900/30 sm:border-l-0">
+                                    class="p-0 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center relative min-w-0 {{ $profileUser->isInstitution() ? '' : 'border-l border-red-900/30 sm:border-l-0' }}">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-circle-nodes text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -235,7 +239,7 @@
                                     </div>
                                 </div>
                                 <div
-                                    class="col-span-2 sm:col-span-1 p-0 pt-2 sm:p-4 flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center min-w-0 border-t border-red-900/30 sm:border-t-0">
+                                    class="{{ $profileUser->isInstitution() ? 'p-0 sm:p-4 border-l border-red-900/30 sm:border-l-0' : 'col-span-2 sm:col-span-1 p-0 pt-2 sm:p-4 border-t border-red-900/30 sm:border-t-0' }} flex flex-col sm:flex-col gap-[6px] sm:gap-0 items-center justify-center min-w-0">
                                     <div class="flex items-center justify-center gap-1">
                                         <i
                                             class="fa-solid fa-pen-to-square text-red-900 text-xs sm:text-sm lg:text-xl"></i>
@@ -253,7 +257,9 @@
                     </div>
                 </section>
 
-                <section class="!mt-3 grid gap-3 lg:grid-cols-3">
+                <section class="!mt-3 grid gap-3 lg:grid-cols-3 lg:items-start">
+                    {{-- The institution account has no career profile. --}}
+                    @unless ($profileUser->isInstitution())
                     <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 max-w-full overflow-hidden">
                         <h3 class="text-base md:text-lg font-semibold tracking-wide text-gray-900">{{ __('Career Profile') }}
                         </h3>
@@ -354,8 +360,9 @@
                             </div>
                         @endif -->
                     </article>
+                    @endunless
 
-                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm max-w-full overflow-hidden">
+                    <article class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm max-w-full overflow-hidden {{ $profileUser->isInstitution() ? 'lg:col-span-3' : '' }}">
                         @php
                             $activityPostsForCarousel = $activityPosts
                                 ->where('user_id', $profileUser->id)
@@ -382,8 +389,8 @@
                                 {{ __('No posts yet.') }}
                             </div>
                         @else
-                            <div class="mt-4" x-data="postCardsCarousel(@js($activityPostsCounts))">
-                                    <div class="relative overflow-hidden" style="touch-action: pan-y;">
+                            <div class="mt-4" x-data="postCardsCarousel(@js($activityPostsCounts), {{ $profileUser->isInstitution() ? 'true' : 'false' }})">
+                                    <div class="relative overflow-hidden {{ $profileUser->isInstitution() ? '-mx-1.5' : '' }}" style="touch-action: pan-y;">
                                     <div class="flex transition-transform duration-300 ease-out min-w-0 js-post-cards-track"
                                         :style="`transform: translateX(-${activeIndex * 100}%);`">
                                         @foreach ($activityPostsForCarousel as $post)
@@ -402,10 +409,16 @@
                                                 $carouselTrashUrl = route('posts.trash', $post);
                                                 $carouselEditUrl  = route('posts.update', $post);
                                                 $carouselReportUrl = route('posts.report', $post);
+                                                $carouselRemoveUrl = route('posts.moderate-remove', $post);
                                                 $isCarouselAuthor = auth()->id() === $post->user_id;
+                                                $canModerateCarousel = ! $isCarouselAuthor && (
+                                                    ($post->community && auth()->user()->isModeratorOf($post->community))
+                                                    || ($post->community && $post->community->is_system && auth()->user()->isInstitution())
+                                                    || auth()->user()->canManageCommunities()
+                                                );
                                                 $canReportCarousel = ! $isCarouselAuthor && auth()->user()->isVerified();
                                             @endphp
-                                            <div class="w-full shrink-0 min-w-0">
+                                            <div class="{{ $profileUser->isInstitution() ? 'w-full sm:w-1/2 lg:w-1/3 px-1.5' : 'w-full' }} shrink-0 min-w-0">
                                                 <article
                                                     class="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:border-gray-300 hover:shadow-md"
                                                     @click="openPostModal($event, {{ $post->id }}, '{{ $profilePostApiUrl }}', '{{ $profilePostCommentsUrl }}')">
@@ -433,7 +446,7 @@
                                                                 class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset {{ $visibilityConfig[0] }}">
                                                                 {{ $visibilityConfig[1] }}
                                                             </span>
-                                                            @if ($isCarouselAuthor || $canReportCarousel)
+                                                            @if ($isCarouselAuthor || $canModerateCarousel || $canReportCarousel)
                                                                 <div class="relative" x-data="{ menuOpen: false }">
                                                                     <button type="button" @click.stop="menuOpen = !menuOpen"
                                                                         class="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
@@ -471,6 +484,16 @@
                                                                                 Delete post
                                                                             </button>
                                                                         </form>
+                                                                        @endif
+                                                                        @if ($canModerateCarousel)
+                                                                        <button type="button"
+                                                                            @click.stop="menuOpen = false; $dispatch('open-remove-modal', @js(['removeUrl' => $carouselRemoveUrl]))"
+                                                                            class="w-full flex items-center gap-2.5 px-3.5 py-2 text-sm text-red-700 hover:bg-red-50 transition">
+                                                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                                            </svg>
+                                                                            Remove post
+                                                                        </button>
                                                                         @endif
                                                                         @if ($canReportCarousel)
                                                                         <button type="button"
@@ -514,8 +537,8 @@
                                                             <h4 class="text-base font-semibold text-gray-900 line-clamp-2">{{ $post->title }}</h4>
                                                         @endif
 
-                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words">
-                                                            {{ \Illuminate\Support\Str::limit(strip_tags($post->body_html ?? $post->body_markdown), 220) }}
+                                                        <p class="mt-2 text-sm leading-6 text-gray-700 line-clamp-3 break-words whitespace-pre-line">
+                                                            {{ \Illuminate\Support\Str::limit($post->body_markdown ?? '', 220) }}
                                                         </p>
 
                                                             @if ($post->media->count() > 0)
@@ -703,7 +726,7 @@
     </div>
 
     <script>
-        function postCardsCarousel(initialPosts) {
+        function postCardsCarousel(initialPosts, multiItem = false) {
             const items = Array.isArray(initialPosts) ? initialPosts : [];
             const initialById = {};
             for (const item of items) {
@@ -715,9 +738,25 @@
             }
 
             return {
-                count: items.length,
+                totalItems: items.length,
+                multiItem: !!multiItem,
+                windowWidth: window.innerWidth,
                 activeIndex: 0,
                 countsByPostId: initialById,
+
+                // Cards shown per page: 3 desktop / 2 tablet / 1 mobile for the
+                // institution's full-width activity; always 1 elsewhere.
+                get perView() {
+                    if (!this.multiItem) return 1;
+                    if (this.windowWidth >= 1024) return 3;
+                    if (this.windowWidth >= 640) return 2;
+                    return 1;
+                },
+
+                // Number of pages (the pager/controls operate on pages).
+                get count() {
+                    return Math.max(1, Math.ceil(this.totalItems / this.perView));
+                },
 
                 init() {
                     window.addEventListener('post-like-count-changed', (event) => {
@@ -735,17 +774,15 @@
                         if (!this.countsByPostId[postId]) this.countsByPostId[postId] = { like_count: 0, comment_count: 0 };
                         this.countsByPostId[postId].comment_count = count;
                     });
-                    // ensure carousel track recalculates transform on resize
-                    const track = this.$el?.querySelector('.js-post-cards-track');
-                    if (track) {
-                        const update = () => {
-                            // force re-apply transform to account for layout changes
-                            track.style.transform = `translateX(-${this.activeIndex * 100}%)`;
-                        };
-                        window.addEventListener('resize', update);
-                        // run once after init
-                        setTimeout(update, 50);
-                    }
+                    // Recompute pages/transform on resize (perView is breakpoint-based).
+                    const update = () => {
+                        this.windowWidth = window.innerWidth;
+                        if (this.activeIndex > this.count - 1) {
+                            this.activeIndex = this.count - 1;
+                        }
+                    };
+                    window.addEventListener('resize', update);
+                    setTimeout(update, 50);
                 },
 
                 getLikeCount(postId, fallback = 0) {
@@ -923,8 +960,28 @@
         });
     </script>
 
+    @if ($isOwnProfile)
+        {{-- Edit composer for the viewer's own posts (opened from the activity
+             carousel via the open-edit-composer event). Edit-only: no create card.
+             Same audience config as the dashboard so the audience picker works:
+             General Hub → Everyone; program/batch → public/connections/community. --}}
+        @php
+            $joinedCommunitiesCollection = collect($joinedCommunities ?? []);
+            $composerGeneralHubId = $joinedCommunitiesCollection->firstWhere('system_key', 'general-alumni-hub')->id ?? null;
+            $defaultCommunityId = $composerGeneralHubId;
+        @endphp
+        @include('partials.post-composer', [
+            'flairsByCommunity' => $flairsByCommunity ?? collect(),
+            'defaultCommunityId' => $defaultCommunityId,
+            'composerGeneralHubId' => $composerGeneralHubId,
+            'composerEditOnly' => true,
+        ])
+        @include('partials.feed-scripts')
+    @endif
+
     <x-post-detail-modal />
     <x-report-post-modal />
+    <x-remove-post-modal />
 
     <x-footer />
 </x-app-layout>

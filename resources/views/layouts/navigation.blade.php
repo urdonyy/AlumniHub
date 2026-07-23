@@ -44,7 +44,7 @@
                         </x-nav-link>
 
                         <x-nav-link :href="route('admin.communities.index')"
-                            :active="request()->routeIs('admin.communities.*')">
+                            :active="request()->routeIs('admin.communities.*') || request()->routeIs('admin.community-requests.*')">
                             <i class="fa-solid fa-group-arrows-rotate text-lg"></i>
                             {{ __('Communities') }}
                         </x-nav-link>
@@ -131,15 +131,35 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('profiles.show', Auth::id())">
-                            <i class="fa-solid fa-circle-user"></i>
-                            {{ __('Profile') }}
-                        </x-dropdown-link>
+                        {{-- Admin accounts have no public alumni profile, so hide the link for them. --}}
+                        @if ($navUser?->role !== 'admin')
+                            <x-dropdown-link :href="route('profiles.show', Auth::id())">
+                                <i class="fa-solid fa-circle-user"></i>
+                                {{ __('Profile') }}
+                            </x-dropdown-link>
+                        @endif
 
-                        <x-dropdown-link :href="route('profile.edit', ['section' => 'account-status'])">
-                            <i class="fa-solid fa-pen-to-square"></i>
-                            {{ __('Edit Profile Settings') }}
-                        </x-dropdown-link>
+                        @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
+                            {{-- Acting as PUP-ITECH Official: offer a way back to the admin --}}
+                            <form method="POST" action="{{ route('institution.exit') }}">
+                                @csrf
+                                <x-dropdown-link :href="route('institution.exit')" onclick="event.preventDefault(); this.closest('form').submit();">
+                                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                                    {{ __('Exit Acting Mode') }}
+                                </x-dropdown-link>
+                            </form>
+                        @elseif ($navUser?->role === 'admin')
+                            <button type="button" @click="$dispatch('open-institution-confirm')"
+                                class="inline-flex items-center gap-[6px] md:gap-2 w-full px-4 py-2 text-start text-sm leading-5 text-gray-600 hover:bg-red-900 hover:text-white focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
+                                <i class="fa-solid fa-user-shield"></i>
+                                {{ __('Enable Acting Mode') }}
+                            </button>
+                        @else
+                            <x-dropdown-link :href="route('profile.edit', ['section' => 'account-status'])">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                                {{ __('Edit Profile Settings') }}
+                            </x-dropdown-link>
+                        @endif
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -181,7 +201,7 @@
                 </x-responsive-nav-link>
 
                 <x-responsive-nav-link :href="route('admin.communities.index')"
-                    :active="request()->routeIs('admin.communities.*')">
+                    :active="request()->routeIs('admin.communities.*') || request()->routeIs('admin.community-requests.*')">
                     <i class="fa-solid fa-group-arrows-rotate"></i>
                     {{ __('Communities') }}
                 </x-responsive-nav-link>
@@ -250,10 +270,26 @@
                     {{ __('Profile') }}
                 </x-responsive-nav-link>
 
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    {{ __('Edit Profile Settings') }}
-                </x-responsive-nav-link>
+                @if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
+                    <form method="POST" action="{{ route('institution.exit') }}">
+                        @csrf
+                        <x-responsive-nav-link :href="route('institution.exit')" onclick="event.preventDefault(); this.closest('form').submit();">
+                            <i class="fa-solid fa-arrow-rotate-left"></i>
+                            {{ __('Exit Superadmin') }}
+                        </x-responsive-nav-link>
+                    </form>
+                @elseif ($navUser?->role === 'admin')
+                    <button type="button" @click="open = false; $dispatch('open-institution-confirm')"
+                        class="block w-full ps-3 pe-4 py-2 border-l-4 border-transparent text-start text-base font-medium text-gray-600 hover:text-red-900 hover:bg-gray-50 hover:border-gray-300 focus:outline-none transition duration-150 ease-in-out">
+                        <i class="fa-solid fa-user-shield"></i>
+                        {{ __('Enable Superadmin') }}
+                    </button>
+                @else
+                    <x-responsive-nav-link :href="route('profile.edit')">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        {{ __('Edit Profile Settings') }}
+                    </x-responsive-nav-link>
+                @endif
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
@@ -268,4 +304,63 @@
             </div>
         </div>
     </div>
+
 </nav>
+
+{{-- Confirmation modal: admin switching into the PUP-ITECH Official account.
+     Lives OUTSIDE <nav> with its own Alpine scope so `fixed` is viewport-relative
+     (the nav is a positioned/stacking context). Opened via a window event. --}}
+@if ($navUser?->role === 'admin' && ! session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY))
+    <div x-data="{ show: false }" x-show="show" x-cloak
+        @open-institution-confirm.window="show = true"
+        @keydown.escape.window="show = false"
+        class="fixed inset-0 z-[600] flex items-center justify-center p-4" style="display:none">
+        <div class="fixed inset-0 bg-black/50" @click="show = false"></div>
+        <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+            x-transition:enter="transition ease-out duration-150"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100">
+            <div class="flex items-start gap-3">
+                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
+                    <i class="fa-solid fa-user-shield"></i>
+                </span>
+                <div>
+                    <h3 class="text-base font-semibold text-gray-900">{{ __('Switch to PUP-ITECH Official?') }}</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        {{ __('You will act as the institution account — browsing, posting, connecting and messaging as PUP-ITECH Official. You can return to the admin panel anytime from the menu.') }}
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end gap-2">
+                <button type="button" @click="show = false"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100">
+                    {{ __('Cancel') }}
+                </button>
+                <form method="POST" action="{{ route('admin.institution.enter') }}">
+                    @csrf
+                    <button type="submit"
+                        class="rounded-lg bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-600">
+                        {{ __('Confirm switch') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+@endif
+
+{{-- Persistent banner while acting as the institution account — fixed to the
+     bottom so it never overlaps the nav on scroll. --}}
+@if (session()->has(\App\Http\Controllers\InstitutionSwitchController::SESSION_KEY) && $navUser?->isInstitution())
+    <div class="fixed inset-x-0 bottom-0 z-[60] flex items-center justify-center gap-3 bg-blue-700 px-4 py-2 text-center text-xs font-medium text-white shadow-[0_-2px_8px_rgba(0,0,0,0.15)]">
+        <span>
+            <i class="fa-solid fa-user-shield me-1"></i>
+            {{ __('You are acting as PUP-ITECH Official') }}
+        </span>
+        <form method="POST" action="{{ route('institution.exit') }}">
+            @csrf
+            <button type="submit" class="rounded-full bg-white/20 px-2.5 py-0.5 font-semibold hover:bg-white/30">
+                {{ __('Return to admin') }}
+            </button>
+        </form>
+    </div>
+@endif

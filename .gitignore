@@ -22,3 +22,11 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# ERD diagrams
+/docs
+
+# Local DB backup
+backup.sql
+backup_utf8.sql
+backup_fixed.sql

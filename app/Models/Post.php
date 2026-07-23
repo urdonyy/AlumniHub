@@ -27,6 +27,9 @@ class Post extends Model
         'trashed_at',
         'reports_count',
         'flagged_at',
+        'removed_by_user_id',
+        'removal_reason',
+        'removal_note',
     ];
 
     protected $casts = [
@@ -156,6 +159,11 @@ class Post extends Model
             $converter = new \League\CommonMark\GithubFlavoredMarkdownConverter([
                 'html_input' => 'strip',
                 'allow_unsafe_links' => false,
+                // Honor single line breaks the author typed (render as <br>),
+                // so a one-Enter line break shows up instead of being collapsed.
+                'renderer' => [
+                    'soft_break' => "<br>\n",
+                ],
             ]);
             return $converter->convert($markdown)->getContent();
         } catch (\Throwable $e) {

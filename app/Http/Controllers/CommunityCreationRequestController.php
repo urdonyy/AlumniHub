@@ -25,6 +25,13 @@ class CommunityCreationRequestController extends Controller
 
         $user = $request->user();
 
+        // A user who already moderates a batch community can't request a new one.
+        if ($user->moderatesAnyBatchCommunity()) {
+            return redirect()
+                ->route('communities.index')
+                ->with('error', "You already moderate a batch community, so you can't request another one.");
+        }
+
         $activeRequest = CommunityCreationRequest::query()
             ->where('requestor_id', $user->id)
             ->whereIn('status', [
@@ -51,7 +58,9 @@ class CommunityCreationRequestController extends Controller
             ->filter(fn (?User $u) => $u !== null
                 && $u->isVerified()
                 && $u->batch_year === $user->batch_year
-                && $u->program_course === $user->program_course)
+                && $u->program_course === $user->program_course
+                // Can't invite someone who already moderates a batch community.
+                && ! $u->moderatesAnyBatchCommunity())
             ->unique('id')
             ->values();
 

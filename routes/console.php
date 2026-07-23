@@ -4,6 +4,7 @@ use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -33,3 +34,6 @@ Schedule::call(function () {
         ->where('trashed_at', '<', now()->subDays(30))
         ->delete();
 })->daily()->name('prune-trashed-notifications')->onOneServer();
+
+// ping DB every 30mins to keep Aiven free-tier alive
+Schedule::call(fn () => DB::select('SELECT 1'))->everyThirtyMinutes();

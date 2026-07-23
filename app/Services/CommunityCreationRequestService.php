@@ -148,6 +148,9 @@ class CommunityCreationRequestService
             $community->addModerator($request->requestor, 'senior_moderator');
             $community->members()->syncWithoutDetaching([$request->requestor_id]);
 
+            // Note: the PUP-ITECH Official account intentionally does NOT auto-join
+            // batch communities — those belong to the batch's own members.
+
             foreach ($request->coModeratorInvites as $invite) {
                 if ($invite->status !== CommunityCreationRequestModerator::STATUS_ACCEPTED) {
                     continue;

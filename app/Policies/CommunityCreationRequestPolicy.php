@@ -10,7 +10,9 @@ class CommunityCreationRequestPolicy
 {
     public function create(User $user): bool
     {
-        return $user->isVerified();
+        // The institution account moderates communities but can't request the
+        // creation of batch communities — that's a client-side action.
+        return $user->isVerified() && ! $user->isInstitution();
     }
 
     public function view(User $user, CommunityCreationRequest $request): bool

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Community;
+use App\Models\CommunityCreationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -22,6 +23,7 @@ class CommunityAdminController extends Controller
 
         return view('admin.communities.index', [
             'communities' => $communities,
+            'pendingRequestCount' => CommunityCreationRequest::query()->pendingAdmin()->count(),
         ]);
     }
 
@@ -48,6 +50,9 @@ class CommunityAdminController extends Controller
                 'program_course' => $validated['rule_program_course'] ?? null,
             ]);
         }
+
+        // Admin-created communities are non-system (batch) communities, so the
+        // PUP-ITECH Official account is not auto-joined here.
 
         return back()->with('status', 'community-created');
     }

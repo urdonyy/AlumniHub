@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Connection;
 use App\Models\Conversation;
 use App\Models\User;
 use App\Services\MessageService;
@@ -58,9 +59,24 @@ class MessageController extends Controller
         $authUser = $request->user();
 
         abort_if($user->id === $authUser->id, 404);
-        abort_unless($authUser->isConnectedWith($user), 403, 'You can only message your connections.');
 
-        $conversation = Conversation::betweenUsers($authUser, $user);
+        $canSend = $authUser->isConnectedWith($user);
+
+        // Look up an existing thread WITHOUT creating one.
+        [$lowId, $highId] = Connection::normalizedPair($authUser->id, $user->id);
+        $conversation = Conversation::where('user_low_id', $lowId)
+            ->where('user_high_id', $highId)
+            ->first();
+
+        // Disconnected users may still READ an existing thread, but can't open a
+        // brand-new one. Block only when not connected AND no history exists.
+        if (! $canSend && ! $conversation) {
+            return redirect()->route('messages.index')
+                ->with('error', 'You can only message your connections.');
+        }
+
+        // Connected users opening a fresh thread create it here.
+        $conversation ??= Conversation::betweenUsers($authUser, $user);
 
         $this->messageService->markConversationRead($conversation, $authUser);
 
@@ -74,6 +90,7 @@ class MessageController extends Controller
             'partner'      => $user,
             'messages'     => $messages,
             'authUser'     => $authUser,
+            'canSend'      => $canSend,
         ]);
     }
 

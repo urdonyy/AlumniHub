@@ -5,7 +5,7 @@
             <h2 class="font-semibold text-xl text-red-900 leading-tight inline-block lg:hidden">
                 {{ auth()->user()->canManageCommunities() ? __('Admin Home') : __('Home') }}
             </h2>
-            <p class="text-sm text-red-900">{{ __('AlumniHub social experience (beta)') }}</p>
+            <p class="text-sm text-red-900">{{ auth()->user()->canManageCommunities() ? __('AlumniHub user management') : __('AlumniHub social experience (beta)') }}</p>
         </div>
     </x-slot>
 
@@ -24,32 +24,7 @@
             @endif
 
             @if (auth()->user()->canManageCommunities())
-                <div class="grid gap-6 lg:grid-cols-2">
-                    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-sm font-medium text-gray-500">{{ __('Community Access') }}</p>
-                        <div
-                            class="mt-3 inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ring-1 ring-inset {{ auth()->user()->communityAccessBadgeClass() }}">
-                            {{ auth()->user()->communityAccessLabel() }}
-                        </div>
-                        <p class="mt-4 text-sm text-gray-600">
-                            {{ __('Use this admin homepage to review verifications and manage community assignment rules.') }}
-                        </p>
-                    </div>
-
-                    <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-6 shadow-sm">
-                        <h3 class="text-base font-semibold text-indigo-900">{{ __('Admin Shortcuts') }}</h3>
-                        <div class="mt-4 flex flex-wrap gap-3">
-                            <a href="{{ route('admin.communities.index') }}"
-                                class="inline-flex items-center rounded-md bg-indigo-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-indigo-600">
-                                {{ __('Manage Communities') }}
-                            </a>
-                            <a href="{{ route('admin.verifications.index') }}"
-                                class="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition hover:bg-gray-700">
-                                {{ __('Review Verifications') }}
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                @include('admin.users._table')
             @else
                 @php
                     $feedCards = [
@@ -77,7 +52,7 @@
                             class="block rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-gray-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-red-900 focus:ring-offset-2">
                             <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{{ __('Profile') }}</p>
                             <h3 class="mt-2 text-lg font-semibold text-gray-900">{{ auth()->user()->name }}</h3>
-                            <p class="text-sm text-gray-600">{{ auth()->user()->program_course ?? __('Program pending') }}</p>
+                            <p class="text-sm text-gray-600">{{ auth()->user()->isInstitution() ? __('Official account') : (auth()->user()->program_course ?? __('Program pending')) }}</p>
                             <div
                                 class="mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {{ auth()->user()->accountStatusBadgeClass() }}">
                                 {{ auth()->user()->accountStatusLabel() }}
@@ -89,7 +64,10 @@
                             <div class="mt-3 space-y-2 text-sm">
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('communities.index') }}">{{ __('My Communities') }}</a>
                                 <a class="block text-gray-700 hover:text-gray-900" href="{{ route('connections.index') }}">{{ __('My Connections') }}</a>
-                                <a class="block text-gray-700 hover:text-gray-900" href="{{ route('profile.edit', ['section' => 'account-status']) }}">{{ __('Account Settings') }}</a>
+                                {{-- The institution account has no editable profile/settings. --}}
+                                @unless (auth()->user()->isInstitution())
+                                    <a class="block text-gray-700 hover:text-gray-900" href="{{ route('profile.edit', ['section' => 'account-status']) }}">{{ __('Account Settings') }}</a>
+                                @endunless
                             </div>
                         </section>
                     </aside>
@@ -147,6 +125,7 @@
 
                         <x-post-detail-modal />
                         <x-report-post-modal />
+                        <x-remove-post-modal />
                     </section>
 
                     <aside class="space-y-3 min-w-0 md:col-span-1 lg:col-span-3 md:sticky md:top-6 md:self-start">
@@ -196,7 +175,7 @@
                                         <a href="{{ $isVerified ? route('profiles.show', $person) : '#' }}"
                                             class="block rounded-lg border border-gray-200 px-3 py-2 transition hover:border-gray-300 hover:bg-gray-50">
                                             <p class="text-sm font-semibold text-gray-900">{{ $person->name }}</p>
-                                            <p class="text-xs text-gray-600">{{ $person->program_course ?? __('Program pending') }}</p>
+                                            <p class="text-xs text-gray-600">{{ $person->isInstitution() ? __('Official account') : ($person->program_course ?? __('Program pending')) }}</p>
                                         </a>
                                     @empty
                                         <p class="rounded-lg border border-dashed border-gray-300 px-3 py-3 text-xs text-gray-500">

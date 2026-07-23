@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\InstitutionSwitchController;
 use App\Models\User;
 use App\Models\VerificationDocument;
 use App\Services\CommunityAutoJoinService;
@@ -37,6 +38,10 @@ class RegisteredUserController extends Controller
         $request->validate([
             'email'    => [
                 'required', 'string', 'lowercase', 'email', 'max:255',
+                // No spaces anywhere in the email.
+                'regex:/^\S+$/',
+                // Only PUP-ITECH alumni/student addresses (Gmail or the school domain).
+                'regex:/@(gmail\.com|iskolarngbayan\.pup\.edu\.ph)$/i',
                 function (string $attribute, mixed $value, \Closure $fail) {
                     $existing = User::where('email', $value)->first();
 
@@ -45,7 +50,11 @@ class RegisteredUserController extends Controller
                     }
                 },
             ],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            // No spaces anywhere in the password.
+            'password' => ['required', 'confirmed', 'regex:/^\S+$/', Rules\Password::defaults()],
+        ], [
+            'email.regex' => 'Please use a real @gmail.com or @iskolarngbayan.pup.edu.ph email address (no spaces).',
+            'password.regex' => 'Password must not contain spaces.',
         ]);
 
         $email = $request->string('email')->value();
@@ -64,9 +73,21 @@ class RegisteredUserController extends Controller
             ]);
         });
 
-        event(new Registered($user));
+        // Send the verification email, but never let an SMTP failure (e.g. a
+        // provider daily-send cap) hard-block registration. The account is
+        // already created; if mail fails the user still reaches the verification
+        // notice page and can use "Resend" once the provider recovers.
+        try {
+            event(new Registered($user));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         Auth::login($user);
+
+        // Never let a newly registered account inherit a stale "acting as
+        // institution" flag left in the browser's cookie session.
+        $request->session()->forget(InstitutionSwitchController::SESSION_KEY);
 
         return redirect()->route('verification.notice');
     }
