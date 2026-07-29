@@ -251,12 +251,12 @@
                 </div>
 
                 @if ($isMember && $isVerified)
+                    {{-- General Alumni Hub auto-joins everyone, so Public and Community reach the same people —
+                         show a single audience there (avoids the redundant picker). Other communities offer both. --}}
                     @include('partials.post-composer', [
                         'flairsByCommunity' => $flairsByCommunity,
                         'defaultCommunityId' => $community->id,
                         'composerLockedCommunityId' => $community->id,
-                        {{-- General Alumni Hub auto-joins everyone, so Public and Community reach the same people —
-                             show a single audience there (avoids the redundant picker). Other communities offer both. --}}
                         'composerVisibilities' => $community->system_key === 'general-alumni-hub' ? ['members'] : ['public', 'members'],
                         'composerGeneralHubId' => $community->system_key === 'general-alumni-hub' ? $community->id : null,
                         'joinedCommunitiesCollection' => collect(),
