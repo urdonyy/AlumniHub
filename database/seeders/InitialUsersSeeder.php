@@ -15,7 +15,7 @@ class InitialUsersSeeder extends Seeder
                 'name' => 'Site Admin',
                 'first_name' => 'Site',
                 'last_name' => 'Admin',
-                'email' => 'admin@example.com',
+                'email' => 'alumnihub.2026@gmail.com',
                 'password' => env('ADMIN_INITIAL_PASSWORD', 'password'),
                 'role' => 'admin',
                 'account_status' => 'approved',
